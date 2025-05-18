@@ -30,7 +30,7 @@
     --chart-4: 46 96% 53%; /* Warning Yellow */
     --chart-5: 0 84% 60%; /* Error Red */
     
-    --radius: 0.5rem;
+    --radius: 1rem; /* Updated from 0.5rem for 16px on rounded-lg */
 
     /* Sidebar specific colors */
     --sidebar-background: var(--background); /* Changed to match page background #000104 */

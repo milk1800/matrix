@@ -13,7 +13,10 @@ interface PlaceholderCardProps {
 
 export function PlaceholderCard({ title, value, description, icon: Icon, children, className }: PlaceholderCardProps) {
   return (
-    <Card className={cn("bg-card/90 shadow-purple-glow hover:shadow-purple-glow-hover transition-shadow duration-300", className)}>
+    <Card className={cn(
+      "bg-card/[.92] shadow-purple-glow hover:shadow-purple-glow-hover hover:-translate-y-1.5 transition-all duration-200 ease-in-out",
+      className
+    )}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-base font-medium text-muted-foreground">{title}</CardTitle>
         {Icon && <Icon className="h-5 w-5 text-primary" />}
