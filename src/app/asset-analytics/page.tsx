@@ -5,7 +5,6 @@ import { PlaceholderChart } from '@/components/dashboard/placeholder-chart';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Label } from "@/components/ui/label";
 
 export default function AssetAnalyticsPage() {
   const metricCardsData = [
@@ -38,8 +37,7 @@ export default function AssetAnalyticsPage() {
       <h1 className="text-3xl font-bold tracking-tight text-foreground mb-8">Asset Analytics</h1>
       
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <div className="space-y-2">
-          <Label htmlFor="advisor-select" className="text-sm font-medium text-muted-foreground">Advisor</Label>
+        <PlaceholderCard title="Advisor">
           <Select>
             <SelectTrigger id="advisor-select" className="w-full bg-card border-input text-foreground">
               <SelectValue placeholder="Select Advisor" />
@@ -51,9 +49,9 @@ export default function AssetAnalyticsPage() {
               <SelectItem value="advisor_3">Advisor Gamma</SelectItem>
             </SelectContent>
           </Select>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="custodian-select" className="text-sm font-medium text-muted-foreground">Custodian</Label>
+        </PlaceholderCard>
+        
+        <PlaceholderCard title="Custodian">
           <Select defaultValue="all_custodians">
             <SelectTrigger id="custodian-select" className="w-full bg-card border-input text-foreground">
               <SelectValue placeholder="Select Custodian" />
@@ -65,9 +63,9 @@ export default function AssetAnalyticsPage() {
               <SelectItem value="custodian_z">Custodian Z</SelectItem>
             </SelectContent>
           </Select>
-        </div>
-        <div className="space-y-2">
-          <Label htmlFor="timeframe-select" className="text-sm font-medium text-muted-foreground">Timeframe</Label>
+        </PlaceholderCard>
+
+        <PlaceholderCard title="Timeframe">
           <Select defaultValue="ytd">
             <SelectTrigger id="timeframe-select" className="w-full bg-card border-input text-foreground">
               <SelectValue placeholder="Select Timeframe" />
@@ -79,7 +77,7 @@ export default function AssetAnalyticsPage() {
               <SelectItem value="trailing_12m">Trailing 12 Months</SelectItem>
             </SelectContent>
           </Select>
-        </div>
+        </PlaceholderCard>
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
