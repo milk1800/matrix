@@ -56,11 +56,10 @@
   }
   body {
     @apply text-foreground;
-    background-color: hsl(var(--background)); /* Fallback to #000104 */
-    background-image: radial-gradient(ellipse at center, #5b21b6 0%, hsl(var(--background)) 100%); /* Updated gradient */
+    background-color: hsl(var(--background)); /* Solid background, gradient moved to page level */
     min-height: 100vh; /* Ensure full viewport height */
     height: 100%; /* Ensure body also takes full height for parents of 100vh children if needed */
-    background-attachment: fixed; /* Keep gradient fixed during scroll */
+    background-attachment: fixed; /* Keep gradient fixed during scroll if it were here */
     font-family: var(--font-geist-sans);
   }
 }

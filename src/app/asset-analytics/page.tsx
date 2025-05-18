@@ -1,8 +1,7 @@
 
+import Image from 'next/image';
 import { AssetAllocationDonutChart } from '@/components/charts/asset-allocation-donut-chart';
 import { PlaceholderCard } from '@/components/dashboard/placeholder-card';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -34,11 +33,12 @@ export default function AssetAnalyticsPage() {
   ];
 
   return (
-    <main className="flex-1 p-6 space-y-8 md:p-8">
+    <main className="flex-1 min-h-screen p-6 space-y-8 md:p-8 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#5b21b6] to-[#000104]">
       <h1 className="text-3xl font-bold tracking-tight text-foreground mb-8">Asset Analytics</h1>
       
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <PlaceholderCard title="Advisor">
+          <Label htmlFor="advisor-select" className="sr-only">Advisor</Label>
           <Select>
             <SelectTrigger id="advisor-select" className="w-full bg-card border-input text-foreground">
               <SelectValue placeholder="Select Advisor" />
@@ -53,6 +53,7 @@ export default function AssetAnalyticsPage() {
         </PlaceholderCard>
         
         <PlaceholderCard title="Custodian">
+          <Label htmlFor="custodian-select" className="sr-only">Custodian</Label>
           <Select defaultValue="all_custodians">
             <SelectTrigger id="custodian-select" className="w-full bg-card border-input text-foreground">
               <SelectValue placeholder="Select Custodian" />
@@ -69,6 +70,7 @@ export default function AssetAnalyticsPage() {
         </PlaceholderCard>
 
         <PlaceholderCard title="Timeframe">
+          <Label htmlFor="timeframe-select" className="sr-only">Timeframe</Label>
           <Select defaultValue="ytd">
             <SelectTrigger id="timeframe-select" className="w-full bg-card border-input text-foreground">
               <SelectValue placeholder="Select Timeframe" />
@@ -90,7 +92,7 @@ export default function AssetAnalyticsPage() {
             title={card.title}
             value={card.value}
             description={card.description}
-            icon={card.icon} // This will now pass the string path
+            icon={card.icon}
           />
         ))}
       </div>
@@ -135,7 +137,7 @@ export default function AssetAnalyticsPage() {
                 <TableCell className="text-muted-foreground">{asset.category}</TableCell>
                 <TableCell className="text-right text-foreground">{asset.value}</TableCell>
                 <TableCell className="text-right text-muted-foreground">{asset.weight}</TableCell>
-                <TableCell className="text-right text-green-400">{asset.ytdReturn}</TableCell>
+                <TableCell className={`text-right font-semibold ${asset.ytdReturn.startsWith('-') ? 'text-red-400' : 'text-green-400'}`}>{asset.ytdReturn}</TableCell>
               </TableRow>
             ))}
           </TableBody>
