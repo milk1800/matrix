@@ -1,40 +1,103 @@
-import { PieChart, Briefcase, TrendingUp } from 'lucide-react';
+
 import { PlaceholderCard } from '@/components/dashboard/placeholder-card';
-import { PlaceholderChart } from '@/components/dashboard/placeholder-chart';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label'; // Added Label import
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export default function PortfolioMatrixPage() {
-  return (
-    <main className="flex-1 p-6 space-y-6 md:p-8">
-      <h1 className="text-3xl font-bold tracking-tight text-foreground">Portfolio Matrix Dashboard</h1>
-      
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <PlaceholderCard
-          title="Total Portfolios"
-          value="85"
-          description="Managed portfolios"
-          icon={Briefcase}
-        />
-        <PlaceholderCard
-          title="Average Portfolio Value"
-          value="$1.2M"
-          description="Across all portfolios"
-          icon={PieChart}
-        />
-        <PlaceholderCard
-          title="Portfolio Growth"
-          value="+8.5%"
-          description="Average YTD growth"
-          icon={TrendingUp}
-        />
-      </div>
+  const portfolioOverviewData = [
+    { ticker: 'AAPL', name: 'Alpha Fund', category: 'Equity', value: '$1,250,000', weight: '25.0%', ytdReturn: '+5.2%' },
+    { ticker: 'MSFT', name: 'Beta Bond Portfolio', category: 'Fixed Income', value: '$800,000', weight: '16.0%', ytdReturn: '+2.1%' },
+    { ticker: 'GOOG', name: 'Gamma Real Estate', category: 'Alternatives', value: '$500,000', weight: '10.0%', ytdReturn: '+7.8%' },
+    { ticker: 'AMZN', name: 'Delta Growth Stock', category: 'Equity', value: '$150,000', weight: '3.0%', ytdReturn: '+12.5%' },
+    { ticker: 'TSLA', name: 'Epsilon Money Market', category: 'Cash Eq.', value: '$2,000,000', weight: '40.0%', ytdReturn: '+0.5%' },
+    { ticker: 'JPM', name: 'Zeta Financial Holding', category: 'Financials', value: '$300,000', weight: '6.0%', ytdReturn: '-3.5%' },
+  ];
 
-      <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-1">
-        <PlaceholderCard title="Portfolio Distribution Matrix">
-          <div className="h-[400px]">
-            <PlaceholderChart dataAiHint="portfolio distribution" />
+  // For "Missed Opportunities", let's use the bottom 3 as an example of underperformers or those with negative/low returns.
+  // In a real scenario, this data would be filtered or sorted appropriately.
+  const missedOpportunitiesData = [
+    portfolioOverviewData[5], // JPM (-3.5%)
+    portfolioOverviewData[4], // TSLA (+0.5%)
+    portfolioOverviewData[1], // MSFT (+2.1%)
+  ];
+
+
+  return (
+    <main className="flex-1 p-6 space-y-8 md:p-8">
+      <h1 className="text-3xl font-bold tracking-tight text-foreground mb-8">Portfolio Matrix Dashboard</h1>
+      
+      <PlaceholderCard title="Portfolio Analysis Engine">
+        <div className="flex flex-col sm:flex-row items-center gap-4">
+          <div className="flex-grow w-full">
+            <Label htmlFor="portfolio-id-input" className="sr-only">Portfolio ID</Label>
+            <Input id="portfolio-id-input" placeholder="e.g. ACC123456789" className="bg-input border-input text-foreground" />
           </div>
-        </PlaceholderCard>
-      </div>
+          <Button className="w-full sm:w-auto shrink-0">Analyze Portfolio</Button>
+        </div>
+      </PlaceholderCard>
+
+      <PlaceholderCard title="Portfolio Matrix Overview">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="font-bold">Ticker</TableHead>
+              <TableHead className="font-bold">Name</TableHead>
+              <TableHead className="font-bold">Category</TableHead>
+              <TableHead className="font-bold text-right">Value</TableHead>
+              <TableHead className="font-bold text-right">Weight</TableHead>
+              <TableHead className="font-bold text-right">YTD Return</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {portfolioOverviewData.map((item) => (
+              <TableRow key={item.ticker}>
+                <TableCell className="font-medium">{item.ticker}</TableCell>
+                <TableCell>{item.name}</TableCell>
+                <TableCell className="text-muted-foreground">{item.category}</TableCell>
+                <TableCell className="text-right text-foreground">{item.value}</TableCell>
+                <TableCell className="text-right text-muted-foreground">{item.weight}</TableCell>
+                <TableCell className={`text-right font-semibold ${item.ytdReturn.startsWith('-') ? 'text-red-400' : 'text-green-400'}`}>
+                  {item.ytdReturn}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </PlaceholderCard>
+
+      <PlaceholderCard title="Missed Opportunities">
+        <p className="text-sm italic text-muted-foreground mb-4">
+          🔍 Current top 3 underperformers show minimal negative impact on overall YTD performance.
+        </p>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="font-bold">Ticker</TableHead>
+              <TableHead className="font-bold">Name</TableHead>
+              <TableHead className="font-bold">Category</TableHead>
+              <TableHead className="font-bold text-right">Value</TableHead>
+              <TableHead className="font-bold text-right">Weight</TableHead>
+              <TableHead className="font-bold text-right">YTD Return</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {missedOpportunitiesData.map((item) => (
+              <TableRow key={`missed-${item.ticker}`}>
+                <TableCell className="font-medium">{item.ticker}</TableCell>
+                <TableCell>{item.name}</TableCell>
+                <TableCell className="text-muted-foreground">{item.category}</TableCell>
+                <TableCell className="text-right text-foreground">{item.value}</TableCell>
+                <TableCell className="text-right text-muted-foreground">{item.weight}</TableCell>
+                <TableCell className={`text-right font-semibold ${item.ytdReturn.startsWith('-') ? 'text-red-400' : 'text-green-400'}`}>
+                  {item.ytdReturn}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </PlaceholderCard>
     </main>
   );
 }
