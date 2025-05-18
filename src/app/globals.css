@@ -7,7 +7,7 @@
   :root {
     --background: 225 100% 0.8%; /* #000104 */
     --foreground: 0 0% 100%; /* #FFFFFF */
-    --card: 0 0% 0% / 0.4; /* rgba(0,0,0,0.4) for cards */
+    --card: 0 0% 0% / 0.6; /* rgba(0,0,0,0.6) for cards */
     --card-foreground: 0 0% 100%; /* #FFFFFF */
     --popover: 253 36% 15%; /* #1C1833 - Matching card for consistency */
     --popover-foreground: 0 0% 100%; /* #FFFFFF */
@@ -71,10 +71,10 @@
 @keyframes pulse-glow {
   0%, 100% {
     transform: scale(1);
-    filter: drop-shadow(0 0 5px #a855f7) drop-shadow(0 0 10px rgba(168, 85, 247, 0.5));
+    filter: drop-shadow(0 0 5px #9333ea) drop-shadow(0 0 10px rgba(147, 51, 234, 0.5));
   }
   50% {
     transform: scale(1.1);
-    filter: drop-shadow(0 0 10px #a855f7) drop-shadow(0 0 20px rgba(168, 85, 247, 0.8));
+    filter: drop-shadow(0 0 10px #9333ea) drop-shadow(0 0 20px rgba(147, 51, 234, 0.8));
   }
 }

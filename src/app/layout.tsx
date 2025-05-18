@@ -40,9 +40,9 @@ export default function RootLayout({
                   <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
                     <defs>
                       <radialGradient id="brainGradient" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
-                        <stop offset="0%" style={{stopColor: '#a855f7', stopOpacity: 1}} />
-                        <stop offset="70%" style={{stopColor: '#7f00ff', stopOpacity: 1}} />
-                        <stop offset="100%" style={{stopColor: '#7f00ff', stopOpacity: 0.9}} />
+                        <stop offset="0%" style={{stopColor: '#c5b3ff', stopOpacity: 1}} /> {/* Lighter center for "lit from within" */}
+                        <stop offset="40%" style={{stopColor: '#a855f7', stopOpacity: 1}} /> {/* Main brain color */}
+                        <stop offset="100%" style={{stopColor: '#9333ea', stopOpacity: 0.9}} /> {/* Edge color, matches new glow */}
                       </radialGradient>
                     </defs>
                     <path 
