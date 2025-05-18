@@ -1,8 +1,8 @@
 "use client"; // Required for state and event handlers
 
-import type { Metadata } from 'next';
+// import type { Metadata } from 'next'; // Client components cannot export metadata
 import { Geist, Geist_Mono } from 'next/font/google';
-import * as React from 'react'; // Ensure React is imported
+import * as React from 'react';
 import './globals.css';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarInset } from '@/components/ui/sidebar';
 import { SidebarNavItems } from '@/components/layout/sidebar-nav-items';
@@ -22,12 +22,6 @@ const geistMono = Geist_Mono({
   variable: '--font-geist-mono',
   subsets: ['latin'],
 });
-
-// Metadata needs to be exported as a const, not a function for client components
-// export const metadata: Metadata = {
-//   title: 'Sanctuary Matrix Dashboard',
-//   description: 'Advanced Analytics Dashboard',
-// };
 
 interface ChatMessage {
   id: string;
@@ -60,7 +54,6 @@ export default function RootLayout({
       sender: 'user',
     };
 
-    // Echo bot for now
     const botResponse: ChatMessage = {
       id: (Date.now() + 1).toString(),
       text: `Maven echoes: "${currentMessage}"`,
@@ -85,9 +78,9 @@ export default function RootLayout({
                   <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
                     <defs>
                       <radialGradient id="brainGradient" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
-                        <stop offset="0%" style={{stopColor: '#d9c2ff', stopOpacity: 1}} /> {/* Light lavender highlight */}
-                        <stop offset="30%" style={{stopColor: '#9147ff', stopOpacity: 1}} /> {/* Neon purple main */}
-                        <stop offset="100%" style={{stopColor: '#7022d3', stopOpacity: 1}} /> {/* Darker purple for depth */}
+                        <stop offset="0%" stopColor='#c5b3ff' stopOpacity={1} />
+                        <stop offset="40%" stopColor='#a855f7' stopOpacity={1} />
+                        <stop offset="100%" stopColor='#9333ea' stopOpacity={0.9} />
                       </radialGradient>
                     </defs>
                     <path
