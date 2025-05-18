@@ -1,4 +1,3 @@
-
 "use client"; // Required for state and event handlers
 
 import type { Metadata } from 'next';
@@ -76,8 +75,8 @@ export default function RootLayout({
     <html lang="en" className="dark">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <SidebarProvider defaultOpen={true}>
-          <Sidebar 
-            collapsible="none" 
+          <Sidebar
+            collapsible="none"
             className="shadow-sidebar-glow"
           >
             <SidebarHeader className="p-4 border-b border-sidebar-border">
@@ -86,25 +85,25 @@ export default function RootLayout({
                   <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
                     <defs>
                       <radialGradient id="brainGradient" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
-                        <stop offset="0%" style={{stopColor: '#c5b3ff', stopOpacity: 1}} /> 
-                        <stop offset="40%" style={{stopColor: '#a855f7', stopOpacity: 1}} /> 
-                        <stop offset="100%" style={{stopColor: '#9333ea', stopOpacity: 0.9}} /> 
+                        <stop offset="0%" style={{stopColor: '#d9c2ff', stopOpacity: 1}} /> {/* Light lavender highlight */}
+                        <stop offset="30%" style={{stopColor: '#9147ff', stopOpacity: 1}} /> {/* Neon purple main */}
+                        <stop offset="100%" style={{stopColor: '#7022d3', stopOpacity: 1}} /> {/* Darker purple for depth */}
                       </radialGradient>
                     </defs>
-                    <path 
-                      d="M12 3C8.686 3 6 5.686 6 9C6 10.481 6.444 11.844 7.209 12.949C7.073 13.3 7 13.638 7 14C7 16.209 8.791 18 11 18V21H13V18C15.209 18 17 16.209 17 14C17 13.638 16.927 13.3 16.791 12.949C17.556 11.844 18 10.481 18 9C18 5.686 15.314 3 12 3ZM8 9C8 6.791 9.791 5 12 5C14.209 5 16 6.791 16 9C16 10.813 14.908 12.347 13.349 12.861C13.131 13.483 13 14.251 13 15H11C11 14.251 10.869 13.483 10.651 12.861C9.092 12.347 8 10.813 8 9Z" 
+                    <path
+                      d="M12 3C8.686 3 6 5.686 6 9C6 10.481 6.444 11.844 7.209 12.949C7.073 13.3 7 13.638 7 14C7 16.209 8.791 18 11 18V21H13V18C15.209 18 17 16.209 17 14C17 13.638 16.927 13.3 16.791 12.949C17.556 11.844 18 10.481 18 9C18 5.686 15.314 3 12 3ZM8 9C8 6.791 9.791 5 12 5C14.209 5 16 6.791 16 9C16 10.813 14.908 12.347 13.349 12.861C13.131 13.483 13 14.251 13 15H11C11 14.251 10.869 13.483 10.651 12.861C9.092 12.347 8 10.813 8 9Z"
                       fill="url(#brainGradient)"
                     />
-                    <path 
-                      d="M11.5 10.5A0.5 0.5 0 0011 11V12A0.5 0.5 0 0011.5 12.5H12.5A0.5 0.5 0 0013 12V11A0.5 0.5 0 0012.5 10.5H11.5Z" 
+                    <path
+                      d="M11.5 10.5A0.5 0.5 0 0011 11V12A0.5 0.5 0 0011.5 12.5H12.5A0.5 0.5 0 0013 12V11A0.5 0.5 0 0012.5 10.5H11.5Z"
                       fill="url(#brainGradient)"
                     />
-                    <path 
-                      d="M9.5 7.5A0.5 0.5 0 009 8V9A0.5 0.5 0 009.5 9.5H10.5A0.5 0.5 0 0011 9V8A0.5 0.5 0 0010.5 7.5H9.5Z" 
+                    <path
+                      d="M9.5 7.5A0.5 0.5 0 009 8V9A0.5 0.5 0 009.5 9.5H10.5A0.5 0.5 0 0011 9V8A0.5 0.5 0 0010.5 7.5H9.5Z"
                       fill="url(#brainGradient)"
                     />
-                    <path 
-                      d="M13.5 7.5A0.5 0.5 0 0013 8V9A0.5 0.5 0 0013.5 9.5H14.5A0.5 0.5 0 0015 9V8A0.5 0.5 0 0014.5 7.5H13.5Z" 
+                    <path
+                      d="M13.5 7.5A0.5 0.5 0 0013 8V9A0.5 0.5 0 0013.5 9.5H14.5A0.5 0.5 0 0015 9V8A0.5 0.5 0 0014.5 7.5H13.5Z"
                       fill="url(#brainGradient)"
                     />
                   </svg>
@@ -172,9 +171,9 @@ export default function RootLayout({
                   onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
                   className="flex-grow bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary"
                 />
-                <Button 
-                  type="submit" 
-                  onClick={handleSendMessage} 
+                <Button
+                  type="submit"
+                  onClick={handleSendMessage}
                   className="bg-primary hover:bg-primary/90 text-primary-foreground"
                   aria-label="Send Message"
                   disabled={!currentMessage.trim()}

@@ -24,13 +24,13 @@
     --border: 230 11% 20%; /* #2C2F3A */
     --input: 253 36% 20%; /* Slightly lighter purple than card for input fields */
     --ring: 258 84% 70%; /* Lighter shade of primary accent for focus rings */
-    
+
     --chart-1: 258 84% 61%; /* Primary Accent */
     --chart-2: 200 92% 60%; /* Secondary Accent */
     --chart-3: 145 63% 42%; /* Success Green */
     --chart-4: 46 96% 53%; /* Warning Yellow */
     --chart-5: 0 84% 60%; /* Error Red */
-    
+
     --radius: 1.25rem; /* 20px */
 
     /* Sidebar specific colors */
@@ -38,9 +38,9 @@
     --sidebar-foreground: 0 0% 100%; /* #FFFFFF */
     --sidebar-primary: 258 84% 61%; /* Active item background #7C3AED */
     --sidebar-primary-foreground: 0 0% 100%; /* Text on active item */
-    --sidebar-accent: 233 27% 20%; 
+    --sidebar-accent: 233 27% 20%;
     --sidebar-accent-foreground: 0 0% 100%; /* Text on hover */
-    --sidebar-border: 230 11% 15%; 
+    --sidebar-border: 230 11% 15%;
     --sidebar-ring: 258 84% 70%; /* Focus ring */
   }
 }
@@ -57,9 +57,9 @@
     /* Unified radial gradient background */
     background-image: radial-gradient(circle at center, #25066b 0%, #0a041d 30%, hsl(var(--background)) 70%);
     background-color: hsl(var(--background)); /* Fallback */
-    min-height: 100vh; 
-    height: 100%; 
-    background-attachment: fixed; 
+    min-height: 100vh;
+    height: 100%;
+    background-attachment: fixed;
     font-family: var(--font-geist-sans);
   }
 }
@@ -71,11 +71,11 @@
 @keyframes pulse-glow {
   0%, 100% {
     transform: scale(1);
-    filter: drop-shadow(0 0 5px #a855f7) drop-shadow(0 0 10px rgba(167, 139, 250, 0.5));
+    filter: drop-shadow(0 0 5px #9147ff) drop-shadow(0 0 10px rgba(145, 71, 255, 0.4));
   }
   50% {
     transform: scale(1.1);
-    filter: drop-shadow(0 0 10px #a855f7) drop-shadow(0 0 20px rgba(167, 139, 250, 0.8));
+    filter: drop-shadow(0 0 10px #9147ff) drop-shadow(0 0 20px rgba(145, 71, 255, 0.6));
   }
 }
 
@@ -111,7 +111,7 @@
 /* Chatbot FAB specific styles - can be removed if Tailwind classes in layout.tsx are sufficient */
 /* .chatbot-fab {
   position: fixed;
-  bottom: 1.5rem; 
+  bottom: 1.5rem;
   right: 1.5rem;
-  z-index: 50; 
+  z-index: 50;
 } */
