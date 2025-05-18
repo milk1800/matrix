@@ -6,9 +6,9 @@
   :root {
     --background: 225 100% 0.8%; /* #000104 */
     --foreground: 0 0% 100%; /* #FFFFFF */
-    --card: 233 27% 14%; /* #1A1C2D */
+    --card: 253 36% 15%; /* #1C1833 - Deep Purple */
     --card-foreground: 0 0% 100%; /* #FFFFFF */
-    --popover: 233 27% 14%; /* #1A1C2D */
+    --popover: 253 36% 15%; /* #1C1833 - Matching card for consistency */
     --popover-foreground: 0 0% 100%; /* #FFFFFF */
     --primary: 258 84% 61%; /* #7C3AED */
     --primary-foreground: 0 0% 100%; /* #FFFFFF */
@@ -21,7 +21,7 @@
     --destructive: 0 84% 60%; /* #EF4444 */
     --destructive-foreground: 0 0% 100%; /* #FFFFFF */
     --border: 230 11% 20%; /* #2C2F3A */
-    --input: 233 27% 20%; /* Slightly lighter than card for input fields */
+    --input: 253 36% 20%; /* Slightly lighter purple than card for input fields */
     --ring: 258 84% 70%; /* Lighter shade of primary accent for focus rings */
     
     --chart-1: 258 84% 61%; /* Primary Accent */
