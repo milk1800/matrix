@@ -36,9 +36,9 @@ export default function AssetAnalyticsPage() {
     <main className="flex-1 p-6 space-y-8 md:p-8">
       <h1 className="text-3xl font-bold tracking-tight text-foreground">Asset Analytics</h1>
       
-      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-start">
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <Select defaultValue="all_advisors">
-          <SelectTrigger className="w-full md:w-[200px] bg-card border-input text-foreground">
+          <SelectTrigger className="w-full bg-card border-input text-foreground">
             <SelectValue placeholder="Select Advisor" />
           </SelectTrigger>
           <SelectContent>
@@ -49,7 +49,7 @@ export default function AssetAnalyticsPage() {
           </SelectContent>
         </Select>
         <Select defaultValue="all_custodians">
-          <SelectTrigger className="w-full md:w-[200px] bg-card border-input text-foreground">
+          <SelectTrigger className="w-full bg-card border-input text-foreground">
             <SelectValue placeholder="Select Custodian" />
           </SelectTrigger>
           <SelectContent>
@@ -60,7 +60,7 @@ export default function AssetAnalyticsPage() {
           </SelectContent>
         </Select>
         <Select defaultValue="ytd">
-          <SelectTrigger className="w-full md:w-[200px] bg-card border-input text-foreground">
+          <SelectTrigger className="w-full bg-card border-input text-foreground">
             <SelectValue placeholder="Select Timeframe" />
           </SelectTrigger>
           <SelectContent>
