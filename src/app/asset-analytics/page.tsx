@@ -5,6 +5,7 @@ import { PlaceholderChart } from '@/components/dashboard/placeholder-chart';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Label } from '@/components/ui/label';
 
 export default function AssetAnalyticsPage() {
   const metricCardsData = [
@@ -61,6 +62,11 @@ export default function AssetAnalyticsPage() {
               <SelectItem value="custodian_x">Custodian X</SelectItem>
               <SelectItem value="custodian_y">Custodian Y</SelectItem>
               <SelectItem value="custodian_z">Custodian Z</SelectItem>
+              <SelectItem value="pershing">Pershing</SelectItem>
+              <SelectItem value="charles_schwab">Charles Schwab</SelectItem>
+              <SelectItem value="fidelity">Fidelity</SelectItem>
+              <SelectItem value="goldman_sachs">Goldman Sachs</SelectItem>
+              <SelectItem value="pas">PAS</SelectItem>
             </SelectContent>
           </Select>
         </PlaceholderCard>
