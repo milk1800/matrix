@@ -1,8 +1,7 @@
 
-import { DollarSign, TrendingUp, Users, PieChart, ArrowUpRight, ArrowDownLeft, Activity, Download, Filter, CalendarDays, Shield } from 'lucide-react';
+import { DollarSign, TrendingUp, Users, PieChart as PieChartIcon, ArrowUpRight, ArrowDownLeft, Activity } from 'lucide-react';
 import { PlaceholderCard } from '@/components/dashboard/placeholder-card';
-import { PlaceholderChart } from '@/components/dashboard/placeholder-chart';
-import { Button } from '@/components/ui/button';
+import { AssetAllocationDonutChart } from '@/components/charts/asset-allocation-donut-chart';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Label } from '@/components/ui/label';
@@ -11,7 +10,7 @@ export default function AssetAnalyticsPage() {
   const metricCardsData = [
     { title: "Total AUM", value: "$12.5M", description: "+5.2% last month", icon: DollarSign },
     { title: "YTD Return", value: "+15.2%", description: "Overall portfolio performance", icon: TrendingUp },
-    { title: "% in Model Portfolios", value: "68%", description: "Allocated to strategic models", icon: PieChart },
+    { title: "% in Model Portfolios", value: "68%", description: "Allocated to strategic models", icon: PieChartIcon },
     { title: "Inflows (MTD)", value: "$350K", description: "New investments this month", icon: ArrowUpRight },
     { title: "Outflows (MTD)", value: "$120K", description: "Withdrawals this month", icon: ArrowDownLeft },
     { title: "Net Flows (MTD)", value: "$230K", description: "Net change in assets", icon: Activity },
@@ -98,7 +97,7 @@ export default function AssetAnalyticsPage() {
       <PlaceholderCard title="Asset Allocation by Type">
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 items-center py-4">
           <div className="h-[300px] md:h-[350px]">
-            <PlaceholderChart dataAiHint="asset allocation donut" />
+            <AssetAllocationDonutChart />
           </div>
           <div className="space-y-3">
             <h3 className="text-lg font-semibold text-foreground mb-4">Asset Breakdown</h3>
