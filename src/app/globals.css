@@ -55,7 +55,7 @@
   body {
     @apply text-foreground;
     /* Unified radial gradient background */
-    background-image: radial-gradient(circle at center, #25066b 0%, hsl(var(--background)) 100%);
+    background-image: radial-gradient(circle at center, #25066b 0%, #0a041d 30%, hsl(var(--background)) 70%);
     background-color: hsl(var(--background)); /* Fallback */
     min-height: 100vh; 
     height: 100%; 
@@ -78,3 +78,4 @@
     filter: drop-shadow(0 0 10px #a78bfa) drop-shadow(0 0 20px rgba(167, 139, 250, 0.8));
   }
 }
+
