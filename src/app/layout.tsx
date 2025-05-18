@@ -31,7 +31,7 @@ export default function RootLayout({
         <SidebarProvider defaultOpen={true}>
           <Sidebar 
             collapsible="none" 
-            className="shadow-[3px_0px_10px_-2px_hsla(var(--primary),0.35)]" // Applies the soft purple glow
+            className="shadow-[4px_0px_20px_0px_hsla(var(--primary),0.3)]" // Updated soft purple glow
           >
             <SidebarHeader className="p-4 border-b border-sidebar-border">
               <h1 className="text-2xl font-semibold text-primary">Sanctuary Matrix</h1>
