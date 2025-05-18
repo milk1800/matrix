@@ -27,12 +27,12 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark"> {/* Ensure dark class if needed by some components, though theme is dark by default */}
+    <html lang="en" className="dark">{/* Ensure dark class if needed by some components, though theme is dark by default */}
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <SidebarProvider defaultOpen={true}>
           <Sidebar 
             collapsible="none" 
-            className="shadow-[3px_0px_10px_-2px_hsla(var(--primary),0.35)]" // Applies the soft purple glow
+            className="shadow-[2px_0_15px_rgba(128,90,213,0.2)]" // Applies the soft purple glow
           >
             <SidebarHeader className="p-4 border-b border-sidebar-border">
               <div className="flex items-center space-x-3">
