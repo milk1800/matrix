@@ -107,3 +107,11 @@
   /* You can add a specific hover style here if different from default box-shadow, e.g. brighter gradient or stronger shadow */
   filter: brightness(1.1);
 }
+
+/* Chatbot FAB specific styles - can be removed if Tailwind classes in layout.tsx are sufficient */
+/* .chatbot-fab {
+  position: fixed;
+  bottom: 1.5rem; 
+  right: 1.5rem;
+  z-index: 50; 
+} */
