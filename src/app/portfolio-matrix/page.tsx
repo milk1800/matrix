@@ -19,14 +19,14 @@ export default function PortfolioMatrixPage() {
 
 
   return (
-    <main className="flex-1 p-6 space-y-8 md:p-8">
+    <main className="min-h-screen bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#25066b] to-[#000104] flex-1 p-6 space-y-8 md:p-8">
       <h1 className="text-3xl font-bold tracking-tight text-foreground mb-8">Portfolio Matrix Dashboard</h1>
       
       <PlaceholderCard title="Portfolio Analysis Engine">
         <div className="flex flex-col sm:flex-row items-center gap-4">
-          <div className="flex-grow w-full">
+          <div className="flex-grow w-full sm:max-w-sm">
             <Label htmlFor="portfolio-id-input" className="sr-only">Portfolio ID</Label>
-            <Input id="portfolio-id-input" placeholder="e.g. ACC123456789" className="bg-input border-input text-foreground" />
+            <Input id="portfolio-id-input" placeholder="e.g. ACC123456789" className="bg-card backdrop-blur-sm border-none shadow-white-glow-soft hover:shadow-white-glow-hover text-foreground" />
           </div>
           <Button className="w-full sm:w-auto shrink-0">Analyze Portfolio</Button>
         </div>
