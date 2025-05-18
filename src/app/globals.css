@@ -6,7 +6,7 @@
   :root {
     --background: 225 100% 0.8%; /* #000104 */
     --foreground: 0 0% 100%; /* #FFFFFF */
-    --card: 240 25% 5.7%; /* approx #0B0B12 */
+    --card: var(--background); /* #000104 - Updated to match page background */
     --card-foreground: 0 0% 100%; /* #FFFFFF */
     --popover: 253 36% 15%; /* #1C1833 - Matching card for consistency */
     --popover-foreground: 0 0% 100%; /* #FFFFFF */
@@ -54,7 +54,7 @@
   body {
     @apply text-foreground;
     background-color: hsl(var(--background)); /* Fallback to #000104 */
-    background-image: radial-gradient(ellipse at center, #1c1543 0%, hsl(var(--background)) 100%);
+    background-image: radial-gradient(ellipse at center, #1c1543 0%, hsl(var(--background)) 80%); /* Updated gradient stop */
     min-height: 100vh; /* Ensure full viewport height */
     background-attachment: fixed; /* Keep gradient fixed during scroll */
     font-family: var(--font-geist-sans);

@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 interface PlaceholderCardProps {
   title: string;
   value?: string;
-  description?: string;
+  description?: React.ReactNode; // Allow ReactNode for description (e.g. for colored text)
   icon?: LucideIcon;
   children?: React.ReactNode; // For embedding a chart or other content
   className?: string;
@@ -14,7 +14,7 @@ interface PlaceholderCardProps {
 export function PlaceholderCard({ title, value, description, icon: Icon, children, className }: PlaceholderCardProps) {
   return (
     <Card className={cn(
-      "bg-card/[.92] shadow-purple-glow hover:shadow-purple-glow-hover hover:-translate-y-1.5 transition-all duration-200 ease-in-out",
+      "shadow-none transition-all duration-300 ease-in-out hover:-translate-y-0.5 hover:shadow-card-hover-glow",
       className
     )}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
