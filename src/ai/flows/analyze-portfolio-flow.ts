@@ -4,15 +4,15 @@
  * @fileOverview A Genkit flow to analyze portfolio items, focusing on missed opportunities.
  *
  * - analyzePortfolioItems - A function that calls the Genkit flow to analyze portfolio items.
- * - PortfolioItemSchema - The Zod schema for an individual portfolio item.
- * - AnalyzePortfolioInputSchema - The Zod schema for the input to the analysis flow.
- * - AnalyzePortfolioOutputSchema - The Zod schema for the output from the analysis flow.
+ * - PortfolioItem - The type for an individual portfolio item.
+ * - AnalyzePortfolioInput - The type for the input to the analysis flow.
+ * - AnalyzePortfolioOutput - The type for the output from the analysis flow.
  */
 
 import {ai} from '@/ai/genkit';
 import {z} from 'genkit';
 
-export const PortfolioItemSchema = z.object({
+const PortfolioItemSchema = z.object({
   ticker: z.string().describe('The stock ticker symbol.'),
   name: z.string().describe('The name of the asset or fund.'),
   category: z.string().describe('The category of the asset (e.g., Equity, Fixed Income).'),
@@ -22,13 +22,13 @@ export const PortfolioItemSchema = z.object({
 });
 export type PortfolioItem = z.infer<typeof PortfolioItemSchema>;
 
-export const AnalyzePortfolioInputSchema = z.object({
+const AnalyzePortfolioInputSchema = z.object({
   portfolioId: z.string().optional().describe('The ID of the portfolio being analyzed.'),
   missedOpportunities: z.array(PortfolioItemSchema).describe('An array of portfolio items identified as missed opportunities or underperforming assets.'),
 });
 export type AnalyzePortfolioInput = z.infer<typeof AnalyzePortfolioInputSchema>;
 
-export const AnalyzePortfolioOutputSchema = z.object({
+const AnalyzePortfolioOutputSchema = z.object({
   analysis: z.string().describe('A textual analysis providing insights or suggestions regarding the provided portfolio items.'),
 });
 export type AnalyzePortfolioOutput = z.infer<typeof AnalyzePortfolioOutputSchema>;
