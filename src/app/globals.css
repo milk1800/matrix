@@ -54,7 +54,6 @@
   }
   body {
     @apply text-foreground;
-    /* Unified radial gradient background */
     background-image: radial-gradient(circle at center, #25066b 0%, #0a041d 30%, hsl(var(--background)) 70%);
     background-color: hsl(var(--background)); /* Fallback */
     min-height: 100vh;
@@ -64,7 +63,7 @@
   }
 }
 
-/* Pulsating Glow Animation - Updated to user's snippet */
+/* Pulsating Glow Animation - Used by Chatbot FAB */
 @keyframes pulse-glow {
   0%, 100% {
     transform: scale(1);
@@ -80,11 +79,10 @@
   animation: pulse-glow 1.5s ease-in-out infinite;
 }
 
-/* Static glow for the new brain logo if needed, not currently used by main logo but kept if needed elsewhere */
+/* Static glow for the main logo */
 .brain-logo-static-glow {
   filter: drop-shadow(0 0 6px #8b5cf6);
 }
-
 
 @keyframes flashRed {
   0%   { background-color: rgba(255, 0, 0, 0.08); }
@@ -111,14 +109,5 @@
 }
 
 .ask-maven-button:hover {
-  /* You can add a specific hover style here if different from default box-shadow, e.g. brighter gradient or stronger shadow */
   filter: brightness(1.1);
 }
-
-/* Chatbot FAB specific styles - can be removed if Tailwind classes in layout.tsx are sufficient */
-/* .chatbot-fab {
-  position: fixed;
-  bottom: 1.5rem;
-  right: 1.5rem;
-  z-index: 50;
-} */

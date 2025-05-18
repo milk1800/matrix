@@ -1,10 +1,9 @@
 
-"use client"; // Required for state and event handlers
+"use client";
 
-// import type { Metadata } from 'next'; // Client components cannot export metadata
 import { Geist, Geist_Mono } from 'next/font/google';
 import * as React from 'react';
-import Image from "next/image"; // Import the Image component
+import Image from "next/image";
 import './globals.css';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarInset } from '@/components/ui/sidebar';
 import { SidebarNavItems } from '@/components/layout/sidebar-nav-items';
@@ -74,20 +73,20 @@ export default function RootLayout({
             collapsible="none"
             className="shadow-sidebar-glow"
           >
-            <SidebarHeader className="p-4 border-b border-sidebar-border">
-              <div className="flex items-center space-x-2">
-                <div className="w-8 h-8 animate-pulse-glow relative">
+            <SidebarHeader className="p-4 px-5 border-b border-sidebar-border"> {/* Adjusted padding */}
+              <div className="flex items-center space-x-3"> {/* Adjusted gap */}
+                <div className="w-9 h-9"> {/* Adjusted size for 36px */}
                   <Image
-                    src="/icons/brain-logo.png"
-                    alt="Sanctuary Matrix Logo"
-                    width={32}
-                    height={32}
-                    className="rounded-full" // Added rounded-full as per snippet
+                    src="/assets/brain-logo.png" // Updated path
+                    alt="Sanctuary Matrix Brain Icon" // Updated alt text
+                    width={36}
+                    height={36}
+                    className="object-contain brain-logo-static-glow hover:scale-110 hover:brightness-125 transition-transform duration-300 ease-out" // Updated classes
                   />
                 </div>
-                <div className="text-xl font-semibold text-foreground leading-tight">
-                  <span>Sanctuary</span><br />
-                  <span>Matrix</span>
+                <div className="text-xl font-bold text-white leading-tight"> {/* Specific styling as per prompt */}
+                  <div>Sanctuary</div>
+                  <div>Matrix</div>
                 </div>
               </div>
             </SidebarHeader>
@@ -107,6 +106,7 @@ export default function RootLayout({
           onClick={() => setIsChatOpen(true)}
           aria-label="Open Chat with Maven AI"
         >
+          {/* Chatbot icon remains /icons/brain-logo.png and animated */}
           <Image src="/icons/brain-logo.png" alt="Chat with Maven AI" width={32} height={32} className="rounded-full" />
         </Button>
 
