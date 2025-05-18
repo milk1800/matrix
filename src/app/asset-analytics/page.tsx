@@ -1,19 +1,20 @@
 
-import { DollarSign, TrendingUp, Users, PieChart as PieChartIcon, ArrowUpRight, ArrowDownLeft, Activity } from 'lucide-react';
-import { PlaceholderCard } from '@/components/dashboard/placeholder-card';
 import { AssetAllocationDonutChart } from '@/components/charts/asset-allocation-donut-chart';
+import { PlaceholderCard } from '@/components/dashboard/placeholder-card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Label } from '@/components/ui/label';
 
 export default function AssetAnalyticsPage() {
   const metricCardsData = [
-    { title: "Total AUM", value: "$12.5M", description: "+5.2% last month", icon: DollarSign },
-    { title: "YTD Return", value: "+15.2%", description: "Overall portfolio performance", icon: TrendingUp },
-    { title: "% in Model Portfolios", value: "68%", description: "Allocated to strategic models", icon: PieChartIcon },
-    { title: "Inflows (MTD)", value: "$350K", description: "New investments this month", icon: ArrowUpRight },
-    { title: "Outflows (MTD)", value: "$120K", description: "Withdrawals this month", icon: ArrowDownLeft },
-    { title: "Net Flows (MTD)", value: "$230K", description: "Net change in assets", icon: Activity },
+    { title: "Total AUM", value: "$12.5M", description: "+5.2% last month", icon: "/icons/total-aum.svg" },
+    { title: "YTD Return", value: "+15.2%", description: "Overall portfolio performance", icon: "/icons/ytd-return.svg" },
+    { title: "% in Model Portfolios", value: "68%", description: "Allocated to strategic models", icon: "/icons/model-portfolios.svg" },
+    { title: "Inflows (MTD)", value: "$350K", description: "New investments this month", icon: "/icons/inflows.svg" },
+    { title: "Outflows (MTD)", value: "$120K", description: "Withdrawals this month", icon: "/icons/outflows.svg" },
+    { title: "Net Flows (MTD)", value: "$230K", description: "Net change in assets", icon: "/icons/net-flows.svg" },
   ];
 
   const assetBreakdownData = [
@@ -89,7 +90,7 @@ export default function AssetAnalyticsPage() {
             title={card.title}
             value={card.value}
             description={card.description}
-            icon={card.icon}
+            icon={card.icon} // This will now pass the string path
           />
         ))}
       </div>
