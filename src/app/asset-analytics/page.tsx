@@ -59,9 +59,6 @@ export default function AssetAnalyticsPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all_custodians">All Custodians</SelectItem>
-              <SelectItem value="custodian_x">Custodian X</SelectItem>
-              <SelectItem value="custodian_y">Custodian Y</SelectItem>
-              <SelectItem value="custodian_z">Custodian Z</SelectItem>
               <SelectItem value="pershing">Pershing</SelectItem>
               <SelectItem value="charles_schwab">Charles Schwab</SelectItem>
               <SelectItem value="fidelity">Fidelity</SelectItem>
