@@ -124,7 +124,7 @@ export default function AssetAnalyticsPage() {
 
       <PlaceholderCard title="Asset Allocation by Type" className="lg:col-span-1">
          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-            <div className="h-[300px] md:h-[350px] w-full">
+            <div className="h-[350px] md:h-[400px] w-full">
               <AssetAllocationDonutChart />
             </div>
             <div className="space-y-3">

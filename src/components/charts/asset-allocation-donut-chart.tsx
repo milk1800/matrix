@@ -57,7 +57,7 @@ export function AssetAllocationDonutChart() {
   return (
     <ChartContainer
       config={chartConfig}
-      className="mx-auto aspect-square h-full max-h-[350px] w-full"
+      className="mx-auto aspect-square h-full max-h-[400px] w-full"
     >
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
@@ -69,8 +69,8 @@ export function AssetAllocationDonutChart() {
             data={chartData}
             dataKey="value"
             nameKey="assetType"
-            innerRadius={70}
-            outerRadius={100}
+            innerRadius={100}
+            outerRadius={140}
             strokeWidth={2}
             stroke="hsl(var(--card))" // Creates separation between segments
             activeIndex={activeIndex}
