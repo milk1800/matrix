@@ -2,6 +2,7 @@
 "use client";
 
 import * as React from "react";
+import { Download } from 'lucide-react';
 import { PlaceholderCard } from '@/components/dashboard/placeholder-card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Progress } from "@/components/ui/progress";
@@ -172,7 +173,7 @@ const allClientData = [
   },
 ];
 
-const INITIAL_VISIBLE_COUNT = 5;
+const INITIAL_VISIBLE_COUNT = 10;
 const CLIENTS_TO_LOAD_COUNT = 5;
 
 export default function RMDMatrixPage() {
@@ -188,7 +189,7 @@ export default function RMDMatrixPage() {
   };
 
   return (
-    <main className="flex-1 p-6 space-y-6 md:p-8">
+    <main className="min-h-screen bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#5b21b6]/10 to-[#000104] flex-1 p-6 space-y-8 md:p-8">
       <h1 className="text-3xl font-bold tracking-tight text-foreground mb-8">RMD Matrix Dashboard</h1>
       
       <PlaceholderCard title="Client RMD Overview" className="overflow-x-auto">
@@ -245,13 +246,16 @@ export default function RMDMatrixPage() {
             ))}
           </TableBody>
         </Table>
-        {remainingClients > 0 && (
-          <div className="mt-6 text-center">
-            <Button variant="outline" className="rounded-md" onClick={handleShowMore}>
+        <div className="flex flex-col sm:flex-row justify-center items-center gap-4 mt-6">
+          {remainingClients > 0 && (
+            <Button variant="outline" className="rounded-md w-full sm:w-auto" onClick={handleShowMore}>
               Show More Clients ({remainingClients} remaining)
             </Button>
-          </div>
-        )}
+          )}
+          <Button variant="outline" className="rounded-md w-full sm:w-auto">
+            <Download className="mr-2 h-4 w-4" /> Download All (Excel)
+          </Button>
+        </div>
       </PlaceholderCard>
     </main>
   );
