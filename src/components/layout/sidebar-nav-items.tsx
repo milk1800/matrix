@@ -1,7 +1,7 @@
 
 "use client";
 
-import * as React from 'react'; // Added this line
+import * as React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -25,7 +25,7 @@ interface NavItem {
   href: string;
   label: string;
   icon: LucideIcon;
-  section?: string; // Optional: to help group or identify sections if needed later
+  section?: string;
 }
 
 const navItems: NavItem[] = [
@@ -65,8 +65,8 @@ export function SidebarNavItems() {
     <SidebarMenu className="p-4 space-y-1">
       {Object.entries(sections).map(([sectionTitle, sectionItems]) => (
         <React.Fragment key={sectionTitle}>
-          <div className="px-4 pt-4 pb-2">
-            <h2 className="text-base font-bold text-foreground uppercase tracking-wider border-b border-sidebar-border/30 pb-1">
+          <div className="px-4 py-3">
+            <h2 className="text-lg font-bold text-gray-300 uppercase tracking-wider border-b border-sidebar-border/30 pb-1">
               {sectionTitle}
             </h2>
           </div>
@@ -83,12 +83,12 @@ export function SidebarNavItems() {
                           asChild
                           isActive={isActive}
                           className={cn(
-                            "w-full justify-start transform-gpu",
+                            "w-full justify-start transform-gpu text-base font-medium", // Added text-base, font-medium
                             "py-[10px] px-4 rounded-[8px] text-sidebar-foreground transition-all duration-300 ease-out",
-                            "bg-black/40", // Base style for floating card
+                            "bg-black/40",
                             isActive
-                              ? "bg-primary/30 shadow-[0_0_12px_rgba(124,58,237,0.25)] -translate-y-px text-sidebar-primary-foreground" // Active item style
-                              : "hover:bg-black/50 hover:shadow-[0_0_10px_rgba(124,58,237,0.2)] hover:-translate-y-px" // Hover style for non-active items
+                              ? "bg-primary/30 shadow-[0_0_12px_rgba(124,58,237,0.25)] -translate-y-px text-sidebar-primary-foreground"
+                              : "hover:bg-black/50 hover:shadow-[0_0_10px_rgba(124,58,237,0.2)] hover:-translate-y-px"
                           )}
                         >
                           <a>
