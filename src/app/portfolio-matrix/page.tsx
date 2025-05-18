@@ -16,7 +16,14 @@ export default function PortfolioMatrixPage() {
     { ticker: 'JPM', name: 'Zeta Financial Holding', category: 'Financials', value: '$300,000', weight: '6.0%', ytdReturn: '-3.5%' },
   ];
 
-  const missedOpportunitiesData = [...portfolioOverviewData];
+  const missedOpportunitiesData = [
+    { ticker: 'AAPL', name: 'Alpha Fund', category: 'Equity', value: '$1,250,000', weight: '25.0%', ytdReturn: '+5.2%' },
+    { ticker: 'MSFT', name: 'Beta Bond Portfolio', category: 'Fixed Income', value: '$800,000', weight: '16.0%', ytdReturn: '-2.1%' }, // Made negative
+    { ticker: 'GOOG', name: 'Gamma Real Estate', category: 'Alternatives', value: '$500,000', weight: '10.0%', ytdReturn: '+7.8%' },
+    { ticker: 'AMZN', name: 'Delta Growth Stock', category: 'Equity', value: '$150,000', weight: '3.0%', ytdReturn: '-1.5%' }, // Made negative
+    { ticker: 'TSLA', name: 'Epsilon Money Market', category: 'Cash Eq.', value: '$2,000,000', weight: '40.0%', ytdReturn: '+0.5%' },
+    { ticker: 'JPM', name: 'Zeta Financial Holding', category: 'Financials', value: '$300,000', weight: '6.0%', ytdReturn: '-3.5%' }, // Already negative
+  ];
 
 
   return (
@@ -64,7 +71,7 @@ export default function PortfolioMatrixPage() {
 
       <PlaceholderCard title="Missed Opportunities">
         <p className="text-sm italic text-muted-foreground mb-4">
-          Displaying all portfolio items. Negative YTD returns are highlighted. Further analysis can identify specific missed opportunities.
+          Displaying portfolio items. Negative YTD returns are highlighted with a flashing glow. Further analysis can identify specific missed opportunities.
         </p>
         <Table>
           <TableHeader>
