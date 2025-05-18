@@ -217,10 +217,9 @@ export default function RMDMatrixPage() {
                       value={client.progressPercent}
                       className={cn(
                         "h-3 flex-grow",
-                        client.progressPercent === 100 ? "[&>div]:bg-[hsl(var(--chart-3))]" : 
-                        client.progressPercent >= 70 ? "[&>div]:bg-[hsl(var(--chart-1))]" :
-                        client.progressPercent >= 40 ? "[&>div]:bg-[hsl(var(--chart-2))]" :
-                        "[&>div]:bg-[hsl(var(--chart-4))]" 
+                        client.progressPercent >= 80 ? "[&>div]:bg-[hsl(var(--chart-3))]" : // Green for >= 80%
+                        client.progressPercent >= 40 ? "[&>div]:bg-[hsl(var(--chart-4))]" : // Yellow for >= 40% and < 80%
+                        "[&>div]:bg-[hsl(var(--chart-5))]"  // Red for < 40%
                       )}
                       aria-label={`Progress ${client.progressPercent}%`}
                     />
@@ -260,3 +259,4 @@ export default function RMDMatrixPage() {
     </main>
   );
 }
+
