@@ -75,10 +75,7 @@ export default function AssetAnalyticsPage() {
               <SelectValue placeholder="Select Advisor" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all_advisors">All Advisors</SelectItem>
-              <SelectItem value="advisor_1">Advisor Alpha</SelectItem>
-              <SelectItem value="advisor_2">Advisor Beta</SelectItem>
-              <SelectItem value="advisor_3">Advisor Gamma</SelectItem>
+              <SelectItem value="mike_mcdermott_mam">Mike McDermott MAM</SelectItem>
             </SelectContent>
           </Select>
         </PlaceholderCard>
