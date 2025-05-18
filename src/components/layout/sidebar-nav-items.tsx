@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from 'next/link';
@@ -5,14 +6,13 @@ import { usePathname } from 'next/navigation';
 import {
   BarChart3,
   Users,
-  DollarSign,
+  TrendingUp,
   Repeat,
   LayoutGrid,
   PieChart,
   Shapes,
   CalendarClock,
   FileText,
-  TrendingUp,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
@@ -43,9 +43,8 @@ export function SidebarNavItems() {
     <SidebarMenu className="p-4 space-y-1">
       {navItems.map((item) => (
         <SidebarMenuItem key={item.href}>
-          <Link href={item.href} passHref legacyBehavior>
+          <Link href={item.href} asChild>
             <SidebarMenuButton
-              asChild
               isActive={pathname === item.href || (pathname.startsWith(item.href) && item.href !== '/')}
               className={cn(
                 "w-full justify-start",
