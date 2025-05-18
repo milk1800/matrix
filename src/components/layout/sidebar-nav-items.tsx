@@ -55,11 +55,11 @@ export function SidebarNavItems() {
                     asChild
                     isActive={isActive}
                     className={cn(
-                      "w-full justify-start transform-gpu", // Added transform-gpu for better animation performance
-                      "bg-black/40 backdrop-blur-sm text-sidebar-foreground rounded-md p-2 transition-all duration-200 ease-out",
+                      "w-full justify-start transform-gpu",
+                      "py-[10px] px-4 rounded-[8px] text-sidebar-foreground transition-all duration-300 ease-out",
                       isActive
-                        ? "bg-primary/30 shadow-[0_0_12px_rgba(124,58,237,0.25)] -translate-y-px text-sidebar-primary-foreground"
-                        : "hover:bg-black/50 hover:shadow-[0_0_10px_rgba(124,58,237,0.2)] hover:-translate-y-px"
+                        ? "bg-primary/[.15] text-primary-foreground -translate-y-0.5 shadow-[0_2px_10px_hsla(var(--primary),0.5)]"
+                        : "bg-white/[.02] hover:bg-white/[.05] hover:-translate-y-0.5 hover:shadow-[0_2px_8px_rgba(80,0,160,0.4)]"
                     )}
                   >
                     <a>
