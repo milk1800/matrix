@@ -89,8 +89,7 @@ export default {
   			'accordion-up': 'accordion-up 0.2s ease-out'
   		},
       boxShadow: {
-        // Removed 'purple-glow' and 'purple-glow-hover'
-        'card-hover-glow': '0 0 10px 0 hsla(var(--primary), 0.3)'
+        'card-hover-glow': '0 0 10px 0 rgba(167, 139, 250, 0.2)'
       }
   	}
   },
