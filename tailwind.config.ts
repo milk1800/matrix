@@ -14,7 +14,7 @@ export default {
   			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
   			card: {
-  				DEFAULT: 'hsl(var(--card))', // Will be rgba(0,0,0,0.6) due to globals.css
+  				DEFAULT: 'hsl(var(--card))', 
   				foreground: 'hsl(var(--card-foreground))'
   			},
   			popover: {
@@ -52,7 +52,7 @@ export default {
   				'5': 'hsl(var(--chart-5))'
   			},
   			sidebar: {
-  				DEFAULT: 'hsl(var(--sidebar-background))', // Will be transparent
+  				DEFAULT: 'hsl(var(--sidebar-background))', 
   				foreground: 'hsl(var(--sidebar-foreground))',
   				primary: 'hsl(var(--sidebar-primary))',
   				'primary-foreground': 'hsl(var(--sidebar-primary-foreground))',
@@ -63,7 +63,7 @@ export default {
   			}
   		},
   		borderRadius: {
-  			lg: 'var(--radius)', // 1rem = 16px
+  			lg: 'var(--radius)', 
   			md: 'calc(var(--radius) - 2px)',
   			sm: 'calc(var(--radius) - 4px)'
   		},
@@ -91,8 +91,10 @@ export default {
   		},
       boxShadow: {
         'card-float': '0 4px 20px rgba(0, 0, 0, 0.2)',
-        'card-hover-glow': '0 6px 24px rgba(124, 58, 237, 0.18)', // Purple glow for card hover
-        'sidebar-glow': '4px 0 12px rgba(124, 58, 237, 0.2)'
+        'card-hover-glow': '0 6px 24px rgba(124, 58, 237, 0.18)', 
+        'sidebar-glow': '4px 0 12px rgba(124, 58, 237, 0.2)',
+        'white-glow-soft': '0 0 10px 0 rgba(255, 255, 255, 0.05)',
+        'white-glow-hover': '0 0 20px 0 rgba(255, 255, 255, 0.1)',
       }
   	}
   },

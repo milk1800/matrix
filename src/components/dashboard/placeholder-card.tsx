@@ -19,12 +19,12 @@ export function PlaceholderCard({ title, value, description, icon, children, cla
 
   return (
     <Card className={cn(
-      "bg-card backdrop-blur-sm rounded-lg shadow-card-float", // bg-card is rgba(0,0,0,0.6)
-      "transition-all duration-200 ease-out hover:-translate-y-1 hover:shadow-card-hover-glow",
+      "bg-card backdrop-blur-sm rounded-lg shadow-white-glow-soft",
+      "transition-all duration-200 ease-out hover:-translate-y-1 hover:shadow-white-glow-hover",
       className
     )}>
       <CardHeader className={cn(
-        "flex space-y-0 p-4 pb-2", 
+        "flex space-y-0 p-6 pb-2", 
         iconPath ? "flex-col items-start" : "flex-row items-center justify-between"
       )}>
         {iconPath && (
@@ -39,7 +39,7 @@ export function PlaceholderCard({ title, value, description, icon, children, cla
           )}
         </div>
       </CardHeader>
-      <CardContent className="p-4 pt-0">
+      <CardContent className="p-6 pt-0">
         {value && <div className="text-3xl font-bold text-foreground">{value}</div>}
         {description && <p className="text-sm text-muted-foreground">{description}</p>}
         {children && <div className="mt-4">{children}</div>}

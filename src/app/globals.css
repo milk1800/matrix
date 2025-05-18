@@ -7,7 +7,7 @@
   :root {
     --background: 225 100% 0.8%; /* #000104 */
     --foreground: 0 0% 100%; /* #FFFFFF */
-    --card: 0 0% 0% / 0.6; /* rgba(0,0,0,0.6) for cards */
+    --card: 0 0% 0% / 0.4; /* rgba(0,0,0,0.4) for cards */
     --card-foreground: 0 0% 100%; /* #FFFFFF */
     --popover: 253 36% 15%; /* #1C1833 - Matching card for consistency */
     --popover-foreground: 0 0% 100%; /* #FFFFFF */
@@ -31,14 +31,14 @@
     --chart-4: 46 96% 53%; /* Warning Yellow */
     --chart-5: 0 84% 60%; /* Error Red */
     
-    --radius: 1.25rem; /* 20px */
+    --radius: 1rem; /* 16px */
 
     /* Sidebar specific colors */
-    --sidebar-background: transparent; /* Changed to transparent */
+    --sidebar-background: transparent;
     --sidebar-foreground: 0 0% 100%; /* #FFFFFF */
     --sidebar-primary: 258 84% 61%; /* Active item background #7C3AED */
     --sidebar-primary-foreground: 0 0% 100%; /* Text on active item */
-    --sidebar-accent: 233 27% 20%; /* Hover background for sidebar items (will be overridden for new style) */
+    --sidebar-accent: 233 27% 20%; 
     --sidebar-accent-foreground: 0 0% 100%; /* Text on hover */
     --sidebar-border: 230 11% 15%; 
     --sidebar-ring: 258 84% 70%; /* Focus ring */
@@ -78,4 +78,3 @@
     filter: drop-shadow(0 0 10px #a855f7) drop-shadow(0 0 20px rgba(168, 85, 247, 0.8));
   }
 }
-
