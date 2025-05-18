@@ -65,8 +65,8 @@ export function SidebarNavItems() {
     <SidebarMenu className="p-4 space-y-1">
       {Object.entries(sections).map(([sectionTitle, sectionItems]) => (
         <React.Fragment key={sectionTitle}>
-          <div className="px-4 pt-3 pb-1.5">
-            <h2 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider border-b border-sidebar-border/30 pb-1">
+          <div className="px-4 pt-4 pb-2">
+            <h2 className="text-base font-bold text-foreground uppercase tracking-wider border-b border-sidebar-border/30 pb-1">
               {sectionTitle}
             </h2>
           </div>
