@@ -66,11 +66,11 @@ const topPerformingAssetsData = [
 
 export default function AssetAnalyticsPage() {
   return (
-    <main className="min-h-screen bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#5b21b6]/10 to-[#000104] flex-1 p-6 space-y-8 md:p-8">
+    <main className="flex-1 p-6 space-y-8 md:p-8">
       <div className="grid gap-6 md:grid-cols-3">
         <PlaceholderCard title="Advisor">
           <Select>
-            <SelectTrigger id="advisor-select" className="w-full bg-card border-input text-foreground">
+            <SelectTrigger id="advisor-select" className="w-full bg-input border-input text-foreground">
               <SelectValue placeholder="Select Advisor" />
             </SelectTrigger>
             <SelectContent>
@@ -83,7 +83,7 @@ export default function AssetAnalyticsPage() {
         </PlaceholderCard>
         <PlaceholderCard title="Custodian">
           <Select defaultValue="all_custodians">
-            <SelectTrigger id="custodian-select" className="w-full bg-card border-input text-foreground">
+            <SelectTrigger id="custodian-select" className="w-full bg-input border-input text-foreground">
               <SelectValue placeholder="Select Custodian" />
             </SelectTrigger>
             <SelectContent>
@@ -98,7 +98,7 @@ export default function AssetAnalyticsPage() {
         </PlaceholderCard>
         <PlaceholderCard title="Timeframe">
           <Select defaultValue="ytd">
-            <SelectTrigger id="timeframe-select" className="w-full bg-card border-input text-foreground">
+            <SelectTrigger id="timeframe-select" className="w-full bg-input border-input text-foreground">
               <SelectValue placeholder="Select Timeframe" />
             </SelectTrigger>
             <SelectContent>
@@ -125,7 +125,7 @@ export default function AssetAnalyticsPage() {
 
       <PlaceholderCard title="Asset Allocation by Type" className="lg:col-span-1">
          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-            <div className="h-[300px] md:h-[350px] w-full"> {/* Ensure chart takes available width */}
+            <div className="h-[300px] md:h-[350px] w-full">
               <AssetAllocationDonutChart />
             </div>
             <div className="space-y-3">

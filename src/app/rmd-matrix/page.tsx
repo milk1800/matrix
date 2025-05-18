@@ -188,7 +188,7 @@ export default function RMDMatrixPage() {
   };
 
   return (
-    <main className="flex-1 min-h-screen p-6 space-y-6 md:p-8">
+    <main className="flex-1 p-6 space-y-6 md:p-8">
       <h1 className="text-3xl font-bold tracking-tight text-foreground mb-8">RMD Matrix Dashboard</h1>
       
       <PlaceholderCard title="Client RMD Overview" className="overflow-x-auto">

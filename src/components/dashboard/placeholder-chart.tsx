@@ -1,7 +1,10 @@
 
 export function PlaceholderChart({ dataAiHint = "abstract chart" }: { dataAiHint?: string }) {
   return (
-    <div className="w-full h-full bg-card rounded-md flex items-center justify-center p-4 shadow-inner" data-ai-hint={dataAiHint}>
+    <div 
+      className="w-full h-full bg-black/60 backdrop-blur-sm rounded-lg shadow-card-float flex items-center justify-center p-4" 
+      data-ai-hint={dataAiHint}
+    >
       <svg width="100%" height="100%" viewBox="0 0 100 60" preserveAspectRatio="xMidYMid meet" className="text-primary/70">
         <defs>
           <linearGradient id="chartGradient" x1="0%" y1="0%" x2="0%" y2="100%">

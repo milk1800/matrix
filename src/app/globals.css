@@ -7,7 +7,7 @@
   :root {
     --background: 225 100% 0.8%; /* #000104 */
     --foreground: 0 0% 100%; /* #FFFFFF */
-    --card: 253 36% 15%; /* #1C1833 - Deep Purple */
+    --card: 0 0% 0% / 0.6; /* rgba(0,0,0,0.6) for cards */
     --card-foreground: 0 0% 100%; /* #FFFFFF */
     --popover: 253 36% 15%; /* #1C1833 - Matching card for consistency */
     --popover-foreground: 0 0% 100%; /* #FFFFFF */
@@ -31,21 +31,18 @@
     --chart-4: 46 96% 53%; /* Warning Yellow */
     --chart-5: 0 84% 60%; /* Error Red */
     
-    --radius: 1.25rem; /* Updated from 1rem for 20px on rounded-lg */
+    --radius: 1rem; /* 16px */
 
     /* Sidebar specific colors */
-    --sidebar-background: var(--background); /* Changed to match page background #000104 */
+    --sidebar-background: transparent; /* Changed to transparent */
     --sidebar-foreground: 0 0% 100%; /* #FFFFFF */
     --sidebar-primary: 258 84% 61%; /* Active item background #7C3AED */
     --sidebar-primary-foreground: 0 0% 100%; /* Text on active item */
-    --sidebar-accent: 233 27% 20%; /* Hover background for sidebar items */
+    --sidebar-accent: 233 27% 20%; /* Hover background for sidebar items (will be overridden for new style) */
     --sidebar-accent-foreground: 0 0% 100%; /* Text on hover */
-    --sidebar-border: 230 11% 15%; /* Darker border for sidebar #1F222E - may not be used for right edge now */
+    --sidebar-border: 230 11% 15%; 
     --sidebar-ring: 258 84% 70%; /* Focus ring */
   }
-
-  /* Remove .dark class selector as dark theme is default */
-  /* .dark { ... } */
 }
 
 @layer base {
@@ -57,10 +54,11 @@
   }
   body {
     @apply text-foreground;
-    background-color: hsl(var(--background)); /* Solid background fallback */
-    background-image: radial-gradient(ellipse at center, #25066b 0%, hsl(var(--background)) 100%);
-    min-height: 100vh; /* Ensure full viewport height */
-    height: 100%; /* Ensure body also takes full height for parents of 100vh children if needed */
+    /* Unified radial gradient background */
+    background-image: radial-gradient(circle at center, #25066b 0%, hsl(var(--background)) 100%);
+    background-color: hsl(var(--background)); /* Fallback */
+    min-height: 100vh; 
+    height: 100%; 
     background-attachment: fixed; 
     font-family: var(--font-geist-sans);
   }
@@ -80,4 +78,3 @@
     filter: drop-shadow(0 0 10px #a78bfa) drop-shadow(0 0 20px rgba(167, 139, 250, 0.8));
   }
 }
-

@@ -2,7 +2,7 @@
 import { PlaceholderCard } from '@/components/dashboard/placeholder-card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label'; // Added Label import
+import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export default function PortfolioMatrixPage() {
@@ -15,12 +15,11 @@ export default function PortfolioMatrixPage() {
     { ticker: 'JPM', name: 'Zeta Financial Holding', category: 'Financials', value: '$300,000', weight: '6.0%', ytdReturn: '-3.5%' },
   ];
 
-  // Duplicate the overview data for missed opportunities initially
   const missedOpportunitiesData = [...portfolioOverviewData];
 
 
   return (
-    <main className="flex-1 min-h-screen p-6 space-y-8 md:p-8">
+    <main className="flex-1 p-6 space-y-8 md:p-8">
       <h1 className="text-3xl font-bold tracking-tight text-foreground mb-8">Portfolio Matrix Dashboard</h1>
       
       <PlaceholderCard title="Portfolio Analysis Engine">
