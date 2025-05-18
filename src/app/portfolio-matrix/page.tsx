@@ -4,6 +4,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { cn } from "@/lib/utils";
 
 export default function PortfolioMatrixPage() {
   const portfolioOverviewData = [
@@ -19,7 +20,7 @@ export default function PortfolioMatrixPage() {
 
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#25066b] to-[#000104] flex-1 p-6 space-y-8 md:p-8">
+    <main className="min-h-screen bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#5b21b6]/10 to-[#000104] flex-1 p-6 space-y-8 md:p-8">
       <h1 className="text-3xl font-bold tracking-tight text-foreground mb-8">Portfolio Matrix Dashboard</h1>
       
       <PlaceholderCard title="Portfolio Analysis Engine">
@@ -63,7 +64,7 @@ export default function PortfolioMatrixPage() {
 
       <PlaceholderCard title="Missed Opportunities">
         <p className="text-sm italic text-muted-foreground mb-4">
-          Displaying all portfolio items. Further analysis will highlight specific missed opportunities.
+          Displaying all portfolio items. Negative YTD returns are highlighted. Further analysis can identify specific missed opportunities.
         </p>
         <Table>
           <TableHeader>
@@ -78,7 +79,12 @@ export default function PortfolioMatrixPage() {
           </TableHeader>
           <TableBody>
             {missedOpportunitiesData.map((item) => (
-              <TableRow key={`missed-${item.ticker}`}>
+              <TableRow 
+                key={`missed-${item.ticker}`}
+                className={cn(
+                  item.ytdReturn.startsWith('-') ? 'missed-row-negative' : ''
+                )}
+              >
                 <TableCell className="font-medium">{item.ticker}</TableCell>
                 <TableCell>{item.name}</TableCell>
                 <TableCell className="text-muted-foreground">{item.category}</TableCell>
@@ -91,6 +97,16 @@ export default function PortfolioMatrixPage() {
             ))}
           </TableBody>
         </Table>
+        <div className="flex justify-end mt-6">
+           <Button
+            variant="outline"
+            className="rounded-full border-primary text-foreground font-semibold py-2 px-5
+                       hover:bg-primary/10 hover:text-foreground hover:shadow-[0_0_8px_hsl(var(--primary))]
+                       active:scale-95 transition-all duration-300 ease-out"
+          >
+            🔍 Ask Maven
+          </Button>
+        </div>
       </PlaceholderCard>
     </main>
   );
