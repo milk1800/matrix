@@ -76,6 +76,7 @@ export default function AssetAnalyticsPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="mike_mcdermott_mam">Mike McDermott MAM</SelectItem>
+              <SelectItem value="sam_rothstein_sar">Sam Rothstein SAR</SelectItem>
             </SelectContent>
           </Select>
         </PlaceholderCard>
