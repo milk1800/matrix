@@ -64,10 +64,7 @@
   }
 }
 
-.animate-pulse-glow {
-  animation: pulse-glow 1.5s ease-in-out infinite;
-}
-
+/* Pulsating Glow Animation - Updated to user's snippet */
 @keyframes pulse-glow {
   0%, 100% {
     transform: scale(1);
@@ -78,6 +75,16 @@
     filter: drop-shadow(0 0 8px #a855f7) drop-shadow(0 0 15px rgba(168, 85, 247, 0.5));
   }
 }
+
+.animate-pulse-glow {
+  animation: pulse-glow 1.5s ease-in-out infinite;
+}
+
+/* Static glow for the new brain logo if needed, not currently used by main logo but kept if needed elsewhere */
+.brain-logo-static-glow {
+  filter: drop-shadow(0 0 6px #8b5cf6);
+}
+
 
 @keyframes flashRed {
   0%   { background-color: rgba(255, 0, 0, 0.08); }

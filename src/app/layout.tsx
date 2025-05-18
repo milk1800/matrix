@@ -77,7 +77,13 @@ export default function RootLayout({
             <SidebarHeader className="p-4 border-b border-sidebar-border">
               <div className="flex items-center space-x-2">
                 <div className="w-8 h-8 animate-pulse-glow relative">
-                  <Image src="/icons/brain-logo.png" alt="Sanctuary Matrix Logo" width={32} height={32} />
+                  <Image
+                    src="/icons/brain-logo.png"
+                    alt="Sanctuary Matrix Logo"
+                    width={32}
+                    height={32}
+                    className="rounded-full" // Added rounded-full as per snippet
+                  />
                 </div>
                 <div className="text-xl font-semibold text-foreground leading-tight">
                   <span>Sanctuary</span><br />
