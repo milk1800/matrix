@@ -7,7 +7,7 @@
   :root {
     --background: 225 100% 0.8%; /* #000104 */
     --foreground: 0 0% 100%; /* #FFFFFF */
-    --card: 0 0% 0%; /* #000000 - Updated for black base */
+    --card: 0 0% 0%; /* #000000 - Black base for cards, alpha applied in component */
     --card-foreground: 0 0% 100%; /* #FFFFFF */
     --popover: 253 36% 15%; /* #1C1833 - Matching card for consistency */
     --popover-foreground: 0 0% 100%; /* #FFFFFF */
@@ -58,7 +58,7 @@
   body {
     @apply text-foreground;
     background-color: hsl(var(--background)); /* Solid background fallback */
-    background-image: radial-gradient(ellipse at center, #1c1543 0%, hsl(var(--background)) 100%);
+    background-image: radial-gradient(ellipse at center, #25066b 0%, hsl(var(--background)) 100%);
     min-height: 100vh; /* Ensure full viewport height */
     height: 100%; /* Ensure body also takes full height for parents of 100vh children if needed */
     background-attachment: fixed; 
@@ -80,3 +80,4 @@
     filter: drop-shadow(0 0 10px #a78bfa) drop-shadow(0 0 20px rgba(167, 139, 250, 0.8));
   }
 }
+
