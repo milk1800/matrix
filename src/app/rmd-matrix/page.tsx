@@ -1,4 +1,7 @@
 
+"use client";
+
+import * as React from "react";
 import { PlaceholderCard } from '@/components/dashboard/placeholder-card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Progress } from "@/components/ui/progress";
@@ -6,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
-const rmdClientData = [
+const allClientData = [
   {
     id: "1",
     clientName: "Johnathan 'Johnny' Doe",
@@ -57,17 +60,132 @@ const rmdClientData = [
     rmdDue: "$15,000 / $7,500",
     daysLeft: 60,
   },
+  {
+    id: "6",
+    clientName: "Sarah Connor",
+    accountType: "Traditional IRA",
+    ytdLimitDue: "$6,500 / $7,000",
+    progressPercent: 93,
+    suggestedMonthly: "$50.00/mo",
+    rmdDue: "$9,000 / $4,500",
+    daysLeft: 30,
+  },
+  {
+    id: "7",
+    clientName: "Bruce Wayne",
+    accountType: "401(k)",
+    ytdLimitDue: "$4,000 / $20,500",
+    progressPercent: 20,
+    suggestedMonthly: "$1,500.00/mo",
+    rmdDue: "$50,000 / $25,000",
+    daysLeft: 250,
+  },
+  {
+    id: "8",
+    clientName: "Diana Prince",
+    accountType: "Roth IRA",
+    ytdLimitDue: "$6,500 / $6,500",
+    progressPercent: 100,
+    suggestedMonthly: "N/A",
+    rmdDue: "N/A",
+    daysLeft: 180,
+  },
+  {
+    id: "9",
+    clientName: "Clark Kent",
+    accountType: "SEP IRA",
+    ytdLimitDue: "$12,000 / $15,000",
+    progressPercent: 80,
+    suggestedMonthly: "$300.00/mo",
+    rmdDue: "$30,000 / $15,000",
+    daysLeft: 90,
+  },
+  {
+    id: "10",
+    clientName: "Peter Parker",
+    accountType: "Traditional IRA",
+    ytdLimitDue: "$1,000 / $7,000",
+    progressPercent: 14,
+    suggestedMonthly: "$700.00/mo",
+    rmdDue: "$5,000 / $2,500",
+    daysLeft: 10,
+  },
+  {
+    id: "11",
+    clientName: "Tony Stark",
+    accountType: "401(k)",
+    ytdLimitDue: "$15,000 / $20,500",
+    progressPercent: 73,
+    suggestedMonthly: "$500.00/mo",
+    rmdDue: "$100,000 / $50,000",
+    daysLeft: 200,
+  },
+  {
+    id: "12",
+    clientName: "Natasha Romanoff",
+    accountType: "Roth IRA",
+    ytdLimitDue: "$3,000 / $6,500",
+    progressPercent: 46,
+    suggestedMonthly: "$350.00/mo",
+    rmdDue: "$7,000 / $3,500",
+    daysLeft: 75,
+  },
+  {
+    id: "13",
+    clientName: "Steve Rogers",
+    accountType: "SEP IRA",
+    ytdLimitDue: "$5,000 / $15,000",
+    progressPercent: 33,
+    suggestedMonthly: "$1,000.00/mo",
+    rmdDue: "$20,000 / $10,000",
+    daysLeft: 50,
+  },
+  {
+    id: "14",
+    clientName: "Thor Odinson",
+    accountType: "Traditional IRA",
+    ytdLimitDue: "$7,000 / $7,000",
+    progressPercent: 100,
+    suggestedMonthly: "N/A",
+    rmdDue: "N/A",
+    daysLeft: 300,
+  },
+  {
+    id: "15",
+    clientName: "Wanda Maximoff",
+    accountType: "401(k)",
+    ytdLimitDue: "$2,000 / $20,500",
+    progressPercent: 10,
+    suggestedMonthly: "$1,850.00/mo",
+    rmdDue: "$18,000 / $9,000",
+    daysLeft: 22,
+  },
+   {
+    id: "16",
+    clientName: "Vision 'Synth' Android",
+    accountType: "Roth IRA",
+    ytdLimitDue: "$1,500 / $6,500",
+    progressPercent: 23,
+    suggestedMonthly: "$500.00/mo",
+    rmdDue: "$6,000 / $3,000",
+    daysLeft: 5,
+  },
 ];
 
-// Simulate a larger dataset for "Show More" functionality
-const totalClients = 16; // Example total
-const initialDisplayCount = rmdClientData.length;
-const remainingClients = totalClients - initialDisplayCount;
-
+const INITIAL_VISIBLE_COUNT = 5;
+const CLIENTS_TO_LOAD_COUNT = 5;
 
 export default function RMDMatrixPage() {
-  // In a real app, this would be stateful and handle loading more clients
-  const clientsToDisplay = rmdClientData;
+  const [visibleClientCount, setVisibleClientCount] = React.useState(INITIAL_VISIBLE_COUNT);
+
+  const clientsToDisplay = allClientData.slice(0, visibleClientCount);
+  const remainingClients = allClientData.length - visibleClientCount;
+
+  const handleShowMore = () => {
+    setVisibleClientCount(prevCount => 
+      Math.min(prevCount + CLIENTS_TO_LOAD_COUNT, allClientData.length)
+    );
+  };
 
   return (
     <main className="flex-1 p-6 space-y-6 md:p-8">
@@ -98,7 +216,10 @@ export default function RMDMatrixPage() {
                       value={client.progressPercent}
                       className={cn(
                         "h-3 flex-grow",
-                        client.progressPercent === 100 ? "[&>div]:bg-[hsl(var(--chart-3))]" : "[&>div]:bg-[hsl(var(--chart-4))]"
+                        client.progressPercent === 100 ? "[&>div]:bg-[hsl(var(--chart-3))]" : 
+                        client.progressPercent >= 70 ? "[&>div]:bg-[hsl(var(--chart-1))]" :
+                        client.progressPercent >= 40 ? "[&>div]:bg-[hsl(var(--chart-2))]" :
+                        "[&>div]:bg-[hsl(var(--chart-4))]" 
                       )}
                       aria-label={`Progress ${client.progressPercent}%`}
                     />
@@ -126,7 +247,7 @@ export default function RMDMatrixPage() {
         </Table>
         {remainingClients > 0 && (
           <div className="mt-6 text-center">
-            <Button variant="outline" className="rounded-md">
+            <Button variant="outline" className="rounded-md" onClick={handleShowMore}>
               Show More Clients ({remainingClients} remaining)
             </Button>
           </div>
