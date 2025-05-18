@@ -57,7 +57,7 @@ export function AssetAllocationDonutChart() {
   return (
     <ChartContainer
       config={chartConfig}
-      className="mx-auto aspect-square h-full max-h-[400px] w-full"
+      className="mx-auto aspect-square h-full max-h-[450px] w-full"
     >
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
@@ -69,25 +69,25 @@ export function AssetAllocationDonutChart() {
             data={chartData}
             dataKey="value"
             nameKey="assetType"
-            innerRadius={100} // Increased for larger donut hole
-            outerRadius={140} // Increased for overall larger donut
+            innerRadius={125} 
+            outerRadius={175} 
             strokeWidth={2}
-            stroke="hsl(var(--card))" // Creates separation between segments
+            stroke="hsl(var(--card))" 
             activeIndex={activeIndex}
             activeShape={({ cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, payload, percent }) => {
               return (
                 <g>
-                  <text x={cx} y={cy! - 10} textAnchor="middle" dominantBaseline="central" fill="hsl(var(--foreground))" className="text-sm">
+                  <text x={cx} y={cy! - 10} textAnchor="middle" dominantBaseline="central" fill="hsl(var(--foreground))" className="text-lg">
                     {payload.assetType ? chartConfig[payload.assetType as keyof typeof chartConfig]?.label : ''}
                   </text>
-                  <text x={cx} y={cy! + 10} textAnchor="middle" dominantBaseline="central" fill={fill} className="text-xl font-bold">
+                  <text x={cx} y={cy! + 15} textAnchor="middle" dominantBaseline="central" fill={fill} className="text-2xl font-bold">
                     {`${(percent * 100).toFixed(0)}%`}
                   </text>
                   <Sector
                     cx={cx}
                     cy={cy}
                     innerRadius={innerRadius}
-                    outerRadius={outerRadius ? outerRadius + 8 : 0} // Pop-out effect
+                    outerRadius={outerRadius ? outerRadius + 8 : 0} 
                     startAngle={startAngle}
                     endAngle={endAngle}
                     fill={fill}
@@ -103,8 +103,8 @@ export function AssetAllocationDonutChart() {
             {chartData.map((entry) => (
               <Cell
                 key={entry.assetType}
-                fill={entry.fill} // This will be processed by ChartContainer based on chartConfig
-                style={{ outline: 'none' }} // Explicitly remove outline for focused Cell
+                fill={entry.fill} 
+                style={{ outline: 'none' }} 
               />
             ))}
           </Pie>

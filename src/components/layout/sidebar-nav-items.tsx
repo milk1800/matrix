@@ -65,7 +65,7 @@ export function SidebarNavItems() {
     <SidebarMenu className="p-4 space-y-1">
       {Object.entries(sections).map(([sectionTitle, sectionItems]) => (
         <React.Fragment key={sectionTitle}>
-          <div className="px-4 py-3">
+          <div className="px-4 pt-4 pb-2">
             <h2 className="text-lg font-bold text-gray-300 uppercase tracking-wider border-b border-sidebar-border/30 pb-1">
               {sectionTitle}
             </h2>
@@ -83,12 +83,12 @@ export function SidebarNavItems() {
                           asChild
                           isActive={isActive}
                           className={cn(
-                            "w-full justify-start transform-gpu text-base font-medium", // Added text-base, font-medium
+                            "w-full justify-start transform-gpu text-base font-medium",
                             "py-[10px] px-4 rounded-[8px] text-sidebar-foreground transition-all duration-300 ease-out",
-                            "bg-black/40",
+                            "bg-black/40", // Base background for floating effect
                             isActive
-                              ? "bg-primary/30 shadow-[0_0_12px_rgba(124,58,237,0.25)] -translate-y-px text-sidebar-primary-foreground"
-                              : "hover:bg-black/50 hover:shadow-[0_0_10px_rgba(124,58,237,0.2)] hover:-translate-y-px"
+                              ? "bg-primary/30 shadow-[0_2px_10px_hsla(var(--primary),0.5)] -translate-y-0.5 text-sidebar-primary-foreground" // Active: brighter glow, lift
+                              : "hover:bg-black/50 hover:shadow-[0_2px_8px_rgba(80,0,160,0.4)] hover:-translate-y-0.5" // Hover: subtle glow and lift
                           )}
                         >
                           <a>

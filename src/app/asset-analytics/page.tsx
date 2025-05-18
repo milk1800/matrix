@@ -1,4 +1,5 @@
 
+import Image from "next/image";
 import { Landmark, TrendingUp, Target, ArrowDownCircle, ArrowUpCircle, ArrowRightLeft, Download } from 'lucide-react';
 import { PlaceholderCard } from '@/components/dashboard/placeholder-card';
 import { AssetAllocationDonutChart } from '@/components/charts/asset-allocation-donut-chart';
@@ -12,37 +13,37 @@ const metricCardsData = [
     title: "Total AUM",
     value: "$12.5M",
     description: "+5.2% last month",
-    icon: Landmark,
+    icon: "/icons/total-aum.svg",
   },
   {
     title: "YTD Return",
     value: "+8.7%",
     description: "vs. Benchmark +7.1%",
-    icon: TrendingUp,
+    icon: "/icons/ytd-return.svg",
   },
   {
     title: "% in Model Portfolios",
     value: "72%",
     description: "Target 80%",
-    icon: Target,
+    icon: "/icons/model-portfolios.svg",
   },
   {
     title: "Inflows (MTD)",
     value: "$350K",
     description: "+15% from last month",
-    icon: ArrowDownCircle,
+    icon: "/icons/inflows.svg",
   },
   {
     title: "Outflows (MTD)",
     value: "$120K",
     description: "-5% from last month",
-    icon: ArrowUpCircle,
+    icon: "/icons/outflows.svg",
   },
   {
     title: "Net Flows (MTD)",
     value: "$230K",
     description: "Net positive inflow",
-    icon: ArrowRightLeft,
+    icon: "/icons/net-flows.svg",
   },
 ];
 
@@ -121,15 +122,15 @@ export default function AssetAnalyticsPage() {
         ))}
       </div>
 
-      <PlaceholderCard title="Asset Allocation by Type" className="lg:col-span-1">
-         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-            <div className="h-[350px] md:h-[400px] w-full">
+      <PlaceholderCard title="Asset Allocation by Type">
+         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+            <div className="h-[400px] md:h-[450px] w-full">
               <AssetAllocationDonutChart />
             </div>
-            <div className="space-y-3">
-              <h3 className="text-lg font-semibold text-foreground mb-4">Asset Breakdown</h3>
+            <div className="space-y-2">
+              <h3 className="text-2xl font-bold text-foreground mb-4">Asset Breakdown</h3>
               {assetBreakdownData.map((item, index) => (
-                <div key={index} className="flex items-center justify-between text-sm">
+                <div key={index} className="flex items-center justify-between text-base hover:bg-primary/10 rounded-md p-1 -m-1 transition-colors duration-150 ease-out">
                   <div className="flex items-center gap-2">
                     <span className={`h-3 w-3 rounded-sm ${item.color}`}></span>
                     <span className="text-muted-foreground">{item.name}</span>
