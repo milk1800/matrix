@@ -18,22 +18,10 @@ export function PlaceholderCard({ title, value, description, icon, children, cla
   const iconPath = typeof icon === 'string' ? icon : null;
 
   return (
-    <Card className={cn(
-      "bg-card/50 border border-white/10 shadow-card-default-glow", // Frosted glass effect with default glow and border
-      "transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-card-hover-glow", // Hover effects
-      className
-    )}>
-      <CardHeader className={cn(
-        "p-6 pb-2", // Standardized padding based on 24px (p-6) requirement
-        iconPath ? "flex flex-col items-start" : "flex flex-row items-center justify-between space-y-0"
-      )}>
-        {iconPath && (
-          <Image src={iconPath} alt={title} width={32} height={32} className="mb-2" />
-        )}
-        <CardTitle className="text-base font-bold text-foreground">{title}</CardTitle>
-        {IconComponent && ( // Only render Lucide if iconPath is not actively used
-          <IconComponent className="h-5 w-5 text-primary" />
-        )}
+    <Card className={cn("shadow-lg hover:shadow-xl transition-shadow duration-300", className)}>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <CardTitle className="text-base font-medium text-muted-foreground">{title}</CardTitle>
+        {Icon && <Icon className="h-5 w-5 text-primary" />}
       </CardHeader>
       <CardContent className="p-6 pt-0"> {/* Standardized padding */}
         {value && <div className="text-3xl font-bold text-foreground">{value}</div>}
