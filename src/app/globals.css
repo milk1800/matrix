@@ -6,7 +6,7 @@
   :root {
     --background: 225 100% 0.8%; /* #000104 */
     --foreground: 0 0% 100%; /* #FFFFFF */
-    --card: 253 36% 15%; /* #1C1833 - Deep Purple */
+    --card: 240 25% 5.7%; /* approx #0B0B12 */
     --card-foreground: 0 0% 100%; /* #FFFFFF */
     --popover: 253 36% 15%; /* #1C1833 - Matching card for consistency */
     --popover-foreground: 0 0% 100%; /* #FFFFFF */
