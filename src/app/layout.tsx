@@ -63,7 +63,7 @@ export default function RootLayout({
                     />
                   </svg>
                 </div>
-                <h1 className="text-2xl font-semibold text-primary">Sanctuary Matrix</h1>
+                <h1 className="text-2xl font-semibold text-foreground">Sanctuary Matrix</h1>
               </div>
             </SidebarHeader>
             <SidebarContent>
