@@ -1,5 +1,5 @@
 
-import { DollarSign, TrendingUp, Users, PieChart, ArrowUpRight, ArrowDownLeft, Activity, Download } from 'lucide-react';
+import { DollarSign, TrendingUp, Users, PieChart, ArrowUpRight, ArrowDownLeft, Activity, Download, Filter, CalendarDays, Shield } from 'lucide-react';
 import { PlaceholderCard } from '@/components/dashboard/placeholder-card';
 import { PlaceholderChart } from '@/components/dashboard/placeholder-chart';
 import { Button } from '@/components/ui/button';
@@ -37,9 +37,9 @@ export default function AssetAnalyticsPage() {
       <h1 className="text-3xl font-bold tracking-tight text-foreground">Asset Analytics</h1>
       
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <Select defaultValue="all_advisors">
+        <Select>
           <SelectTrigger className="w-full bg-card border-input text-foreground">
-            <SelectValue placeholder="Select Advisor" />
+            <SelectValue placeholder="Advisor" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all_advisors">All Advisors</SelectItem>
