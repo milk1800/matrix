@@ -33,7 +33,7 @@
     --radius: 0.5rem;
 
     /* Sidebar specific colors */
-    --sidebar-background: var(--background); /* Changed to match page background */
+    --sidebar-background: var(--background); /* Changed to match page background #000104 */
     --sidebar-foreground: 0 0% 100%; /* #FFFFFF */
     --sidebar-primary: 258 84% 61%; /* Active item background #7C3AED */
     --sidebar-primary-foreground: 0 0% 100%; /* Text on active item */
