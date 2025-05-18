@@ -2,7 +2,7 @@
 "use client"
 
 import * as React from "react"
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts"
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Sector } from "recharts"
 
 import {
   ChartContainer,
@@ -69,13 +69,12 @@ export function AssetAllocationDonutChart() {
             data={chartData}
             dataKey="value"
             nameKey="assetType"
-            innerRadius={100}
-            outerRadius={140}
+            innerRadius={100} // Increased for larger donut hole
+            outerRadius={140} // Increased for overall larger donut
             strokeWidth={2}
             stroke="hsl(var(--card))" // Creates separation between segments
             activeIndex={activeIndex}
             activeShape={({ cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, payload, percent }) => {
-              const RADIAN = Math.PI / 180;
               return (
                 <g>
                   <text x={cx} y={cy! - 10} textAnchor="middle" dominantBaseline="central" fill="hsl(var(--foreground))" className="text-sm">
@@ -84,7 +83,7 @@ export function AssetAllocationDonutChart() {
                   <text x={cx} y={cy! + 10} textAnchor="middle" dominantBaseline="central" fill={fill} className="text-xl font-bold">
                     {`${(percent * 100).toFixed(0)}%`}
                   </text>
-                  <Cell
+                  <Sector
                     cx={cx}
                     cy={cy}
                     innerRadius={innerRadius}
