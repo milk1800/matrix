@@ -75,11 +75,14 @@ export default function RootLayout({
             className="shadow-sidebar-glow"
           >
             <SidebarHeader className="p-4 border-b border-sidebar-border">
-              <div className="flex items-center space-x-3">
-                <div className="w-9 h-9 animate-pulse-glow relative"> {/* Updated size and added relative for Image layout="fill" if used */}
-                  <Image src="/icons/brain_icon.png" alt="Sanctuary Matrix AI Logo" width={36} height={36} />
+              <div className="flex items-center space-x-2">
+                <div className="w-8 h-8 animate-pulse-glow relative">
+                  <Image src="/icons/brain-logo.png" alt="Sanctuary Matrix Logo" width={32} height={32} />
                 </div>
-                <h1 className="text-2xl font-semibold text-foreground">Sanctuary Matrix</h1>
+                <div className="text-xl font-semibold text-foreground leading-tight">
+                  <span>Sanctuary</span><br />
+                  <span>Matrix</span>
+                </div>
               </div>
             </SidebarHeader>
             <SidebarContent>
@@ -98,7 +101,7 @@ export default function RootLayout({
           onClick={() => setIsChatOpen(true)}
           aria-label="Open Chat with Maven AI"
         >
-          <Image src="/icons/brain_icon.png" alt="Chat with Maven AI" width={36} height={36} className="rounded-full" />
+          <Image src="/icons/brain-logo.png" alt="Chat with Maven AI" width={32} height={32} className="rounded-full" />
         </Button>
 
         {/* Chatbot Dialog */}
