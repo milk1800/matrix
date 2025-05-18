@@ -1,5 +1,5 @@
 
-import { DollarSign, TrendingUp, Users, PieChart, ArrowUpRight, ArrowDownLeft, Activity, Download, Percent, BarChartHorizontalBig } from 'lucide-react';
+import { Download } from 'lucide-react';
 import Image from 'next/image';
 import { PlaceholderCard } from '@/components/dashboard/placeholder-card';
 import { AssetAllocationDonutChart } from '@/components/charts/asset-allocation-donut-chart';
@@ -66,11 +66,12 @@ const topPerformingAssetsData = [
 
 export default function AssetAnalyticsPage() {
   return (
-    <main className="flex-1 p-6 space-y-8 md:p-8">
+    <main className="min-h-screen bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#5b21b6]/10 to-[#000104] flex-1 p-6 space-y-8 md:p-8">
+      <h1 className="text-3xl font-bold tracking-tight text-foreground mb-8">Assets Analytics Dashboard</h1>
       <div className="grid gap-6 md:grid-cols-3">
         <PlaceholderCard title="Advisor">
           <Select>
-            <SelectTrigger id="advisor-select" className="w-full bg-input border-input text-foreground">
+            <SelectTrigger id="advisor-select" className="w-full bg-card border-input text-foreground">
               <SelectValue placeholder="Select Advisor" />
             </SelectTrigger>
             <SelectContent>
@@ -83,7 +84,7 @@ export default function AssetAnalyticsPage() {
         </PlaceholderCard>
         <PlaceholderCard title="Custodian">
           <Select defaultValue="all_custodians">
-            <SelectTrigger id="custodian-select" className="w-full bg-input border-input text-foreground">
+            <SelectTrigger id="custodian-select" className="w-full bg-card border-input text-foreground">
               <SelectValue placeholder="Select Custodian" />
             </SelectTrigger>
             <SelectContent>
@@ -98,7 +99,7 @@ export default function AssetAnalyticsPage() {
         </PlaceholderCard>
         <PlaceholderCard title="Timeframe">
           <Select defaultValue="ytd">
-            <SelectTrigger id="timeframe-select" className="w-full bg-input border-input text-foreground">
+            <SelectTrigger id="timeframe-select" className="w-full bg-card border-input text-foreground">
               <SelectValue placeholder="Select Timeframe" />
             </SelectTrigger>
             <SelectContent>
