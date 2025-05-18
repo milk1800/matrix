@@ -2,16 +2,19 @@
 import { DollarSign, TrendingUp, Users, PieChart, ArrowUpRight, ArrowDownLeft, Activity, Download } from 'lucide-react';
 import { PlaceholderCard } from '@/components/dashboard/placeholder-card';
 import { PlaceholderChart } from '@/components/dashboard/placeholder-chart';
+import { Button } from '@/components/ui/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export default function AssetAnalyticsPage() {
   return (
     <main className="flex-1 p-6 space-y-8 md:p-8">
-      <h1 className="text-3xl font-bold tracking-tight text-foreground">Asset Analytics</h1>
+      <h1 className="text-3xl font-bold tracking-tight text-foreground mb-8">Asset Analytics</h1>
       
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        <Select defaultValue="all_advisors">
+        <Select>
           <SelectTrigger className="w-full bg-card border-input text-foreground">
-            <SelectValue placeholder="Select Advisor" />
+            <SelectValue placeholder="Advisor" />
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all_advisors">All Advisors</SelectItem>
@@ -21,7 +24,7 @@ export default function AssetAnalyticsPage() {
           </SelectContent>
         </Select>
         <Select defaultValue="all_custodians">
-          <SelectTrigger className="w-full md:w-[200px] bg-card border-input text-foreground">
+          <SelectTrigger className="w-full bg-card border-input text-foreground">
             <SelectValue placeholder="Select Custodian" />
           </SelectTrigger>
           <SelectContent>
@@ -32,7 +35,7 @@ export default function AssetAnalyticsPage() {
           </SelectContent>
         </Select>
         <Select defaultValue="ytd">
-          <SelectTrigger className="w-full md:w-[200px] bg-card border-input text-foreground">
+          <SelectTrigger className="w-full bg-card border-input text-foreground">
             <SelectValue placeholder="Select Timeframe" />
           </SelectTrigger>
           <SelectContent>
