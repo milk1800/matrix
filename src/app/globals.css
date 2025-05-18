@@ -48,6 +48,9 @@
 }
 
 @layer base {
+  html {
+    height: 100%;
+  }
   * {
     @apply border-border;
   }
@@ -56,6 +59,7 @@
     background-color: hsl(var(--background)); /* Fallback to #000104 */
     background-image: radial-gradient(ellipse at center, #1c1543 0%, hsl(var(--background)) 80%); /* Updated gradient stop */
     min-height: 100vh; /* Ensure full viewport height */
+    height: 100%; /* Ensure body also takes full height for parents of 100vh children if needed */
     background-attachment: fixed; /* Keep gradient fixed during scroll */
     font-family: var(--font-geist-sans);
   }

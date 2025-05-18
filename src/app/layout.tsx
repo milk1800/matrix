@@ -31,7 +31,7 @@ export default function RootLayout({
         <SidebarProvider defaultOpen={true}>
           <Sidebar
             collapsible="none"
-            className="shadow-[4px_0px_20px_0px_rgba(114,0,255,0.2)]" // Updated soft purple glow on right edge
+            className="shadow-[2px_0_15px_rgba(128,90,213,0.2)]" // Updated soft purple glow on right edge
           >
             <SidebarHeader className="p-4 border-b border-sidebar-border">
               <div className="flex items-center space-x-3">
