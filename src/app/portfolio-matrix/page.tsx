@@ -15,13 +15,8 @@ export default function PortfolioMatrixPage() {
     { ticker: 'JPM', name: 'Zeta Financial Holding', category: 'Financials', value: '$300,000', weight: '6.0%', ytdReturn: '-3.5%' },
   ];
 
-  // For "Missed Opportunities", let's use the bottom 3 as an example of underperformers or those with negative/low returns.
-  // In a real scenario, this data would be filtered or sorted appropriately.
-  const missedOpportunitiesData = [
-    portfolioOverviewData[5], // JPM (-3.5%)
-    portfolioOverviewData[4], // TSLA (+0.5%)
-    portfolioOverviewData[1], // MSFT (+2.1%)
-  ];
+  // Duplicate the overview data for missed opportunities initially
+  const missedOpportunitiesData = [...portfolioOverviewData];
 
 
   return (
@@ -69,7 +64,7 @@ export default function PortfolioMatrixPage() {
 
       <PlaceholderCard title="Missed Opportunities">
         <p className="text-sm italic text-muted-foreground mb-4">
-          🔍 Current top 3 underperformers show minimal negative impact on overall YTD performance.
+          Displaying all portfolio items. Further analysis will highlight specific missed opportunities.
         </p>
         <Table>
           <TableHeader>
