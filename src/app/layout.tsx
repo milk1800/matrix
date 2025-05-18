@@ -73,15 +73,14 @@ export default function RootLayout({
             collapsible="none"
             className="shadow-sidebar-glow"
           >
-            <SidebarHeader className="p-4 px-5 border-b border-sidebar-border"> {/* Adjusted padding */}
-              <div className="flex items-center space-x-3"> {/* Adjusted gap */}
-                <div className="w-9 h-9"> {/* Adjusted size for 36px */}
+            <SidebarHeader className="p-4 px-5 border-b border-sidebar-border">
+              <div className="flex items-center space-x-3">
+                <div className="w-10 h-10 relative"> {/* Updated size and made relative for fill */}
                   <Image
-                    src="/assets/brain-logo.png" // Updated path
-                    alt="Sanctuary Matrix Brain Icon" // Updated alt text
-                    width={36}
-                    height={36}
-                    className="object-contain brain-logo-static-glow hover:scale-110 hover:brightness-125 transition-transform duration-300 ease-out" // Updated classes
+                    src="/icons/brain-logo.png" // Updated path
+                    alt="Sanctuary Matrix Logo" // Updated alt text
+                    fill // Use fill to cover the parent div
+                    objectFit="contain" // Maintain aspect ratio
                   />
                 </div>
                 <div className="text-xl font-bold text-white leading-tight"> {/* Specific styling as per prompt */}
@@ -106,8 +105,7 @@ export default function RootLayout({
           onClick={() => setIsChatOpen(true)}
           aria-label="Open Chat with Maven AI"
         >
-          {/* Chatbot icon remains /icons/brain-logo.png and animated */}
-          <Image src="/icons/brain-logo.png" alt="Chat with Maven AI" width={32} height={32} className="rounded-full" />
+          <Image src="/icons/brain-logo.png" alt="Chat with Maven AI" width={32} height={32} />
         </Button>
 
         {/* Chatbot Dialog */}
