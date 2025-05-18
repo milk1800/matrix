@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    --background: 233 31% 8%; /* #0E0F1A */
+    --background: 225 100% 0.8%; /* #000104 */
     --foreground: 0 0% 100%; /* #FFFFFF */
     --card: 233 27% 14%; /* #1A1C2D */
     --card-foreground: 0 0% 100%; /* #FFFFFF */
@@ -52,7 +52,11 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
+    background-color: hsl(var(--background)); /* Fallback to #000104 */
+    background-image: radial-gradient(ellipse at center, #1c1543 0%, hsl(var(--background)) 100%);
+    min-height: 100vh; /* Ensure full viewport height */
+    background-attachment: fixed; /* Keep gradient fixed during scroll */
     font-family: var(--font-geist-sans);
   }
 }
