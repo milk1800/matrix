@@ -33,13 +33,13 @@
     --radius: 0.5rem;
 
     /* Sidebar specific colors */
-    --sidebar-background: 233 27% 11%; /* Slightly darker than card for distinct sidebar #141622 */
+    --sidebar-background: var(--background); /* Changed to match page background */
     --sidebar-foreground: 0 0% 100%; /* #FFFFFF */
     --sidebar-primary: 258 84% 61%; /* Active item background #7C3AED */
     --sidebar-primary-foreground: 0 0% 100%; /* Text on active item */
     --sidebar-accent: 233 27% 20%; /* Hover background for sidebar items */
     --sidebar-accent-foreground: 0 0% 100%; /* Text on hover */
-    --sidebar-border: 230 11% 15%; /* Darker border for sidebar #1F222E */
+    --sidebar-border: 230 11% 15%; /* Darker border for sidebar #1F222E - may not be used for right edge now */
     --sidebar-ring: 258 84% 70%; /* Focus ring */
   }
 

@@ -29,7 +29,10 @@ export default function RootLayout({
     <html lang="en" className="dark"> {/* Ensure dark class if needed by some components, though theme is dark by default */}
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <SidebarProvider defaultOpen={true}>
-          <Sidebar collapsible="none" className="border-r border-sidebar-border shadow-lg">
+          <Sidebar 
+            collapsible="none" 
+            className="shadow-[3px_0px_10px_-2px_hsla(var(--primary),0.35)]" // Removed border-r, border-sidebar-border and replaced shadow-lg
+          >
             <SidebarHeader className="p-4 border-b border-sidebar-border">
               <h1 className="text-2xl font-semibold text-primary">Sanctuary Matrix</h1>
             </SidebarHeader>
