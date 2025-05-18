@@ -13,6 +13,7 @@ import {
   Shapes,
   CalendarClock,
   FileText,
+  Layers, // Added Layers for Winger Matrix
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
@@ -34,6 +35,7 @@ const navItems: NavItem[] = [
   { href: '/model-matrix', label: 'Model Matrix', icon: Shapes },
   { href: '/rmd-matrix', label: 'RMD Matrix', icon: CalendarClock },
   { href: '/reports', label: 'Reports', icon: FileText },
+  { href: '/winger-matrix', label: 'Winger Matrix', icon: Layers },
 ];
 
 export function SidebarNavItems() {
@@ -45,6 +47,7 @@ export function SidebarNavItems() {
         <SidebarMenuItem key={item.href}>
           <Link href={item.href} asChild>
             <SidebarMenuButton
+              asChild // Tell SidebarMenuButton to render a Slot
               isActive={pathname === item.href || (pathname.startsWith(item.href) && item.href !== '/')}
               className={cn(
                 "w-full justify-start",
@@ -54,10 +57,12 @@ export function SidebarNavItems() {
               )}
               tooltip={{ children: item.label, side: "right", align: "center" }}
             >
-              <>
+              {/* This anchor tag will be the child of SidebarMenuButton's Slot */}
+              {/* It will receive the href and other link props */}
+              <a>
                 <item.icon className="h-5 w-5 mr-3 shrink-0" />
                 <span className="truncate">{item.label}</span>
-              </>
+              </a>
             </SidebarMenuButton>
           </Link>
         </SidebarMenuItem>

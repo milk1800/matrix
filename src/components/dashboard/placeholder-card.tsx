@@ -18,16 +18,22 @@ export function PlaceholderCard({ title, value, description, icon, children, cla
   const iconPath = typeof icon === 'string' ? icon : null;
 
   return (
-    <Card className={cn("shadow-lg hover:shadow-xl transition-shadow duration-300", className)}>
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-base font-medium text-muted-foreground">{title}</CardTitle>
-        {Icon && <Icon className="h-5 w-5 text-primary" />}
+    <Card className={cn(
+      "shadow-card-default-glow hover:shadow-card-hover-glow hover:-translate-y-1 transition-all duration-300 ease-in-out bg-card/50 border border-white/10",
+      className
+    )}>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 p-4 pb-2">
+        {iconPath && (
+          <Image src={iconPath} alt={title} width={36} height={36} className="mb-2 text-primary" />
+        )}
+        <CardTitle className="text-base font-bold text-foreground">{title}</CardTitle>
+        {IconComponent && !iconPath && <IconComponent className="h-5 w-5 text-primary" />}
       </CardHeader>
-      <CardContent className="p-6 pt-0"> {/* Standardized padding */}
+      <CardContent className="p-4 pt-0">
         {value && <div className="text-3xl font-bold text-foreground">{value}</div>}
         {description && <p className="text-sm text-muted-foreground">{description}</p>}
         {children && <div className="mt-4">{children}</div>}
-        {!children && !value && !icon && <div className="text-muted-foreground h-[50px] flex items-center">Placeholder content</div>}
+        {!children && !value && !IconComponent && !iconPath && <div className="text-muted-foreground h-[50px] flex items-center">Placeholder content</div>}
       </CardContent>
     </Card>
   );
