@@ -19,11 +19,12 @@ export function PlaceholderCard({ title, value, description, icon, children, cla
 
   return (
     <Card className={cn(
-      "shadow-none transition-all duration-300 ease-in-out hover:-translate-y-0.5 hover:shadow-card-hover-glow bg-card/[.92]",
+      "bg-card/50 border border-white/10 shadow-card-default-glow", // Frosted glass effect with default glow and border
+      "transition-all duration-300 ease-in-out hover:-translate-y-1 hover:shadow-card-hover-glow", // Hover effects
       className
     )}>
       <CardHeader className={cn(
-        "p-4 pb-2", // Standardized padding
+        "p-6 pb-2", // Standardized padding based on 24px (p-6) requirement
         iconPath ? "flex flex-col items-start" : "flex flex-row items-center justify-between space-y-0"
       )}>
         {iconPath && (
@@ -34,7 +35,7 @@ export function PlaceholderCard({ title, value, description, icon, children, cla
           <IconComponent className="h-5 w-5 text-primary" />
         )}
       </CardHeader>
-      <CardContent className="p-4 pt-0"> {/* Standardized padding */}
+      <CardContent className="p-6 pt-0"> {/* Standardized padding */}
         {value && <div className="text-3xl font-bold text-foreground">{value}</div>}
         {description && <p className="text-sm text-muted-foreground">{description}</p>}
         {children && <div className="mt-4">{children}</div>}

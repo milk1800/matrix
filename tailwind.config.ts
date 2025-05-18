@@ -90,7 +90,8 @@ export default {
   			'accordion-up': 'accordion-up 0.2s ease-out'
   		},
       boxShadow: {
-        'card-hover-glow': '0 0 10px 0 rgba(167, 139, 250, 0.3)'
+        'card-default-glow': '0 0 15px 0 hsla(var(--primary), 0.15)',
+        'card-hover-glow': '0 0 20px 0 hsla(var(--primary), 0.25)'
       }
   	}
   },

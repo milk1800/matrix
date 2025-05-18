@@ -7,7 +7,7 @@
   :root {
     --background: 225 100% 0.8%; /* #000104 */
     --foreground: 0 0% 100%; /* #FFFFFF */
-    --card: var(--background); /* #000104 - Updated to match page background */
+    --card: 0 0% 0%; /* #000000 - Updated for black base */
     --card-foreground: 0 0% 100%; /* #FFFFFF */
     --popover: 253 36% 15%; /* #1C1833 - Matching card for consistency */
     --popover-foreground: 0 0% 100%; /* #FFFFFF */
@@ -31,7 +31,7 @@
     --chart-4: 46 96% 53%; /* Warning Yellow */
     --chart-5: 0 84% 60%; /* Error Red */
     
-    --radius: 1rem; /* Updated from 0.5rem for 16px on rounded-lg */
+    --radius: 1.25rem; /* Updated from 1rem for 20px on rounded-lg */
 
     /* Sidebar specific colors */
     --sidebar-background: var(--background); /* Changed to match page background #000104 */
@@ -57,7 +57,8 @@
   }
   body {
     @apply text-foreground;
-    background-color: hsl(var(--background)); /* Solid background, page-level gradient now used */
+    background-color: hsl(var(--background)); /* Solid background fallback */
+    background-image: radial-gradient(ellipse at center, #1c1543 0%, hsl(var(--background)) 100%);
     min-height: 100vh; /* Ensure full viewport height */
     height: 100%; /* Ensure body also takes full height for parents of 100vh children if needed */
     background-attachment: fixed; 
