@@ -3,7 +3,7 @@
 
 import { Geist, Geist_Mono } from 'next/font/google';
 import * as React from 'react';
-import Image from "next/image"; // Ensured Image is imported
+import Image from "next/image";
 import './globals.css';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarInset } from '@/components/ui/sidebar';
 import { SidebarNavItems } from '@/components/layout/sidebar-nav-items';
@@ -69,22 +69,38 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+        <div className="w-full overflow-hidden bg-black/90 border-b border-gray-700 py-2 fixed top-0 z-50">
+          <div className="animate-marquee whitespace-nowrap text-sm text-white">
+            <span className="mx-4">AAPL: $189.45 ▲1.2%</span>
+            <span className="mx-4">MSFT: $324.12 ▼0.4%</span>
+            <span className="mx-4">NVDA: $1,122.33 ▲2.1%</span>
+            <span className="mx-4">GOOGL: $132.99 ▲0.6%</span>
+            <span className="mx-4">TSLA: $172.43 ▼1.0%</span>
+            {/* Duplicate for seamless scroll */}
+            <span className="mx-4">AAPL: $189.45 ▲1.2%</span>
+            <span className="mx-4">MSFT: $324.12 ▼0.4%</span>
+            <span className="mx-4">NVDA: $1,122.33 ▲2.1%</span>
+            <span className="mx-4">GOOGL: $132.99 ▲0.6%</span>
+            <span className="mx-4">TSLA: $172.43 ▼1.0%</span>
+          </div>
+        </div>
+        {/* Adjust pt-10 or similar on the main content wrapper if needed to account for ticker height */}
         <SidebarProvider defaultOpen={true}>
           <Sidebar
             collapsible="none"
-            className="shadow-sidebar-glow"
+            className="shadow-sidebar-glow pt-10" // Added pt-10 to push sidebar content below ticker
           >
             <SidebarHeader className="p-4 px-5 border-b border-sidebar-border">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 relative"> {/* Container for the icon 40x40px */}
+                <div className="w-10 h-10 relative">
                   <Image
-                    src="/icons/brain-logo.png" // Correct path
+                    src="/icons/brain-logo.png"
                     alt="Sanctuary Matrix Logo"
-                    fill // Use fill to cover the parent div
-                    objectFit="contain" // Maintain aspect ratio
+                    fill
+                    objectFit="contain"
                   />
                 </div>
-                <div className="text-xl font-bold text-white leading-tight"> {/* Specific styling as per prompt */}
+                <div className="text-xl font-bold text-white leading-tight">
                   <div>Sanctuary</div>
                   <div>Matrix</div>
                 </div>
@@ -94,7 +110,7 @@ export default function RootLayout({
               <SidebarNavItems />
             </SidebarContent>
           </Sidebar>
-          <SidebarInset>
+          <SidebarInset className="pt-10"> {/* Added pt-10 to push main content below ticker */}
             {children}
           </SidebarInset>
         </SidebarProvider>
