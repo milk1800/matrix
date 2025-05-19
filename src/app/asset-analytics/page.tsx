@@ -2,7 +2,7 @@
 "use client";
 import * as React from "react";
 import Image from "next/image";
-import { PiggyBank, TrendingUp, Target, ArrowDownCircle, ArrowUpCircle, ArrowRightLeft, Download } from 'lucide-react';
+import { Landmark, TrendingUp, Target, ArrowDownCircle, ArrowUpCircle, ArrowRightLeft, Download, Users, DollarSign, CreditCard, PiggyBank } from 'lucide-react';
 import { PlaceholderCard } from '@/components/dashboard/placeholder-card';
 import { AssetAllocationDonutChart } from '@/components/charts/asset-allocation-donut-chart';
 import { Button } from '@/components/ui/button';
@@ -15,8 +15,8 @@ const metricCardsData = [
     title: "Total AUM",
     value: "$1.2B",
     description: React.createElement('span', { className: 'text-green-400 text-sm' }, '+20.1% from last month'),
-    icon: PiggyBank, // Using Lucide PiggyBank
-    iconClassName: "text-green-500", // Custom class for green color
+    icon: PiggyBank, 
+    iconClassName: "text-green-500", 
   },
   {
     title: "YTD Return",
