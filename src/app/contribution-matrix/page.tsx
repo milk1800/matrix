@@ -3,6 +3,7 @@
 
 import * as React from "react";
 import { Download, TrendingUp, MessageSquare, Loader2, AlertTriangle } from 'lucide-react';
+import { differenceInDays, parseISO, format, isValid } from 'date-fns';
 import { PlaceholderCard } from '@/components/dashboard/placeholder-card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Progress } from "@/components/ui/progress";
@@ -20,20 +21,65 @@ interface ContributionAccount {
   accountType: AccountType;
   annualLimit: number;
   amountContributed: number;
+  dueDate: string; // YYYY-MM-DD format
 }
 
+const getFutureDate = (days: number): string => {
+  const date = new Date();
+  date.setDate(date.getDate() + days);
+  return format(date, 'yyyy-MM-dd');
+};
+
 const initialContributionAccounts: ContributionAccount[] = [
-  { id: "1", accountName: "John's Primary Roth", accountType: "Roth IRA", annualLimit: 7000, amountContributed: 3500 },
-  { id: "2", accountName: "Jane's Traditional", accountType: "Traditional IRA", annualLimit: 7000, amountContributed: 7000 },
-  { id: "3", accountName: "Business SEP", accountType: "SEP IRA", annualLimit: 66000, amountContributed: 25000 },
-  { id: "4", accountName: "Side Gig SIMPLE", accountType: "SIMPLE IRA", annualLimit: 16000, amountContributed: 8000 },
-  { id: "5", accountName: "John's Rollover IRA", accountType: "Traditional IRA", annualLimit: 7000, amountContributed: 1000 },
+  { id: "1", accountName: "John's Primary Roth", accountType: "Roth IRA", annualLimit: 7000, amountContributed: 3500, dueDate: getFutureDate(5) }, // Due soon
+  { id: "2", accountName: "Jane's Traditional", accountType: "Traditional IRA", annualLimit: 7000, amountContributed: 7000, dueDate: getFutureDate(25) }, // Approaching
+  { id: "3", accountName: "Business SEP", accountType: "SEP IRA", annualLimit: 66000, amountContributed: 25000, dueDate: getFutureDate(60) }, // Far out
+  { id: "4", accountName: "Side Gig SIMPLE", accountType: "SIMPLE IRA", annualLimit: 16000, amountContributed: 8000, dueDate: getFutureDate(-5) }, // Past due
+  { id: "5", accountName: "John's Rollover IRA", accountType: "Traditional IRA", annualLimit: 7000, amountContributed: 1000, dueDate: getFutureDate(90) }, // Far out
 ];
 
 const calculateMonthsLeft = (): number => {
   const currentMonth = new Date().getMonth(); // 0-11
-  return 11 - currentMonth; // Months remaining including current
+  return Math.max(1, 11 - currentMonth); // Ensure at least 1 month for calculation if current month is December
 };
+
+interface DueDateInfo {
+  formattedDate: string;
+  colorClass: string;
+  daysRemainingText: string;
+}
+
+const getDueDateInfo = (dueDateString: string): DueDateInfo => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // Normalize today to the start of the day
+  const parsedDueDate = parseISO(dueDateString);
+
+  if (!isValid(parsedDueDate)) {
+    return { formattedDate: "Invalid Date", colorClass: "text-muted-foreground", daysRemainingText: "" };
+  }
+  
+  parsedDueDate.setHours(0,0,0,0); // Normalize due date to the start of the day for accurate comparison
+
+  const daysRemaining = differenceInDays(parsedDueDate, today);
+  let colorClass = "text-green-400";
+  let daysRemainingText = `(${daysRemaining} days left)`;
+
+  if (daysRemaining <= 7) {
+    colorClass = "text-red-400";
+    if (daysRemaining < 0) daysRemainingText = `(${Math.abs(daysRemaining)} days past)`;
+    else if (daysRemaining === 0) daysRemainingText = `(Due today)`;
+    else daysRemainingText = `(${daysRemaining} days left)`;
+  } else if (daysRemaining <= 30) {
+    colorClass = "text-yellow-400";
+  }
+
+  return {
+    formattedDate: format(parsedDueDate, "MMM dd, yyyy"),
+    colorClass,
+    daysRemainingText,
+  };
+};
+
 
 export default function ContributionMatrixPage() {
   const [accounts, setAccounts] = React.useState<ContributionAccount[]>(initialContributionAccounts);
@@ -44,7 +90,7 @@ export default function ContributionMatrixPage() {
 
   const handleContributionChange = (accountId: string, newAmount: string) => {
     const numericAmount = parseInt(newAmount, 10);
-    if (isNaN(numericAmount) && newAmount !== "") return; // Allow clearing the input
+    if (isNaN(numericAmount) && newAmount !== "") return; 
 
     setAccounts(prevAccounts =>
       prevAccounts.map(acc => {
@@ -71,7 +117,6 @@ export default function ContributionMatrixPage() {
     if (!mavenQuery.trim()) return;
     setIsLoadingMaven(true);
     setMavenResponse(null);
-    // Simulate AI call
     await new Promise(resolve => setTimeout(resolve, 1500));
 
     let responseText = "I'm not sure how to answer that. Try asking about maxing out a specific IRA type.";
@@ -109,6 +154,7 @@ export default function ContributionMatrixPage() {
               <TableHead className="font-bold text-right">Remaining</TableHead>
               <TableHead className="font-bold min-w-[180px]">Progress (%)</TableHead>
               <TableHead className="font-bold text-right whitespace-nowrap">Monthly to Max-Out</TableHead>
+              <TableHead className="font-bold text-right whitespace-nowrap">Due Date</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -116,6 +162,7 @@ export default function ContributionMatrixPage() {
               const remaining = account.annualLimit - account.amountContributed;
               const progressPercent = account.annualLimit > 0 ? Math.min(100, Math.max(0,(account.amountContributed / account.annualLimit) * 100)) : 0;
               const monthlyToMax = remaining > 0 && monthsLeft > 0 ? (remaining / monthsLeft) : 0;
+              const dueDateInfo = getDueDateInfo(account.dueDate);
 
               return (
                 <TableRow key={account.id}>
@@ -125,7 +172,7 @@ export default function ContributionMatrixPage() {
                   <TableCell className="text-right">
                     <Input
                       type="number"
-                      value={account.amountContributed.toString()} // Control component by converting number to string
+                      value={account.amountContributed.toString()} 
                       onChange={(e) => handleContributionChange(account.id, e.target.value)}
                       className="h-8 text-right bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary"
                       min="0"
@@ -149,7 +196,11 @@ export default function ContributionMatrixPage() {
                     </div>
                   </TableCell>
                   <TableCell className="text-right whitespace-nowrap">
-                    {monthlyToMax > 0 ? `$${monthlyToMax.toFixed(2)}/mo` : (progressPercent >= 100 ? "Maxed Out" : "N/A")}
+                    {monthlyToMax > 0 && progressPercent < 100 ? `$${monthlyToMax.toFixed(2)}/mo` : (progressPercent >= 100 ? "Maxed Out" : "N/A")}
+                  </TableCell>
+                  <TableCell className={cn("text-right whitespace-nowrap font-medium", dueDateInfo.colorClass)}>
+                    {dueDateInfo.formattedDate}
+                    <span className="ml-1 text-xs opacity-80">{dueDateInfo.daysRemainingText}</span>
                   </TableCell>
                 </TableRow>
               );
