@@ -12,6 +12,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+
 
 type AccountType = 'Traditional IRA' | 'Roth IRA' | 'SEP IRA' | 'SIMPLE IRA';
 
@@ -36,6 +38,8 @@ const initialContributionAccounts: ContributionAccount[] = [
   { id: "3", accountName: "Business SEP", accountType: "SEP IRA", annualLimit: 66000, amountContributed: 25000, dueDate: getFutureDate(60) }, // Far out
   { id: "4", accountName: "Side Gig SIMPLE", accountType: "SIMPLE IRA", annualLimit: 16000, amountContributed: 8000, dueDate: getFutureDate(-5) }, // Past due
   { id: "5", accountName: "John's Rollover IRA", accountType: "Traditional IRA", annualLimit: 7000, amountContributed: 1000, dueDate: getFutureDate(90) }, // Far out
+  { id: "6", accountName: "Spouse Roth", accountType: "Roth IRA", annualLimit: 7000, amountContributed: 0, dueDate: getFutureDate(1) }, // Due tomorrow
+  { id: "7", accountName: "Emergency Fund IRA", accountType: "Traditional IRA", annualLimit: 7000, amountContributed: 3000, dueDate: getFutureDate(0) }, // Due today
 ];
 
 const calculateMonthsLeft = (): number => {
@@ -44,9 +48,9 @@ const calculateMonthsLeft = (): number => {
 };
 
 interface DueDateInfo {
-  formattedDate: string;
+  mainDisplay: string;
+  tooltipDate: string;
   colorClass: string;
-  daysRemainingText: string;
 }
 
 const getDueDateInfo = (dueDateString: string): DueDateInfo => {
@@ -55,28 +59,39 @@ const getDueDateInfo = (dueDateString: string): DueDateInfo => {
   const parsedDueDate = parseISO(dueDateString);
 
   if (!isValid(parsedDueDate)) {
-    return { formattedDate: "Invalid Date", colorClass: "text-muted-foreground", daysRemainingText: "" };
+    return { mainDisplay: "N/A", tooltipDate: "Invalid Date", colorClass: "text-muted-foreground" };
   }
   
   parsedDueDate.setHours(0,0,0,0); // Normalize due date to the start of the day for accurate comparison
 
   const daysRemaining = differenceInDays(parsedDueDate, today);
-  let colorClass = "text-green-400";
-  let daysRemainingText = `(${daysRemaining} days left)`;
+  let colorClass = "text-green-400"; // Default green
+  let mainDisplay: string;
 
-  if (daysRemaining <= 7) {
+  if (daysRemaining < 0) {
     colorClass = "text-red-400";
-    if (daysRemaining < 0) daysRemainingText = `(${Math.abs(daysRemaining)} days past)`;
-    else if (daysRemaining === 0) daysRemainingText = `(Due today)`;
-    else daysRemainingText = `(${daysRemaining} days left)`;
+    mainDisplay = `${Math.abs(daysRemaining)}d past`;
+  } else if (daysRemaining === 0) {
+    colorClass = "text-red-400";
+    mainDisplay = "Today";
+  } else if (daysRemaining === 1) {
+    colorClass = "text-red-400";
+    mainDisplay = "1d left";
+  } else if (daysRemaining <= 7) {
+    colorClass = "text-red-400";
+    mainDisplay = `${daysRemaining}d left`;
   } else if (daysRemaining <= 30) {
     colorClass = "text-yellow-400";
+    mainDisplay = `${daysRemaining}d left`;
+  } else {
+    // Default for > 30 days
+    mainDisplay = `${daysRemaining}d left`;
   }
 
   return {
-    formattedDate: format(parsedDueDate, "MMM dd, yyyy"),
+    mainDisplay,
+    tooltipDate: format(parsedDueDate, "MMM dd, yyyy"),
     colorClass,
-    daysRemainingText,
   };
 };
 
@@ -199,8 +214,16 @@ export default function ContributionMatrixPage() {
                     {monthlyToMax > 0 && progressPercent < 100 ? `$${monthlyToMax.toFixed(2)}/mo` : (progressPercent >= 100 ? "Maxed Out" : "N/A")}
                   </TableCell>
                   <TableCell className={cn("text-right whitespace-nowrap font-medium", dueDateInfo.colorClass)}>
-                    {dueDateInfo.formattedDate}
-                    <span className="ml-1 text-xs opacity-80">{dueDateInfo.daysRemainingText}</span>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span>{dueDateInfo.mainDisplay}</span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{dueDateInfo.tooltipDate}</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </TableCell>
                 </TableRow>
               );
@@ -249,3 +272,4 @@ export default function ContributionMatrixPage() {
     </main>
   );
 }
+
