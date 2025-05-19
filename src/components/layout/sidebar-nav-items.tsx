@@ -7,14 +7,13 @@ import { usePathname } from 'next/navigation';
 import {
   BarChart3,
   Users,
-  TrendingUp,
+  TrendingUp, // Changed from CalendarClock for Contribution Matrix
   Repeat,
   LayoutGrid,
   PieChart,
   Shapes,
-  CalendarClock,
   FileText,
-  Layers, // Used for Winger Matrix
+  Layers, 
   UserCog,
   LibraryBig
 } from 'lucide-react';
@@ -35,11 +34,11 @@ const navItems: NavItem[] = [
   { href: '/client-analytics', label: 'Client Analytics', icon: Users, section: "Analytics Center" },
   { href: '/financial-analytics', label: 'Financial Analytics', icon: TrendingUp, section: "Analytics Center" },
   { href: '/conversion-analytics', label: 'Conversion Analytics', icon: Repeat, section: "Analytics Center" },
-  { href: '/reports', label: 'Reports', icon: FileText, section: "Analytics Center" }, // Moved here
+  { href: '/reports', label: 'Reports', icon: FileText, section: "Analytics Center" }, 
   { href: '/resource-matrix', label: 'Resource Matrix', icon: LayoutGrid, section: "Matrix Tools" },
   { href: '/portfolio-matrix', label: 'Portfolio Matrix', icon: PieChart, section: "Matrix Tools" },
   { href: '/model-matrix', label: 'Model Matrix', icon: Shapes, section: "Matrix Tools" },
-  { href: '/rmd-matrix', label: 'RMD Matrix', icon: CalendarClock, section: "Matrix Tools" },
+  { href: '/contribution-matrix', label: 'Contribution Matrix', icon: TrendingUp, section: "Matrix Tools" }, // Updated label, href, and icon
   { href: '/winger-matrix', label: 'Winger Matrix', icon: Layers, section: "Matrix Tools" },
 ];
 
@@ -49,13 +48,13 @@ const sections = {
     '/client-analytics',
     '/financial-analytics',
     '/conversion-analytics',
-    '/reports', // Added here
+    '/reports',
   ],
   "Matrix Tools": [
-    '/resource-matrix', // Moved from Analytics Center
+    '/resource-matrix',
     '/portfolio-matrix',
     '/model-matrix',
-    '/rmd-matrix',
+    '/contribution-matrix', // Added here
     '/winger-matrix',
   ],
 };
@@ -67,7 +66,7 @@ export function SidebarNavItems() {
     <SidebarMenu className="p-4 space-y-1">
       {Object.entries(sections).map(([sectionTitle, sectionItemsHrefs]) => (
         <React.Fragment key={sectionTitle}>
-          <div className="px-4 pt-4 pb-2">
+          <div className="px-4 py-3">
             <h2 className="text-lg font-bold text-gray-300 uppercase tracking-wider border-b border-sidebar-border/30 pb-1">
               {sectionTitle}
             </h2>
@@ -87,9 +86,9 @@ export function SidebarNavItems() {
                           className={cn(
                             "w-full justify-start transform-gpu text-base font-medium",
                             "py-[10px] px-4 rounded-[8px]",
-                            "bg-black/40 text-sidebar-foreground", 
+                            "bg-black/40 text-sidebar-foreground transition-all duration-300 ease-out", 
                             isActive
-                              ? "bg-primary/30 shadow-[0_2px_10px_hsla(var(--primary),0.5)] -translate-y-0.5 text-sidebar-primary-foreground"
+                              ? "bg-primary/30 backdrop-blur-sm shadow-[0_2px_10px_hsla(var(--primary),0.5)] -translate-y-0.5 text-sidebar-primary-foreground"
                               : "hover:bg-black/50 hover:shadow-[0_0_10px_rgba(124,58,237,0.2)] hover:-translate-y-px"
                           )}
                         >
