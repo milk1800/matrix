@@ -15,8 +15,8 @@ const metricCardsData = [
     title: "Total AUM",
     value: "$1.2B",
     description: React.createElement('span', { className: 'text-green-400 text-sm' }, '+20.1% from last month'),
-    icon: PiggyBank,
-    iconClassName: "text-green-500",
+    icon: PiggyBank, // Using Lucide PiggyBank
+    iconClassName: "text-green-500", // Custom class for green color
   },
   {
     title: "YTD Return",
@@ -34,19 +34,19 @@ const metricCardsData = [
     title: "Inflows (MTD)",
     value: "$350K",
     description: "+15% from last month",
-    icon: ArrowDownCircle, // Lucide icon for inflows
+    icon: ArrowDownCircle, 
   },
   {
     title: "Outflows (MTD)",
     value: "$120K",
     description: "-5% from last month",
-    icon: ArrowUpCircle, // Lucide icon for outflows
+    icon: ArrowUpCircle,
   },
   {
     title: "Net Flows (MTD)",
     value: "$230K",
     description: "Net positive inflow",
-    icon: ArrowRightLeft, // Lucide icon for net flows
+    icon: ArrowRightLeft,
   },
 ];
 
@@ -121,7 +121,7 @@ export default function AssetAnalyticsPage() {
             value={card.value}
             description={card.description}
             icon={card.icon}
-            iconClassName={card.iconClassName} // Pass the custom class name
+            iconClassName={card.iconClassName}
           />
         ))}
       </div>

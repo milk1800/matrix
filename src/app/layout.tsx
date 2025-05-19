@@ -14,13 +14,13 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, X, Brain } from 'lucide-react';
 
-const mainFont = Inter({ // Using Inter as a replacement for Geist_Sans
-  variable: '--font-geist-sans', // Keep original CSS variable name
+const mainFont = Inter({
+  variable: '--font-geist-sans',
   subsets: ['latin'],
 });
 
-const monoFont = Roboto_Mono({ // Using Roboto_Mono as a replacement for Geist_Mono
-  variable: '--font-geist-mono', // Keep original CSS variable name
+const monoFont = Roboto_Mono({
+  variable: '--font-geist-mono',
   subsets: ['latin'],
 });
 
@@ -57,7 +57,7 @@ export default function RootLayout({
 
     const botResponse: ChatMessage = {
       id: (Date.now() + 1).toString(),
-      text: `Maven echoes: "${currentMessage}"`, 
+      text: `Maven echoes: "${currentMessage}"`,
       sender: 'bot',
     };
 
@@ -111,12 +111,9 @@ export default function RootLayout({
             className="shadow-sidebar-glow pt-10"
           >
             <SidebarHeader className="p-4 px-5 border-b border-sidebar-border">
-              <div className="flex items-center space-x-3">
-                <img src="/icons/animated/brain-logo.svg" alt="Brain Icon" className="w-6 h-6 mr-2" />
-                <div className="text-xl font-bold text-white leading-tight">
-                  <div>Sanctuary</div>
-                  <div>Matrix</div>
-                </div>
+              <div className="flex items-center space-x-2">
+                <Brain className="w-6 h-6 text-purple-500 mr-2" />
+                <span className="text-xl font-bold text-white">Sanctuary Matrix</span>
               </div>
             </SidebarHeader>
             <SidebarContent>
