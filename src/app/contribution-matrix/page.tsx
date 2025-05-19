@@ -10,7 +10,7 @@ import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast";
+// Removed useToast as it's no longer needed for input validation
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -82,17 +82,13 @@ const getDueDateInfo = (dueDateString: string): DueDateInfo => {
     mainDisplay = "Today";
     boxClassName = "bg-red-500 text-white";
     pulseClassName = "due-pulse";
-  } else if (daysRemaining === 1) {
-    mainDisplay = `1d left`;
-    boxClassName = "bg-red-500 text-white";
-    pulseClassName = "due-pulse";
   } else if (daysRemaining <= 5) {
     mainDisplay = `${daysRemaining}d left`;
     boxClassName = "bg-red-500 text-white";
     pulseClassName = "due-pulse";
   } else if (daysRemaining < 15) {
     mainDisplay = `${daysRemaining}d left`;
-    boxClassName = "bg-red-500 text-white";
+    boxClassName = "bg-red-500 text-white"; // Red, no pulse
   } else if (daysRemaining <= 45) {
     mainDisplay = `${daysRemaining}d left`;
     boxClassName = "bg-yellow-400 text-black";
@@ -111,36 +107,14 @@ const getDueDateInfo = (dueDateString: string): DueDateInfo => {
 
 
 export default function ContributionMatrixPage() {
-  const [accounts, setAccounts] = React.useState<ContributionAccount[]>(initialContributionAccounts);
+  // Removed accounts state as it's now static display from initialContributionAccounts
+  const accounts = initialContributionAccounts;
   const [mavenQuery, setMavenQuery] = React.useState("");
   const [mavenResponse, setMavenResponse] = React.useState<string | null>(null);
   const [isLoadingMaven, setIsLoadingMaven] = React.useState(false);
-  const { toast } = useToast();
+  // Removed useToast as it's no longer needed
 
-  const handleContributionChange = (accountId: string, newAmount: string) => {
-    const numericAmount = parseInt(newAmount, 10);
-    if (isNaN(numericAmount) && newAmount !== "") return; 
-
-    setAccounts(prevAccounts =>
-      prevAccounts.map(acc => {
-        if (acc.id === accountId) {
-          let contributed = newAmount === "" ? 0 : numericAmount;
-          if (contributed > acc.annualLimit) {
-            toast({
-              title: "Contribution Exceeds Limit",
-              description: `Contribution for ${acc.accountName} cannot exceed $${acc.annualLimit.toLocaleString()}.`,
-              variant: "destructive",
-            });
-            contributed = acc.annualLimit;
-          } else if (contributed < 0) {
-            contributed = 0;
-          }
-          return { ...acc, amountContributed: contributed };
-        }
-        return acc;
-      })
-    );
-  };
+  // Removed handleContributionChange function as the input is now read-only
 
   const handleAskMaven = async () => {
     if (!mavenQuery.trim()) return;
@@ -199,14 +173,8 @@ export default function ContributionMatrixPage() {
                   <TableCell className="text-muted-foreground whitespace-nowrap">{account.accountType}</TableCell>
                   <TableCell className="text-right whitespace-nowrap">${account.annualLimit.toLocaleString()}</TableCell>
                   <TableCell className="text-right">
-                    <Input
-                      type="number"
-                      value={account.amountContributed.toString()} 
-                      onChange={(e) => handleContributionChange(account.id, e.target.value)}
-                      className="h-8 text-right bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary"
-                      min="0"
-                      max={account.annualLimit}
-                    />
+                    {/* Replaced Input with static text display */}
+                    <span>${account.amountContributed.toLocaleString()}</span>
                   </TableCell>
                   <TableCell className="text-right whitespace-nowrap">${remaining.toLocaleString()}</TableCell>
                   <TableCell>
