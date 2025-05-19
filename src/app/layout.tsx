@@ -1,8 +1,8 @@
-"use client"; 
+"use client";
 
 import { Geist, Geist_Mono } from 'next/font/google';
 import * as React from 'react';
-import Image from "next/image"; // Keep Image for chatbot FAB
+import Image from "next/image";
 import './globals.css';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarInset } from '@/components/ui/sidebar';
 import { SidebarNavItems } from '@/components/layout/sidebar-nav-items';
@@ -57,7 +57,7 @@ export default function RootLayout({
 
     const botResponse: ChatMessage = {
       id: (Date.now() + 1).toString(),
-      text: `Maven echoes: "${currentMessage}"`, 
+      text: `Maven echoes: "${currentMessage}"`,
       sender: 'bot',
     };
 
@@ -104,11 +104,11 @@ export default function RootLayout({
             <span className="text-white">ROKU: <span className="text-green-400">$62.22 ▲2.0%</span></span>
           </div>
         </div>
-        
+
         <SidebarProvider defaultOpen={true}>
           <Sidebar
             collapsible="none"
-            className="shadow-sidebar-glow pt-10" 
+            className="shadow-sidebar-glow pt-10"
           >
             <SidebarHeader className="p-4 px-5 border-b border-sidebar-border">
               <div className="flex items-center space-x-3">
@@ -123,7 +123,7 @@ export default function RootLayout({
               <SidebarNavItems />
             </SidebarContent>
           </Sidebar>
-          <SidebarInset className="pt-10"> 
+          <SidebarInset className="pt-10">
             {children}
           </SidebarInset>
         </SidebarProvider>
@@ -135,6 +135,7 @@ export default function RootLayout({
           onClick={() => setIsChatOpen(true)}
           aria-label="Open Chat with Maven AI"
         >
+          {/* Ensure the path /icons/brain-logo.png is correct if you intend to use a specific PNG for the chatbot FAB */}
           <Image src="/assets/brain-logo.png" alt="Chat with Maven AI" width={36} height={36} />
         </Button>
 
