@@ -2,11 +2,15 @@
 "use client";
 
 import * as React from "react";
-import { Download, UserCog, LibraryBig, FileText, TrendingUp, TrendingDown, DollarSign, SlidersHorizontal, FileDown, ChevronsUpDown } from 'lucide-react';
+import { Download, UserCog, LibraryBig, FileText, TrendingUp, TrendingDown, DollarSign, SlidersHorizontal, FileDown, ChevronsUpDown, Brain } from 'lucide-react';
 import { PlaceholderCard } from '@/components/dashboard/placeholder-card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Slider } from "@/components/ui/slider";
+import { PlaceholderChart } from "@/components/dashboard/placeholder-chart";
 import { cn } from "@/lib/utils";
 import {
   DropdownMenu,
@@ -135,6 +139,14 @@ const modelPerformanceData: ModelData[] = [
   },
 ];
 
+// Mock data for the rebalancing sandbox
+const sandboxSelectedManagers = [
+  { ...modelPerformanceData[0], weight: 50 }, // Global Growth Equity
+  { ...modelPerformanceData[1], weight: 30 }, // Core Fixed Income
+  { ...modelPerformanceData[3], weight: 20 }, // Balanced Portfolio UMA
+];
+
+
 const getReturnClass = (returnValue: string) => {
   if (!returnValue || returnValue === "N/A") return 'text-muted-foreground';
   if (returnValue.startsWith('+')) return 'text-green-400';
@@ -175,6 +187,7 @@ interface ComparisonCardData extends Omit<ModelData, 'aum' | 'id' | 'strategyNam
 
 export default function ModelMatrixPage() {
   const [selectedManagerNames, setSelectedManagerNames] = React.useState<string[]>([]);
+  const [managerWeights, setManagerWeights] = React.useState<Record<string, number>>({});
 
   const availableManagers = React.useMemo(() => {
     const managerNames = new Set(modelPerformanceData.map(model => model.manager));
@@ -198,13 +211,12 @@ export default function ModelMatrixPage() {
     return selectedManagerNames.map(managerName => {
       const managerStrategies = modelPerformanceData.filter(model => model.manager === managerName);
       if (managerStrategies.length === 0) {
-        // This case should ideally not happen if managerName comes from availableManagers
         return {
           manager: managerName,
           strategies: ["N/A"],
           totalAum: 0,
           feePercent: "N/A",
-          programFeePercent: "0.20%", // Mocked
+          programFeePercent: "0.20%", 
           totalCostPercent: "N/A",
           style: "N/A",
           ytdReturn: "N/A", ytdBenchmark: "N/A",
@@ -239,6 +251,13 @@ export default function ModelMatrixPage() {
       };
     });
   }, [selectedManagerNames]);
+
+  // Mock handler for slider changes
+  const handleWeightChange = (managerId: string, value: number[]) => {
+    setManagerWeights(prev => ({ ...prev, [managerId]: value[0] }));
+    // In a real app, you'd re-calculate blended metrics here
+    // and ensure total weight is 100%
+  };
 
 
   return (
@@ -396,6 +415,98 @@ export default function ModelMatrixPage() {
             <Button variant="outline">
                 <Download className="mr-2 h-4 w-4" /> Download PDF Summary
             </Button>
+        </div>
+      </PlaceholderCard>
+
+      {/* Model Rebalancing Sandbox Section */}
+      <PlaceholderCard title="Model Rebalancing Sandbox" className="mt-8">
+        <div className="space-y-6">
+          <p className="text-sm text-muted-foreground">
+            Select managers from the matrix above or search to add them to the sandbox (max 3-5). 
+            Adjust weights to simulate blended portfolio metrics.
+          </p>
+          
+          {/* Selected Managers for Rebalancing */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-foreground">Selected Managers for Rebalancing</h3>
+            {sandboxSelectedManagers.map((manager, index) => (
+              <div key={manager.id} className="p-4 rounded-md border border-border/50 bg-black/20 space-y-3">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <p className="font-semibold text-foreground">{manager.manager}</p>
+                    <p className="text-xs text-muted-foreground">{manager.strategyName}</p>
+                  </div>
+                  <Badge variant="outline" className={cn(
+                      manager.style === "Growth" && "bg-purple-500/70 hover:bg-purple-500/90 border-purple-400 text-white",
+                      manager.style === "Value" && "bg-blue-500/70 hover:bg-blue-500/90 border-blue-400 text-white",
+                      manager.style === "Fixed Income" && "bg-teal-500/70 hover:bg-teal-500/90 border-teal-400 text-white",
+                      manager.style === "Balanced" && "bg-amber-500/70 hover:bg-amber-500/90 border-amber-400 text-white",
+                      manager.style.startsWith("Sector") && "bg-pink-500/70 hover:bg-pink-500/90 border-pink-400 text-white"
+                    )}>{manager.style}</Badge>
+                </div>
+                <div>
+                  <Label htmlFor={`weight-slider-${manager.id}`} className="text-xs text-muted-foreground">
+                    Weight: {managerWeights[manager.id] || manager.weight}%
+                  </Label>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Slider
+                      id={`weight-slider-${manager.id}`}
+                      defaultValue={[manager.weight]}
+                      max={100}
+                      step={1}
+                      className="w-[70%]"
+                      onValueChange={(value) => handleWeightChange(manager.id, value)}
+                      aria-label={`Weight for ${manager.strategyName}`}
+                    />
+                    <Input
+                      type="number"
+                      value={managerWeights[manager.id] || manager.weight}
+                      onChange={(e) => handleWeightChange(manager.id, [parseInt(e.target.value, 10) || 0])}
+                      className="w-[30%] h-8 text-xs bg-input border-border/50"
+                      min="0"
+                      max="100"
+                    />
+                  </div>
+                </div>
+              </div>
+            ))}
+             {sandboxSelectedManagers.length === 0 && (
+              <p className="text-sm text-muted-foreground text-center py-4">No managers selected for rebalancing.</p>
+            )}
+          </div>
+
+          {/* Blended Portfolio Metrics */}
+          <PlaceholderCard title="Simulated Blended Metrics" className="bg-black/30">
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+              <div><strong className="text-muted-foreground block">YTD Return:</strong> <span className="text-green-400">+X.X%</span></div>
+              <div><strong className="text-muted-foreground block">1Y Return:</strong> <span className="text-green-400">+X.X%</span></div>
+              <div><strong className="text-muted-foreground block">3Y Return:</strong> <span className="text-green-400">+X.X% p.a.</span></div>
+              <div><strong className="text-muted-foreground block">5Y Return:</strong> <span className="text-green-400">+X.X% p.a.</span></div>
+              <div><strong className="text-muted-foreground block">Sharpe Ratio:</strong> X.XX</div>
+              <div><strong className="text-muted-foreground block">IRR:</strong> X.X%</div>
+              <div><strong className="text-muted-foreground block">Beta:</strong> X.XX</div>
+              <div><strong className="text-muted-foreground block md:col-span-2">Weighted Total Cost:</strong> X.XX%</div>
+            </div>
+            <p className="text-xs text-muted-foreground mt-3">
+              Metrics are placeholders and will update based on selected managers and weights.
+            </p>
+          </PlaceholderCard>
+
+          {/* Visualization Placeholder */}
+          <PlaceholderCard title="Blended Performance Visualization">
+            <div className="h-[300px]">
+              <PlaceholderChart dataAiHint="blended portfolio performance comparison bar" />
+            </div>
+            <p className="text-xs text-muted-foreground mt-2 text-center">
+                Chart will compare original vs. simulated allocation if applicable.
+            </p>
+          </PlaceholderCard>
+
+          <div className="flex justify-end mt-6">
+            <Button variant="outline" disabled>
+              <FileDown className="mr-2 h-4 w-4" /> Download Scenario PDF
+            </Button>
+          </div>
         </div>
       </PlaceholderCard>
     </main>
