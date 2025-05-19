@@ -27,9 +27,10 @@
 
     --chart-1: 258 84% 61%; /* Primary Accent */
     --chart-2: 200 92% 60%; /* Secondary Accent */
-    --chart-3: 145 63% 42%; /* Success Green */
-    --chart-4: 46 96% 53%; /* Warning Yellow */
-    --chart-5: 0 84% 60%; /* Error Red */
+    --chart-3: 120 61% 50%; /* Success Green e.g. #34D399 */
+    --chart-4: 45 93% 57%;  /* Warning Yellow e.g. #FBBF24 */
+    --chart-5: 0 72% 51%;   /* Error Red e.g. #F43F5E */
+
 
     --radius: 1rem; /* 16px */
 
@@ -63,7 +64,7 @@
   }
 }
 
-/* Pulsating Glow Animation - Used by Chatbot FAB */
+/* Pulsating Glow Animation - Used by Chatbot FAB & Brain Logo */
 @keyframes pulse-glow {
   0%, 100% {
     transform: scale(1);
@@ -97,7 +98,7 @@
 }
 
 
-/* Static glow for the main logo if needed, not used with pulse-neon */
+/* Static glow for the main logo if needed */
 .brain-logo-static-glow {
   filter: drop-shadow(0 0 6px #8b5cf6);
 }
@@ -111,7 +112,7 @@
 .missed-opportunity-row {
   animation: flashRed 1.5s infinite;
   transition: background-color 0.3s ease;
-  border-radius: 8px; /* This might have limited effect on <tr> styling */
+  border-radius: 8px; 
 }
 
 .ask-maven-button {
@@ -137,4 +138,27 @@
 
 .animate-ticker {
   animation: ticker 30s linear infinite;
+}
+
+/* Due Date Box Styles */
+.due-box {
+  border-radius: 0.375rem; /* rounded-md */
+  padding: 0.25rem 0.5rem; /* py-1 px-2 */
+  font-weight: 600; /* font-semibold */
+  display: inline-block;
+  text-align: center;
+  /* Background and text color will be applied via Tailwind utility classes */
+}
+
+@keyframes pulse-red {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); /* red-500 with opacity */
+  }
+  50% {
+    box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.3); /* red-500 with opacity */
+  }
+}
+
+.due-pulse {
+  animation: pulse-red 1.2s infinite;
 }

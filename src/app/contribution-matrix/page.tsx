@@ -33,14 +33,18 @@ const getFutureDate = (days: number): string => {
 };
 
 const initialContributionAccounts: ContributionAccount[] = [
-  { id: "1", accountName: "John's Primary Roth", accountType: "Roth IRA", annualLimit: 7000, amountContributed: 3500, dueDate: getFutureDate(5) }, // Due soon
-  { id: "2", accountName: "Jane's Traditional", accountType: "Traditional IRA", annualLimit: 7000, amountContributed: 7000, dueDate: getFutureDate(25) }, // Approaching
-  { id: "3", accountName: "Business SEP", accountType: "SEP IRA", annualLimit: 66000, amountContributed: 25000, dueDate: getFutureDate(60) }, // Far out
-  { id: "4", accountName: "Side Gig SIMPLE", accountType: "SIMPLE IRA", annualLimit: 16000, amountContributed: 8000, dueDate: getFutureDate(-5) }, // Past due
-  { id: "5", accountName: "John's Rollover IRA", accountType: "Traditional IRA", annualLimit: 7000, amountContributed: 1000, dueDate: getFutureDate(90) }, // Far out
-  { id: "6", accountName: "Spouse Roth", accountType: "Roth IRA", annualLimit: 7000, amountContributed: 0, dueDate: getFutureDate(1) }, // Due tomorrow
-  { id: "7", accountName: "Emergency Fund IRA", accountType: "Traditional IRA", annualLimit: 7000, amountContributed: 3000, dueDate: getFutureDate(0) }, // Due today
+  { id: "1", accountName: "John's Primary Roth", accountType: "Roth IRA", annualLimit: 7000, amountContributed: 3500, dueDate: getFutureDate(3) }, // Pulse Red
+  { id: "2", accountName: "Jane's Traditional", accountType: "Traditional IRA", annualLimit: 7000, amountContributed: 7000, dueDate: getFutureDate(25) }, // Yellow
+  { id: "3", accountName: "Business SEP", accountType: "SEP IRA", annualLimit: 66000, amountContributed: 25000, dueDate: getFutureDate(60) }, // Green
+  { id: "4", accountName: "Side Gig SIMPLE", accountType: "SIMPLE IRA", annualLimit: 16000, amountContributed: 8000, dueDate: getFutureDate(-5) }, // Pulse Red (Past Due)
+  { id: "5", accountName: "John's Rollover IRA", accountType: "Traditional IRA", annualLimit: 7000, amountContributed: 1000, dueDate: getFutureDate(90) }, // Green
+  { id: "6", accountName: "Spouse Roth", accountType: "Roth IRA", annualLimit: 7000, amountContributed: 0, dueDate: getFutureDate(1) }, // Pulse Red (Due tomorrow)
+  { id: "7", accountName: "Emergency Fund IRA", accountType: "Traditional IRA", annualLimit: 7000, amountContributed: 3000, dueDate: getFutureDate(0) }, // Pulse Red (Due today)
+  { id: "8", accountName: "College Fund IRA", accountType: "Roth IRA", annualLimit: 7000, amountContributed: 1500, dueDate: getFutureDate(14) }, // Red (no pulse)
+  { id: "9", accountName: "Retirement Plus", accountType: "SEP IRA", annualLimit: 66000, amountContributed: 60000, dueDate: getFutureDate(40) }, // Yellow
+  { id: "10", accountName: "Travel Savings IRA", accountType: "Traditional IRA", annualLimit: 7000, amountContributed: 500, dueDate: getFutureDate(180) }, // Green
 ];
+
 
 const calculateMonthsLeft = (): number => {
   const currentMonth = new Date().getMonth(); // 0-11
@@ -50,7 +54,8 @@ const calculateMonthsLeft = (): number => {
 interface DueDateInfo {
   mainDisplay: string;
   tooltipDate: string;
-  colorClass: string;
+  boxClassName: string;
+  pulseClassName: string;
 }
 
 const getDueDateInfo = (dueDateString: string): DueDateInfo => {
@@ -59,39 +64,48 @@ const getDueDateInfo = (dueDateString: string): DueDateInfo => {
   const parsedDueDate = parseISO(dueDateString);
 
   if (!isValid(parsedDueDate)) {
-    return { mainDisplay: "N/A", tooltipDate: "Invalid Date", colorClass: "text-muted-foreground" };
+    return { mainDisplay: "N/A", tooltipDate: "Invalid Date", boxClassName: "bg-gray-400 text-black", pulseClassName: "" };
   }
   
-  parsedDueDate.setHours(0,0,0,0); // Normalize due date to the start of the day for accurate comparison
+  parsedDueDate.setHours(0,0,0,0); // Normalize due date for accurate comparison
 
   const daysRemaining = differenceInDays(parsedDueDate, today);
-  let colorClass = "text-green-400"; // Default green
   let mainDisplay: string;
+  let boxClassName: string;
+  let pulseClassName = "";
 
   if (daysRemaining < 0) {
-    colorClass = "text-red-400";
     mainDisplay = `${Math.abs(daysRemaining)}d past`;
+    boxClassName = "bg-red-500 text-white";
+    pulseClassName = "due-pulse";
   } else if (daysRemaining === 0) {
-    colorClass = "text-red-400";
     mainDisplay = "Today";
+    boxClassName = "bg-red-500 text-white";
+    pulseClassName = "due-pulse";
   } else if (daysRemaining === 1) {
-    colorClass = "text-red-400";
-    mainDisplay = "1d left";
-  } else if (daysRemaining <= 7) {
-    colorClass = "text-red-400";
+    mainDisplay = `1d left`;
+    boxClassName = "bg-red-500 text-white";
+    pulseClassName = "due-pulse";
+  } else if (daysRemaining <= 5) {
     mainDisplay = `${daysRemaining}d left`;
-  } else if (daysRemaining <= 30) {
-    colorClass = "text-yellow-400";
+    boxClassName = "bg-red-500 text-white";
+    pulseClassName = "due-pulse";
+  } else if (daysRemaining < 15) {
     mainDisplay = `${daysRemaining}d left`;
+    boxClassName = "bg-red-500 text-white";
+  } else if (daysRemaining <= 45) {
+    mainDisplay = `${daysRemaining}d left`;
+    boxClassName = "bg-yellow-400 text-black";
   } else {
-    // Default for > 30 days
     mainDisplay = `${daysRemaining}d left`;
+    boxClassName = "bg-green-500 text-white";
   }
 
   return {
     mainDisplay,
     tooltipDate: format(parsedDueDate, "MMM dd, yyyy"),
-    colorClass,
+    boxClassName,
+    pulseClassName,
   };
 };
 
@@ -169,7 +183,7 @@ export default function ContributionMatrixPage() {
               <TableHead className="font-bold text-right">Remaining</TableHead>
               <TableHead className="font-bold min-w-[180px]">Progress (%)</TableHead>
               <TableHead className="font-bold text-right whitespace-nowrap">Monthly to Max-Out</TableHead>
-              <TableHead className="font-bold text-right whitespace-nowrap">Due Date</TableHead>
+              <TableHead className="font-bold text-center whitespace-nowrap">Due Date</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -213,11 +227,13 @@ export default function ContributionMatrixPage() {
                   <TableCell className="text-right whitespace-nowrap">
                     {monthlyToMax > 0 && progressPercent < 100 ? `$${monthlyToMax.toFixed(2)}/mo` : (progressPercent >= 100 ? "Maxed Out" : "N/A")}
                   </TableCell>
-                  <TableCell className={cn("text-right whitespace-nowrap font-medium", dueDateInfo.colorClass)}>
+                  <TableCell className="text-center whitespace-nowrap">
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <span>{dueDateInfo.mainDisplay}</span>
+                          <span className={cn("due-box", dueDateInfo.boxClassName, dueDateInfo.pulseClassName)}>
+                            {dueDateInfo.mainDisplay}
+                          </span>
                         </TooltipTrigger>
                         <TooltipContent>
                           <p>{dueDateInfo.tooltipDate}</p>
