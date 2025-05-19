@@ -2,18 +2,18 @@
 "use client";
 
 import * as React from "react";
-import { Download, TrendingUp, MessageSquare, Loader2, AlertTriangle } from 'lucide-react';
+import { Download, TrendingUp, MessageSquare, Loader2, AlertTriangle, PieChart, BarChart2 } from 'lucide-react';
 import { differenceInDays, parseISO, format, isValid } from 'date-fns';
 import { PlaceholderCard } from '@/components/dashboard/placeholder-card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-// Removed useToast as it's no longer needed for input validation
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-
+import { CircularProgressRing } from "@/components/ui/circular-progress-ring";
+import { OverallContributionDonutChart } from "@/components/charts/overall-contribution-donut-chart";
+import { RevenueOpportunityBarChart } from "@/components/charts/revenue-opportunity-bar-chart";
 
 type AccountType = 'Traditional IRA' | 'Roth IRA' | 'SEP IRA' | 'SIMPLE IRA';
 
@@ -33,22 +33,21 @@ const getFutureDate = (days: number): string => {
 };
 
 const initialContributionAccounts: ContributionAccount[] = [
-  { id: "1", accountName: "John's Primary Roth", accountType: "Roth IRA", annualLimit: 7000, amountContributed: 3500, dueDate: getFutureDate(3) }, // Pulse Red
-  { id: "2", accountName: "Jane's Traditional", accountType: "Traditional IRA", annualLimit: 7000, amountContributed: 7000, dueDate: getFutureDate(25) }, // Yellow
-  { id: "3", accountName: "Business SEP", accountType: "SEP IRA", annualLimit: 66000, amountContributed: 25000, dueDate: getFutureDate(60) }, // Green
-  { id: "4", accountName: "Side Gig SIMPLE", accountType: "SIMPLE IRA", annualLimit: 16000, amountContributed: 8000, dueDate: getFutureDate(-5) }, // Pulse Red (Past Due)
-  { id: "5", accountName: "John's Rollover IRA", accountType: "Traditional IRA", annualLimit: 7000, amountContributed: 1000, dueDate: getFutureDate(90) }, // Green
-  { id: "6", accountName: "Spouse Roth", accountType: "Roth IRA", annualLimit: 7000, amountContributed: 0, dueDate: getFutureDate(1) }, // Pulse Red (Due tomorrow)
-  { id: "7", accountName: "Emergency Fund IRA", accountType: "Traditional IRA", annualLimit: 7000, amountContributed: 3000, dueDate: getFutureDate(0) }, // Pulse Red (Due today)
-  { id: "8", accountName: "College Fund IRA", accountType: "Roth IRA", annualLimit: 7000, amountContributed: 1500, dueDate: getFutureDate(14) }, // Red (no pulse)
-  { id: "9", accountName: "Retirement Plus", accountType: "SEP IRA", annualLimit: 66000, amountContributed: 60000, dueDate: getFutureDate(40) }, // Yellow
-  { id: "10", accountName: "Travel Savings IRA", accountType: "Traditional IRA", annualLimit: 7000, amountContributed: 500, dueDate: getFutureDate(180) }, // Green
+  { id: "1", accountName: "John's Primary Roth", accountType: "Roth IRA", annualLimit: 7000, amountContributed: 3500, dueDate: getFutureDate(3) },
+  { id: "2", accountName: "Jane's Traditional", accountType: "Traditional IRA", annualLimit: 7000, amountContributed: 7000, dueDate: getFutureDate(25) },
+  { id: "3", accountName: "Business SEP", accountType: "SEP IRA", annualLimit: 66000, amountContributed: 25000, dueDate: getFutureDate(60) },
+  { id: "4", accountName: "Side Gig SIMPLE", accountType: "SIMPLE IRA", annualLimit: 16000, amountContributed: 8000, dueDate: getFutureDate(-5) },
+  { id: "5", accountName: "John's Rollover IRA", accountType: "Traditional IRA", annualLimit: 7000, amountContributed: 1000, dueDate: getFutureDate(90) },
+  { id: "6", accountName: "Spouse Roth", accountType: "Roth IRA", annualLimit: 7000, amountContributed: 0, dueDate: getFutureDate(1) },
+  { id: "7", accountName: "Emergency Fund IRA", accountType: "Traditional IRA", annualLimit: 7000, amountContributed: 3000, dueDate: getFutureDate(0) },
+  { id: "8", accountName: "College Fund IRA", accountType: "Roth IRA", annualLimit: 7000, amountContributed: 1500, dueDate: getFutureDate(14) },
+  { id: "9", accountName: "Retirement Plus", accountType: "SEP IRA", annualLimit: 66000, amountContributed: 60000, dueDate: getFutureDate(40) },
+  { id: "10", accountName: "Travel Savings IRA", accountType: "Traditional IRA", annualLimit: 7000, amountContributed: 500, dueDate: getFutureDate(180) },
 ];
-
 
 const calculateMonthsLeft = (): number => {
   const currentMonth = new Date().getMonth(); // 0-11
-  return Math.max(1, 11 - currentMonth); // Ensure at least 1 month for calculation if current month is December
+  return Math.max(1, 11 - currentMonth); 
 };
 
 interface DueDateInfo {
@@ -60,14 +59,14 @@ interface DueDateInfo {
 
 const getDueDateInfo = (dueDateString: string): DueDateInfo => {
   const today = new Date();
-  today.setHours(0, 0, 0, 0); // Normalize today to the start of the day
+  today.setHours(0, 0, 0, 0); 
   const parsedDueDate = parseISO(dueDateString);
 
   if (!isValid(parsedDueDate)) {
     return { mainDisplay: "N/A", tooltipDate: "Invalid Date", boxClassName: "bg-gray-400 text-black", pulseClassName: "" };
   }
   
-  parsedDueDate.setHours(0,0,0,0); // Normalize due date for accurate comparison
+  parsedDueDate.setHours(0,0,0,0); 
 
   const daysRemaining = differenceInDays(parsedDueDate, today);
   let mainDisplay: string;
@@ -88,7 +87,7 @@ const getDueDateInfo = (dueDateString: string): DueDateInfo => {
     pulseClassName = "due-pulse";
   } else if (daysRemaining < 15) {
     mainDisplay = `${daysRemaining}d left`;
-    boxClassName = "bg-red-500 text-white"; // Red, no pulse
+    boxClassName = "bg-red-500 text-white"; 
   } else if (daysRemaining <= 45) {
     mainDisplay = `${daysRemaining}d left`;
     boxClassName = "bg-yellow-400 text-black";
@@ -105,16 +104,13 @@ const getDueDateInfo = (dueDateString: string): DueDateInfo => {
   };
 };
 
+const MOCK_FEE_RATE = 0.01; // 1%
 
 export default function ContributionMatrixPage() {
-  // Removed accounts state as it's now static display from initialContributionAccounts
   const accounts = initialContributionAccounts;
   const [mavenQuery, setMavenQuery] = React.useState("");
   const [mavenResponse, setMavenResponse] = React.useState<string | null>(null);
   const [isLoadingMaven, setIsLoadingMaven] = React.useState(false);
-  // Removed useToast as it's no longer needed
-
-  // Removed handleContributionChange function as the input is now read-only
 
   const handleAskMaven = async () => {
     if (!mavenQuery.trim()) return;
@@ -142,6 +138,28 @@ export default function ContributionMatrixPage() {
 
   const monthsLeft = calculateMonthsLeft();
 
+  const overallContributionData = React.useMemo(() => {
+    const totalContributed = accounts.reduce((sum, acc) => sum + acc.amountContributed, 0);
+    const totalLimit = accounts.reduce((sum, acc) => sum + acc.annualLimit, 0);
+    return { totalContributed, totalLimit };
+  }, [accounts]);
+
+  const revenueOpportunityData = React.useMemo(() => {
+    return accounts.map(acc => {
+      const remaining = Math.max(0, acc.annualLimit - acc.amountContributed);
+      return {
+        name: acc.accountName,
+        opportunity: remaining * MOCK_FEE_RATE,
+        remainingContribution: remaining,
+        accountType: acc.accountType
+      };
+    }).filter(item => item.opportunity > 0);
+  }, [accounts]);
+
+  const totalRevenueOpportunity = React.useMemo(() => {
+    return revenueOpportunityData.reduce((sum, item) => sum + item.opportunity, 0);
+  }, [revenueOpportunityData]);
+
   return (
     <main className="min-h-screen bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#5b21b6]/10 to-[#000104] flex-1 p-6 space-y-8 md:p-8">
       <h1 className="text-3xl font-bold tracking-tight text-foreground mb-8">Contribution Matrix</h1>
@@ -155,7 +173,7 @@ export default function ContributionMatrixPage() {
               <TableHead className="font-bold text-right">Annual Limit</TableHead>
               <TableHead className="font-bold text-right w-40">Contributed</TableHead>
               <TableHead className="font-bold text-right">Remaining</TableHead>
-              <TableHead className="font-bold min-w-[180px]">Progress (%)</TableHead>
+              <TableHead className="font-bold min-w-[180px] text-center">Progress (%)</TableHead>
               <TableHead className="font-bold text-right whitespace-nowrap">Monthly to Max-Out</TableHead>
               <TableHead className="font-bold text-center whitespace-nowrap">Due Date</TableHead>
             </TableRow>
@@ -173,24 +191,11 @@ export default function ContributionMatrixPage() {
                   <TableCell className="text-muted-foreground whitespace-nowrap">{account.accountType}</TableCell>
                   <TableCell className="text-right whitespace-nowrap">${account.annualLimit.toLocaleString()}</TableCell>
                   <TableCell className="text-right">
-                    {/* Replaced Input with static text display */}
                     <span>${account.amountContributed.toLocaleString()}</span>
                   </TableCell>
                   <TableCell className="text-right whitespace-nowrap">${remaining.toLocaleString()}</TableCell>
-                  <TableCell>
-                    <div className="flex items-center gap-2">
-                      <Progress
-                        value={progressPercent}
-                        className={cn(
-                          "h-3 flex-grow",
-                           progressPercent >= 80 ? "[&>div]:bg-[hsl(var(--chart-3))]" : 
-                           progressPercent >= 40 ? "[&>div]:bg-[hsl(var(--chart-4))]" :
-                                                 "[&>div]:bg-[hsl(var(--chart-5))]"
-                        )}
-                        aria-label={`Progress ${progressPercent.toFixed(0)}%`}
-                      />
-                      <span className="text-xs font-medium text-muted-foreground w-12 text-right">{progressPercent.toFixed(0)}%</span>
-                    </div>
+                  <TableCell className="flex justify-center items-center">
+                     <CircularProgressRing progress={progressPercent} size={48} strokeWidth={5} />
                   </TableCell>
                   <TableCell className="text-right whitespace-nowrap">
                     {monthlyToMax > 0 && progressPercent < 100 ? `$${monthlyToMax.toFixed(2)}/mo` : (progressPercent >= 100 ? "Maxed Out" : "N/A")}
@@ -221,7 +226,46 @@ export default function ContributionMatrixPage() {
         </div>
       </PlaceholderCard>
 
-      <PlaceholderCard title="Ask Maven (Contribution Assistant)">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
+        <PlaceholderCard title="Overall Contribution Status" icon={PieChart}>
+          <div className="h-[350px] md:h-[400px] w-full">
+            {accounts.length > 0 ? (
+              <OverallContributionDonutChart
+                totalContributed={overallContributionData.totalContributed}
+                totalLimit={overallContributionData.totalLimit}
+              />
+            ) : (
+              <p className="text-muted-foreground text-center flex items-center justify-center h-full">No contribution data available.</p>
+            )}
+          </div>
+           <p className="text-sm text-muted-foreground mt-2 text-center">
+            Showing % of total IRA contribution limits funded across all accounts.
+          </p>
+        </PlaceholderCard>
+
+        <PlaceholderCard 
+          title="Revenue Opportunity from Maxing Out Contributions" 
+          icon={BarChart2}
+          description={
+            <span className="text-lg font-semibold text-green-400">
+              Total Potential: ${totalRevenueOpportunity.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+            </span>
+          }
+        >
+          <div className="h-[350px] md:h-[400px] w-full mt-2">
+            {revenueOpportunityData.length > 0 ? (
+              <RevenueOpportunityBarChart data={revenueOpportunityData} />
+            ) : (
+              <p className="text-muted-foreground text-center flex items-center justify-center h-full">All accounts are maxed out or no data available.</p>
+            )}
+          </div>
+          <p className="text-xs text-muted-foreground mt-2 text-center">
+            Estimated based on remaining contributions and a {MOCK_FEE_RATE*100}% advisory fee.
+          </p>
+        </PlaceholderCard>
+      </div>
+
+      <PlaceholderCard title="Ask Maven (Contribution Assistant)" className="mt-8">
         <div className="space-y-4">
           <div className="flex items-center gap-2">
             <Label htmlFor="maven-query-input" className="sr-only">Ask Maven</Label>
@@ -252,8 +296,6 @@ export default function ContributionMatrixPage() {
           )}
         </div>
       </PlaceholderCard>
-
     </main>
   );
 }
-
