@@ -113,10 +113,10 @@ export default function RootLayout({
           >
             <SidebarHeader className="p-4 px-5 border-b border-sidebar-border">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 relative">
+                <div className="w-9 h-9 relative">
                   <Image
-                    src="/icons/brain-logo.png"
-                    alt="Sanctuary Matrix Logo"
+                    src="/assets/brain-logo.png"
+                    alt="Sanctuary Matrix Brain Icon"
                     fill
                     className="object-contain brain-logo-static-glow" 
                   />
@@ -143,7 +143,7 @@ export default function RootLayout({
           onClick={() => setIsChatOpen(true)}
           aria-label="Open Chat with Maven AI"
         >
-          <Image src="/icons/brain-logo.png" alt="Chat with Maven AI" width={36} height={36} />
+          <Image src="/assets/brain-logo.png" alt="Chat with Maven AI" width={36} height={36} />
         </Button>
 
         {/* Chatbot Dialog */}
