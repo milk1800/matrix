@@ -76,12 +76,42 @@ export default function RootLayout({
             <span className="mx-4">NVDA: $1,122.33 ▲2.1%</span>
             <span className="mx-4">GOOGL: $132.99 ▲0.6%</span>
             <span className="mx-4">TSLA: $172.43 ▼1.0%</span>
+            <span className="mx-4">AMZN: $123.55 ▲0.9%</span>
+            <span className="mx-4">META: $309.70 ▲1.7%</span>
+            <span className="mx-4">NFLX: $402.20 ▼0.6%</span>
+            <span className="mx-4">AMD: $132.44 ▲2.4%</span>
+            <span className="mx-4">CRM: $220.11 ▲0.3%</span>
+            <span className="mx-4">INTC: $37.15 ▼0.2%</span>
+            <span className="mx-4">ORCL: $116.50 ▲1.1%</span>
+            <span className="mx-4">UBER: $72.90 ▲1.8%</span>
+            <span className="mx-4">LYFT: $15.44 ▼0.8%</span>
+            <span className="mx-4">SPOT: $308.20 ▲2.9%</span>
+            <span className="mx-4">SNOW: $178.40 ▼1.2%</span>
+            <span className="mx-4">SHOP: $68.90 ▲1.5%</span>
+            <span className="mx-4">COIN: $142.70 ▲3.6%</span>
+            <span className="mx-4">BABA: $85.10 ▼0.9%</span>
+            <span className="mx-4">ROKU: $62.22 ▲2.0%</span>
             {/* Duplicate for seamless scroll */}
             <span className="mx-4">AAPL: $189.45 ▲1.2%</span>
             <span className="mx-4">MSFT: $324.12 ▼0.4%</span>
             <span className="mx-4">NVDA: $1,122.33 ▲2.1%</span>
             <span className="mx-4">GOOGL: $132.99 ▲0.6%</span>
             <span className="mx-4">TSLA: $172.43 ▼1.0%</span>
+            <span className="mx-4">AMZN: $123.55 ▲0.9%</span>
+            <span className="mx-4">META: $309.70 ▲1.7%</span>
+            <span className="mx-4">NFLX: $402.20 ▼0.6%</span>
+            <span className="mx-4">AMD: $132.44 ▲2.4%</span>
+            <span className="mx-4">CRM: $220.11 ▲0.3%</span>
+            <span className="mx-4">INTC: $37.15 ▼0.2%</span>
+            <span className="mx-4">ORCL: $116.50 ▲1.1%</span>
+            <span className="mx-4">UBER: $72.90 ▲1.8%</span>
+            <span className="mx-4">LYFT: $15.44 ▼0.8%</span>
+            <span className="mx-4">SPOT: $308.20 ▲2.9%</span>
+            <span className="mx-4">SNOW: $178.40 ▼1.2%</span>
+            <span className="mx-4">SHOP: $68.90 ▲1.5%</span>
+            <span className="mx-4">COIN: $142.70 ▲3.6%</span>
+            <span className="mx-4">BABA: $85.10 ▼0.9%</span>
+            <span className="mx-4">ROKU: $62.22 ▲2.0%</span>
           </div>
         </div>
         {/* Adjust pt-10 or similar on the main content wrapper if needed to account for ticker height */}
@@ -97,7 +127,7 @@ export default function RootLayout({
                     src="/icons/brain-logo.png"
                     alt="Sanctuary Matrix Logo"
                     fill
-                    objectFit="contain"
+                    className="object-contain" 
                   />
                 </div>
                 <div className="text-xl font-bold text-white leading-tight">
