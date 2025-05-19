@@ -1,7 +1,7 @@
 
 "use client";
 
-import { Inter, Roboto_Mono } from 'next/font/google'; // Changed to valid Google Fonts
+import { Inter, Roboto_Mono } from 'next/font/google'; 
 import * as React from 'react';
 import Image from "next/image";
 import './globals.css';
@@ -12,15 +12,15 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, X, Brain } from 'lucide-react';
+import { Send, X, Brain } from 'lucide-react'; // Brain icon imported
 
-const mainFont = Inter({
-  variable: '--font-geist-sans',
+const mainFont = Inter({ // Using Inter as a valid Google Font
+  variable: '--font-geist-sans', // Keeping original variable name for CSS compatibility
   subsets: ['latin'],
 });
 
-const monoFont = Roboto_Mono({
-  variable: '--font-geist-mono',
+const monoFont = Roboto_Mono({ // Using Roboto Mono as a valid Google Font
+  variable: '--font-geist-mono', // Keeping original variable name
   subsets: ['latin'],
 });
 
@@ -57,7 +57,7 @@ export default function RootLayout({
 
     const botResponse: ChatMessage = {
       id: (Date.now() + 1).toString(),
-      text: `Maven echoes: "${currentMessage}"`,
+      text: `Maven echoes: "${currentMessage}"`, 
       sender: 'bot',
     };
 
@@ -108,19 +108,21 @@ export default function RootLayout({
         <SidebarProvider defaultOpen={true}>
           <Sidebar
             collapsible="none"
-            className="shadow-sidebar-glow pt-10"
+            className="shadow-sidebar-glow pt-10" // Added pt-10 for ticker padding
           >
             <SidebarHeader className="p-4 px-5 border-b border-sidebar-border">
-              <div className="flex items-center space-x-2">
-                <Brain className="w-6 h-6 text-purple-500 mr-2" />
-                <span className="text-xl font-bold text-white">Sanctuary Matrix</span>
+              <div className="flex items-center space-x-3">
+                <Brain className="w-8 h-8 text-purple-500 animate-pulse-neon" /> 
+                <span className="text-white font-bold text-lg leading-tight">
+                  Sanctuary <br /> Matrix
+                </span>
               </div>
             </SidebarHeader>
             <SidebarContent>
               <SidebarNavItems />
             </SidebarContent>
           </Sidebar>
-          <SidebarInset className="pt-10">
+          <SidebarInset className="pt-10"> {/* Added pt-10 for ticker padding */}
             {children}
           </SidebarInset>
         </SidebarProvider>
@@ -131,7 +133,7 @@ export default function RootLayout({
           onClick={() => setIsChatOpen(true)}
           aria-label="Open Chat with Maven AI"
         >
-          <Image src="/assets/brain-logo.png" alt="Chat with Maven AI" width={36} height={36} />
+           <Image src="/icons/brain-logo.png" alt="Chat with Maven AI" width={36} height={36} />
         </Button>
 
         <Dialog open={isChatOpen} onOpenChange={setIsChatOpen}>

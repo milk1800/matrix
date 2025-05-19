@@ -79,7 +79,25 @@
   animation: pulse-glow 1.5s ease-in-out infinite;
 }
 
-/* Static glow for the main logo */
+
+/* Neon Pulse for Brain Logo */
+@keyframes neonPulse {
+  0%, 100% {
+    filter: drop-shadow(0 0 4px #a855f7) drop-shadow(0 0 8px #a855f7) drop-shadow(0 0 12px #a855f7);
+    transform: scale(1);
+  }
+  50% {
+    filter: drop-shadow(0 0 6px #9333ea) drop-shadow(0 0 12px #9333ea) drop-shadow(0 0 20px #9333ea);
+    transform: scale(1.05);
+  }
+}
+
+.animate-pulse-neon {
+  animation: neonPulse 1.8s infinite ease-in-out;
+}
+
+
+/* Static glow for the main logo if needed, not used with pulse-neon */
 .brain-logo-static-glow {
   filter: drop-shadow(0 0 6px #8b5cf6);
 }
