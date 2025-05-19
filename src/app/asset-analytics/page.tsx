@@ -1,6 +1,8 @@
 
+"use client";
+import * as React from "react";
 import Image from "next/image";
-import { Landmark, TrendingUp, Target, ArrowDownCircle, ArrowUpCircle, ArrowRightLeft, Download } from 'lucide-react';
+import { PiggyBank, TrendingUp, Target, ArrowDownCircle, ArrowUpCircle, ArrowRightLeft, Download } from 'lucide-react';
 import { PlaceholderCard } from '@/components/dashboard/placeholder-card';
 import { AssetAllocationDonutChart } from '@/components/charts/asset-allocation-donut-chart';
 import { Button } from '@/components/ui/button';
@@ -11,39 +13,40 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 const metricCardsData = [
   {
     title: "Total AUM",
-    value: "$12.5M",
-    description: "+5.2% last month",
-    icon: "/icons/total-aum.svg",
+    value: "$1.2B",
+    description: React.createElement('span', { className: 'text-green-400 text-sm' }, '+20.1% from last month'),
+    icon: PiggyBank,
+    iconClassName: "text-green-500",
   },
   {
     title: "YTD Return",
     value: "+8.7%",
     description: "vs. Benchmark +7.1%",
-    icon: "/icons/ytd-return.svg",
+    icon: TrendingUp,
   },
   {
     title: "% in Model Portfolios",
     value: "72%",
     description: "Target 80%",
-    icon: "/icons/model-portfolios.svg",
+    icon: Target,
   },
   {
     title: "Inflows (MTD)",
     value: "$350K",
     description: "+15% from last month",
-    icon: "/icons/inflows.svg",
+    icon: ArrowDownCircle, // Lucide icon for inflows
   },
   {
     title: "Outflows (MTD)",
     value: "$120K",
     description: "-5% from last month",
-    icon: "/icons/outflows.svg",
+    icon: ArrowUpCircle, // Lucide icon for outflows
   },
   {
     title: "Net Flows (MTD)",
     value: "$230K",
     description: "Net positive inflow",
-    icon: "/icons/net-flows.svg",
+    icon: ArrowRightLeft, // Lucide icon for net flows
   },
 ];
 
@@ -118,6 +121,7 @@ export default function AssetAnalyticsPage() {
             value={card.value}
             description={card.description}
             icon={card.icon}
+            iconClassName={card.iconClassName} // Pass the custom class name
           />
         ))}
       </div>

@@ -1,3 +1,4 @@
+
 import type { LucideIcon } from "lucide-react";
 import Image from "next/image";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -7,12 +8,13 @@ interface PlaceholderCardProps {
   title: string;
   value?: string;
   description?: React.ReactNode;
-  icon?: LucideIcon | string; // Icon can be a LucideIcon component OR a string path
+  icon?: LucideIcon | string;
+  iconClassName?: string; // New prop for custom icon styling
   children?: React.ReactNode;
   className?: string;
 }
 
-export function PlaceholderCard({ title, value, description, icon, children, className }: PlaceholderCardProps) {
+export function PlaceholderCard({ title, value, description, icon, iconClassName, children, className }: PlaceholderCardProps) {
   const isStringPathIcon = typeof icon === 'string';
   const LucideIconComponent = typeof icon === 'function' ? icon : null;
 
@@ -23,25 +25,24 @@ export function PlaceholderCard({ title, value, description, icon, children, cla
       className
     )}>
       <CardHeader className={cn(
-        "flex p-4", // Unified base padding
-        isStringPathIcon ? "flex-col items-start pb-2" : "flex-row items-center space-y-0 pb-2" // Adjust layout based on icon type
+        "flex p-4",
+        isStringPathIcon ? "flex-col items-start pb-2" : "flex-row items-center space-y-0 pb-2"
       )}>
-        {isStringPathIcon && icon && ( // If icon is a string path, render Image
-          <div className="mb-2"> {/* Wrapper for consistent spacing for top image */}
+        {isStringPathIcon && icon && (
+          <div className="mb-3"> {/* Adjusted margin for visual balance with title */}
             <Image src={icon} alt={title} width={32} height={32} />
           </div>
         )}
-        {/* Render LucideIconComponent only if it's a function AND not a string path case */}
         {!isStringPathIcon && LucideIconComponent && (
-          <LucideIconComponent className="h-5 w-5 text-muted-foreground mr-3 shrink-0" />
+          <LucideIconComponent className={cn("h-5 w-5 mr-3 shrink-0", iconClassName || "text-muted-foreground")} />
         )}
         <CardTitle className="text-base font-bold text-foreground">{title}</CardTitle>
       </CardHeader>
       <CardContent className="p-4 pt-0">
         {value && <div className="text-3xl font-bold text-foreground">{value}</div>}
         {description && <p className="text-sm text-muted-foreground">{description}</p>}
-        {children && <div className="mt-4">{children}</div>}
-        {!children && !value && (
+        {children && <div className={cn(value || description ? "mt-4" : "")}>{children}</div>}
+        {!children && !value && !description && (
           <div className="text-muted-foreground h-[50px] flex items-center">Placeholder content</div>
         )}
       </CardContent>
