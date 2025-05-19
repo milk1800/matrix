@@ -1,6 +1,7 @@
+
 "use client";
 
-import { Geist, Geist_Mono } from 'next/font/google';
+import { Inter, Roboto_Mono } from 'next/font/google'; // Changed to valid Google Fonts
 import * as React from 'react';
 import Image from "next/image";
 import './globals.css';
@@ -11,16 +12,15 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, X } from 'lucide-react';
+import { Send, X, Brain } from 'lucide-react';
 
-
-const geistSans = Geist({
-  variable: '--font-geist-sans',
+const mainFont = Inter({ // Using Inter as a replacement for Geist_Sans
+  variable: '--font-geist-sans', // Keep original CSS variable name
   subsets: ['latin'],
 });
 
-const geistMono = Geist_Mono({
-  variable: '--font-geist-mono',
+const monoFont = Roboto_Mono({ // Using Roboto_Mono as a replacement for Geist_Mono
+  variable: '--font-geist-mono', // Keep original CSS variable name
   subsets: ['latin'],
 });
 
@@ -57,7 +57,7 @@ export default function RootLayout({
 
     const botResponse: ChatMessage = {
       id: (Date.now() + 1).toString(),
-      text: `Maven echoes: "${currentMessage}"`,
+      text: `Maven echoes: "${currentMessage}"`, 
       sender: 'bot',
     };
 
@@ -67,7 +67,7 @@ export default function RootLayout({
 
   return (
     <html lang="en" className="dark">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+      <body className={`${mainFont.variable} ${monoFont.variable} antialiased`}>
         <div className="w-full overflow-hidden bg-black/90 border-b border-gray-700 py-2 fixed top-0 z-50">
           <div className="animate-ticker whitespace-nowrap flex space-x-6 text-sm font-mono">
             {/* Stock items - repeated for seamless scroll */}
@@ -129,19 +129,16 @@ export default function RootLayout({
         </SidebarProvider>
         <Toaster />
 
-        {/* Chatbot FAB */}
         <Button
           className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg bg-primary hover:bg-primary/90 z-50 flex items-center justify-center animate-pulse-glow"
           onClick={() => setIsChatOpen(true)}
           aria-label="Open Chat with Maven AI"
         >
-          {/* Ensure the path /icons/brain-logo.png is correct if you intend to use a specific PNG for the chatbot FAB */}
           <Image src="/assets/brain-logo.png" alt="Chat with Maven AI" width={36} height={36} />
         </Button>
 
-        {/* Chatbot Dialog */}
         <Dialog open={isChatOpen} onOpenChange={setIsChatOpen}>
-          <DialogContent className="sm:max-w-[425px] md:max-w-[550px] lg:max-w-[40%] h-[70vh] flex flex-col bg-card/90 backdrop-blur-md border-none shadow-xl">
+          <DialogContent className="sm:max-w-[425px] md:max-w-[550px] lg:max-w-[40%] h-[70vh] flex flex-col bg-card/60 backdrop-blur-md border-none shadow-xl">
             <DialogHeader className="p-4 border-b border-border/50">
               <DialogTitle className="text-lg font-semibold text-foreground">Chat with Maven AI</DialogTitle>
                <DialogClose asChild>
@@ -193,7 +190,6 @@ export default function RootLayout({
             </DialogFooter>
           </DialogContent>
         </Dialog>
-
       </body>
     </html>
   );
