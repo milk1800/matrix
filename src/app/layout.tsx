@@ -1,9 +1,9 @@
 
-"use client";
+"use client"; // Keep client for chatbot state for now
 
 import { Geist, Geist_Mono } from 'next/font/google';
 import * as React from 'react';
-import Image from "next/image";
+import Image from "next/image"; // Ensured Image is imported
 import './globals.css';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarInset } from '@/components/ui/sidebar';
 import { SidebarNavItems } from '@/components/layout/sidebar-nav-items';
@@ -13,6 +13,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogC
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, X } from 'lucide-react';
+
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -75,10 +76,10 @@ export default function RootLayout({
           >
             <SidebarHeader className="p-4 px-5 border-b border-sidebar-border">
               <div className="flex items-center space-x-3">
-                <div className="w-10 h-10 relative"> {/* Updated size and made relative for fill */}
+                <div className="w-10 h-10 relative"> {/* Container for the icon 40x40px */}
                   <Image
-                    src="/icons/brain-logo.png" // Updated path
-                    alt="Sanctuary Matrix Logo" // Updated alt text
+                    src="/icons/brain-logo.png" // Correct path
+                    alt="Sanctuary Matrix Logo"
                     fill // Use fill to cover the parent div
                     objectFit="contain" // Maintain aspect ratio
                   />
