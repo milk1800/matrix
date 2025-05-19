@@ -12,9 +12,9 @@ export default function ReportsPage() {
   ];
 
   return (
-    <main className="flex-1 p-6 space-y-6 md:p-8">
+    <main className="min-h-screen bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#5b21b6]/10 to-[#000104] flex-1 p-6 space-y-6 md:p-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold tracking-tight text-foreground">Reports Dashboard</h1>
+        <h1 className="text-3xl font-bold tracking-tight text-foreground">Reports</h1>
         <Button>
           <Settings className="mr-2 h-4 w-4" /> Configure Reports
         </Button>

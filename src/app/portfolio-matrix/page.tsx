@@ -56,7 +56,7 @@ export default function PortfolioMatrixPage() {
 
   return (
     <main className="min-h-screen bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#5b21b6]/10 to-[#000104] flex-1 p-6 space-y-8 md:p-8">
-      <h1 className="text-3xl font-bold tracking-tight text-foreground mb-8">Portfolio Matrix Dashboard</h1>
+      <h1 className="text-3xl font-bold tracking-tight text-foreground mb-8">Portfolio Matrix</h1>
       
       <PlaceholderCard title="Portfolio Analysis Engine">
         <div className="flex flex-col sm:flex-row items-center gap-4">
@@ -72,7 +72,7 @@ export default function PortfolioMatrixPage() {
           </div>
           <Button 
             className="w-full sm:w-auto shrink-0"
-            onClick={handleAnalyzePortfolio} // We'll make this functional later
+            onClick={handleAnalyzePortfolio} 
             disabled={isLoadingAnalysis}
           >
             {isLoadingAnalysis ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
