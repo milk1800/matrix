@@ -1,5 +1,5 @@
 
-"use client"; // Keep client for chatbot state for now
+"use client"; 
 
 import { Geist, Geist_Mono } from 'next/font/google';
 import * as React from 'react';
@@ -58,7 +58,7 @@ export default function RootLayout({
 
     const botResponse: ChatMessage = {
       id: (Date.now() + 1).toString(),
-      text: `Maven echoes: "${currentMessage}"`, // Placeholder response
+      text: `Maven echoes: "${currentMessage}"`, 
       sender: 'bot',
     };
 
@@ -70,55 +70,46 @@ export default function RootLayout({
     <html lang="en" className="dark">
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <div className="w-full overflow-hidden bg-black/90 border-b border-gray-700 py-2 fixed top-0 z-50">
-          <div className="animate-marquee whitespace-nowrap text-sm text-white">
-            <span className="mx-4">AAPL: $189.45 ▲1.2%</span>
-            <span className="mx-4">MSFT: $324.12 ▼0.4%</span>
-            <span className="mx-4">NVDA: $1,122.33 ▲2.1%</span>
-            <span className="mx-4">GOOGL: $132.99 ▲0.6%</span>
-            <span className="mx-4">TSLA: $172.43 ▼1.0%</span>
-            <span className="mx-4">AMZN: $123.55 ▲0.9%</span>
-            <span className="mx-4">META: $309.70 ▲1.7%</span>
-            <span className="mx-4">NFLX: $402.20 ▼0.6%</span>
-            <span className="mx-4">AMD: $132.44 ▲2.4%</span>
-            <span className="mx-4">CRM: $220.11 ▲0.3%</span>
-            <span className="mx-4">INTC: $37.15 ▼0.2%</span>
-            <span className="mx-4">ORCL: $116.50 ▲1.1%</span>
-            <span className="mx-4">UBER: $72.90 ▲1.8%</span>
-            <span className="mx-4">LYFT: $15.44 ▼0.8%</span>
-            <span className="mx-4">SPOT: $308.20 ▲2.9%</span>
-            <span className="mx-4">SNOW: $178.40 ▼1.2%</span>
-            <span className="mx-4">SHOP: $68.90 ▲1.5%</span>
-            <span className="mx-4">COIN: $142.70 ▲3.6%</span>
-            <span className="mx-4">BABA: $85.10 ▼0.9%</span>
-            <span className="mx-4">ROKU: $62.22 ▲2.0%</span>
-            {/* Duplicate for seamless scroll */}
-            <span className="mx-4">AAPL: $189.45 ▲1.2%</span>
-            <span className="mx-4">MSFT: $324.12 ▼0.4%</span>
-            <span className="mx-4">NVDA: $1,122.33 ▲2.1%</span>
-            <span className="mx-4">GOOGL: $132.99 ▲0.6%</span>
-            <span className="mx-4">TSLA: $172.43 ▼1.0%</span>
-            <span className="mx-4">AMZN: $123.55 ▲0.9%</span>
-            <span className="mx-4">META: $309.70 ▲1.7%</span>
-            <span className="mx-4">NFLX: $402.20 ▼0.6%</span>
-            <span className="mx-4">AMD: $132.44 ▲2.4%</span>
-            <span className="mx-4">CRM: $220.11 ▲0.3%</span>
-            <span className="mx-4">INTC: $37.15 ▼0.2%</span>
-            <span className="mx-4">ORCL: $116.50 ▲1.1%</span>
-            <span className="mx-4">UBER: $72.90 ▲1.8%</span>
-            <span className="mx-4">LYFT: $15.44 ▼0.8%</span>
-            <span className="mx-4">SPOT: $308.20 ▲2.9%</span>
-            <span className="mx-4">SNOW: $178.40 ▼1.2%</span>
-            <span className="mx-4">SHOP: $68.90 ▲1.5%</span>
-            <span className="mx-4">COIN: $142.70 ▲3.6%</span>
-            <span className="mx-4">BABA: $85.10 ▼0.9%</span>
-            <span className="mx-4">ROKU: $62.22 ▲2.0%</span>
+          <div className="animate-ticker whitespace-nowrap flex space-x-6 text-sm font-mono">
+            {/* Stock items - repeated for seamless scroll */}
+            <span className="text-white">AAPL: <span className="text-green-400">$189.45 ▲1.2%</span></span>
+            <span className="text-white">MSFT: <span className="text-red-400">$324.12 ▼0.4%</span></span>
+            <span className="text-white">NVDA: <span className="text-green-400">$1122.33 ▲2.1%</span></span>
+            <span className="text-white">GOOGL: <span className="text-green-400">$132.99 ▲0.6%</span></span>
+            <span className="text-white">TSLA: <span className="text-red-400">$172.43 ▼1.0%</span></span>
+            <span className="text-white">AMZN: <span className="text-green-400">$123.55 ▲0.9%</span></span>
+            <span className="text-white">META: <span className="text-green-400">$309.70 ▲1.7%</span></span>
+            <span className="text-white">NFLX: <span className="text-red-400">$402.20 ▼0.6%</span></span>
+            <span className="text-white">AMD: <span className="text-green-400">$132.44 ▲2.4%</span></span>
+            <span className="text-white">INTC: <span className="text-red-400">$37.15 ▼0.2%</span></span>
+            <span className="text-white">SNOW: <span className="text-red-400">$178.40 ▼1.2%</span></span>
+            <span className="text-white">SHOP: <span className="text-green-400">$68.90 ▲1.5%</span></span>
+            <span className="text-white">COIN: <span className="text-green-400">$142.70 ▲3.6%</span></span>
+            <span className="text-white">BABA: <span className="text-red-400">$85.10 ▼0.9%</span></span>
+            <span className="text-white">ROKU: <span className="text-green-400">$62.22 ▲2.0%</span></span>
+            {/* Duplicate set for seamless scroll */}
+            <span className="text-white">AAPL: <span className="text-green-400">$189.45 ▲1.2%</span></span>
+            <span className="text-white">MSFT: <span className="text-red-400">$324.12 ▼0.4%</span></span>
+            <span className="text-white">NVDA: <span className="text-green-400">$1122.33 ▲2.1%</span></span>
+            <span className="text-white">GOOGL: <span className="text-green-400">$132.99 ▲0.6%</span></span>
+            <span className="text-white">TSLA: <span className="text-red-400">$172.43 ▼1.0%</span></span>
+            <span className="text-white">AMZN: <span className="text-green-400">$123.55 ▲0.9%</span></span>
+            <span className="text-white">META: <span className="text-green-400">$309.70 ▲1.7%</span></span>
+            <span className="text-white">NFLX: <span className="text-red-400">$402.20 ▼0.6%</span></span>
+            <span className="text-white">AMD: <span className="text-green-400">$132.44 ▲2.4%</span></span>
+            <span className="text-white">INTC: <span className="text-red-400">$37.15 ▼0.2%</span></span>
+            <span className="text-white">SNOW: <span className="text-red-400">$178.40 ▼1.2%</span></span>
+            <span className="text-white">SHOP: <span className="text-green-400">$68.90 ▲1.5%</span></span>
+            <span className="text-white">COIN: <span className="text-green-400">$142.70 ▲3.6%</span></span>
+            <span className="text-white">BABA: <span className="text-red-400">$85.10 ▼0.9%</span></span>
+            <span className="text-white">ROKU: <span className="text-green-400">$62.22 ▲2.0%</span></span>
           </div>
         </div>
-        {/* Adjust pt-10 or similar on the main content wrapper if needed to account for ticker height */}
+        
         <SidebarProvider defaultOpen={true}>
           <Sidebar
             collapsible="none"
-            className="shadow-sidebar-glow pt-10" // Added pt-10 to push sidebar content below ticker
+            className="shadow-sidebar-glow pt-10" 
           >
             <SidebarHeader className="p-4 px-5 border-b border-sidebar-border">
               <div className="flex items-center space-x-3">
@@ -127,7 +118,7 @@ export default function RootLayout({
                     src="/icons/brain-logo.png"
                     alt="Sanctuary Matrix Logo"
                     fill
-                    className="object-contain" 
+                    className="object-contain brain-logo-static-glow" 
                   />
                 </div>
                 <div className="text-xl font-bold text-white leading-tight">
@@ -140,7 +131,7 @@ export default function RootLayout({
               <SidebarNavItems />
             </SidebarContent>
           </Sidebar>
-          <SidebarInset className="pt-10"> {/* Added pt-10 to push main content below ticker */}
+          <SidebarInset className="pt-10"> 
             {children}
           </SidebarInset>
         </SidebarProvider>
@@ -152,7 +143,7 @@ export default function RootLayout({
           onClick={() => setIsChatOpen(true)}
           aria-label="Open Chat with Maven AI"
         >
-          <Image src="/icons/brain-logo.png" alt="Chat with Maven AI" width={32} height={32} />
+          <Image src="/icons/brain-logo.png" alt="Chat with Maven AI" width={36} height={36} />
         </Button>
 
         {/* Chatbot Dialog */}

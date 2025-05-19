@@ -7,7 +7,7 @@
   :root {
     --background: 225 100% 0.8%; /* #000104 */
     --foreground: 0 0% 100%; /* #FFFFFF */
-    --card: 0 0% 0% / 0.4; /* rgba(0,0,0,0.4) for cards */
+    --card: 0 0% 0% / 0.6; /* rgba(0,0,0,0.6) for cards */
     --card-foreground: 0 0% 100%; /* #FFFFFF */
     --popover: 253 36% 15%; /* #1C1833 - Matching card for consistency */
     --popover-foreground: 0 0% 100%; /* #FFFFFF */
@@ -31,7 +31,7 @@
     --chart-4: 46 96% 53%; /* Warning Yellow */
     --chart-5: 0 84% 60%; /* Error Red */
 
-    --radius: 1.25rem; /* 20px */
+    --radius: 1rem; /* 16px */
 
     /* Sidebar specific colors */
     --sidebar-background: transparent;
@@ -112,11 +112,11 @@
   filter: brightness(1.1);
 }
 
-@keyframes marquee {
+@keyframes ticker {
   0% { transform: translateX(100%); }
   100% { transform: translateX(-100%); }
 }
 
-.animate-marquee {
-  animation: marquee 40s linear infinite; /* Increased duration for more items */
+.animate-ticker {
+  animation: ticker 30s linear infinite;
 }
