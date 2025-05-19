@@ -1,9 +1,8 @@
-
 "use client"; 
 
 import { Geist, Geist_Mono } from 'next/font/google';
 import * as React from 'react';
-import Image from "next/image";
+import Image from "next/image"; // Keep Image for chatbot FAB
 import './globals.css';
 import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarInset } from '@/components/ui/sidebar';
 import { SidebarNavItems } from '@/components/layout/sidebar-nav-items';
@@ -136,7 +135,7 @@ export default function RootLayout({
           onClick={() => setIsChatOpen(true)}
           aria-label="Open Chat with Maven AI"
         >
-          <Image src="/assets/brain-logo.png" alt="Chat with Maven AI" width={32} height={32} />
+          <Image src="/assets/brain-logo.png" alt="Chat with Maven AI" width={36} height={36} />
         </Button>
 
         {/* Chatbot Dialog */}
