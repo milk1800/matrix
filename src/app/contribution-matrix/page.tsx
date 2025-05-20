@@ -143,22 +143,47 @@ export default function ContributionMatrixPage() {
     const totalLimit = accounts.reduce((sum, acc) => sum + acc.annualLimit, 0);
     return { totalContributed, totalLimit };
   }, [accounts]);
+  
+  const aggregatedOpportunityByType = React.useMemo(() => {
+    const opportunityByType: Record<AccountType, { totalRemaining: number; totalOpportunity: number }> = {
+      "Traditional IRA": { totalRemaining: 0, totalOpportunity: 0 },
+      "Roth IRA": { totalRemaining: 0, totalOpportunity: 0 },
+      "SEP IRA": { totalRemaining: 0, totalOpportunity: 0 },
+      "SIMPLE IRA": { totalRemaining: 0, totalOpportunity: 0 },
+    };
 
-  const revenueOpportunityData = React.useMemo(() => {
-    return accounts.map(acc => {
+    accounts.forEach(acc => {
       const remaining = Math.max(0, acc.annualLimit - acc.amountContributed);
-      return {
-        name: acc.accountName,
-        opportunity: remaining * MOCK_FEE_RATE,
-        remainingContribution: remaining,
-        accountType: acc.accountType
-      };
-    }).filter(item => item.opportunity > 0);
+      opportunityByType[acc.accountType].totalRemaining += remaining;
+      opportunityByType[acc.accountType].totalOpportunity += remaining * MOCK_FEE_RATE;
+    });
+
+    return (Object.keys(opportunityByType) as AccountType[]).map(type => ({
+      name: type, // 'name' is used by BarChart for YAxis dataKey
+      opportunity: opportunityByType[type].totalOpportunity,
+      remainingContribution: opportunityByType[type].totalRemaining,
+      accountType: type,
+    })).filter(item => item.opportunity > 0);
   }, [accounts]);
 
-  const totalRevenueOpportunity = React.useMemo(() => {
-    return revenueOpportunityData.reduce((sum, item) => sum + item.opportunity, 0);
-  }, [revenueOpportunityData]);
+  const overallTotalRemainingContributions = React.useMemo(() => {
+    return aggregatedOpportunityByType.reduce((sum, item) => sum + item.remainingContribution, 0);
+  }, [aggregatedOpportunityByType]);
+
+  const overallTotalRevenueOpportunity = React.useMemo(() => {
+    return aggregatedOpportunityByType.reduce((sum, item) => sum + item.opportunity, 0);
+  }, [aggregatedOpportunityByType]);
+
+  const topIraTypeByOpportunity = React.useMemo(() => {
+    if (aggregatedOpportunityByType.length === 0 || overallTotalRevenueOpportunity === 0) {
+      return { name: "N/A", percentage: 0 };
+    }
+    const sortedTypes = [...aggregatedOpportunityByType].sort((a, b) => b.opportunity - a.opportunity);
+    const topType = sortedTypes[0];
+    const percentage = (topType.opportunity / overallTotalRevenueOpportunity) * 100;
+    return { name: topType.name, percentage: parseFloat(percentage.toFixed(1)) };
+  }, [aggregatedOpportunityByType, overallTotalRevenueOpportunity]);
+
 
   return (
     <main className="min-h-screen bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#5b21b6]/10 to-[#000104] flex-1 p-6 space-y-8 md:p-8">
@@ -226,6 +251,40 @@ export default function ContributionMatrixPage() {
         </div>
       </PlaceholderCard>
 
+      {overallTotalRevenueOpportunity > 0 && (
+        <PlaceholderCard 
+            title="Smart Contribution Insights" 
+            icon={AlertTriangle} 
+            className="border-yellow-500/50 shadow-yellow-500/10 hover:shadow-yellow-500/20"
+        >
+            <div className="space-y-3 text-foreground">
+                <p className="text-xl font-semibold text-yellow-400">
+                    🚨 You’re Leaving ${overallTotalRevenueOpportunity.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} in Revenue on the Table
+                </p>
+                <p>
+                    Across your book of business, <span className="font-bold text-white">${overallTotalRemainingContributions.toLocaleString()}</span> in eligible retirement contributions remain unfunded.
+                </p>
+                <p>
+                    Maxing out these accounts before year-end could generate an additional <span className="font-bold text-green-400">${overallTotalRevenueOpportunity.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</span> in advisory fees.
+                </p>
+                {topIraTypeByOpportunity.name !== "N/A" && (
+                    <p className="font-semibold">
+                        ✅ <span className="text-primary">{topIraTypeByOpportunity.name}</span> accounts make up <span className="text-white">{topIraTypeByOpportunity.percentage}%</span> of this opportunity.
+                    </p>
+                )}
+                <p className="text-sm text-muted-foreground">
+                    🔔 Prioritize discussions around these account types to help clients optimize their savings and close the advisory gap.
+                </p>
+                 <div className="flex justify-end pt-2">
+                    <Button variant="outline" className="border-primary text-primary hover:bg-primary/10 hover:text-primary">
+                        View Clients with Unfunded IRAs
+                    </Button>
+                </div>
+            </div>
+        </PlaceholderCard>
+      )}
+
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-8">
         <PlaceholderCard title="Overall Contribution Status" icon={PieChart}>
           <div className="h-[350px] md:h-[400px] w-full">
@@ -244,24 +303,26 @@ export default function ContributionMatrixPage() {
         </PlaceholderCard>
 
         <PlaceholderCard 
-          title="Revenue Opportunity from Maxing Out Contributions" 
+          title="Revenue Opportunity by Account Type" 
           icon={BarChart2}
-          description={
+          description={ overallTotalRevenueOpportunity > 0 &&
             <span className="text-lg font-semibold text-green-400">
-              Total Potential: ${totalRevenueOpportunity.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+              Total Potential: ${overallTotalRevenueOpportunity.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
             </span>
           }
         >
           <div className="h-[350px] md:h-[400px] w-full mt-2">
-            {revenueOpportunityData.length > 0 ? (
-              <RevenueOpportunityBarChart data={revenueOpportunityData} />
+            {aggregatedOpportunityByType.length > 0 ? (
+              <RevenueOpportunityBarChart data={aggregatedOpportunityByType} />
             ) : (
               <p className="text-muted-foreground text-center flex items-center justify-center h-full">All accounts are maxed out or no data available.</p>
             )}
           </div>
-          <p className="text-xs text-muted-foreground mt-2 text-center">
-            Estimated based on remaining contributions and a {MOCK_FEE_RATE*100}% advisory fee.
-          </p>
+          {overallTotalRevenueOpportunity > 0 && (
+            <p className="text-xs text-muted-foreground mt-2 text-center">
+              Estimated based on remaining contributions and a {MOCK_FEE_RATE*100}% advisory fee. Grouped by IRA type.
+            </p>
+          )}
         </PlaceholderCard>
       </div>
 

@@ -2,20 +2,22 @@
 "use client"
 
 import * as React from "react"
-import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, Cell } from "recharts"
+import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, Cell, Legend } from "recharts"
 import {
   ChartContainer,
   ChartTooltip,
   ChartTooltipContent,
+  ChartLegend,
+  ChartLegendContent,
 } from "@/components/ui/chart"
 import type { ChartConfig } from "@/components/ui/chart"
 
 interface RevenueOpportunityBarChartProps {
   data: {
-    name: string;
+    name: string; // This will be the AccountType (e.g., "Roth IRA")
     opportunity: number;
     remainingContribution: number;
-    accountType: string;
+    accountType: string; // Explicitly keep accountType for coloring
   }[];
 }
 
@@ -31,28 +33,34 @@ export function RevenueOpportunityBarChart({ data }: RevenueOpportunityBarChartP
   const chartConfig = {
     opportunity: {
       label: "Revenue Opportunity",
-      color: "hsl(var(--chart-1))", // Default color, will be overridden by cell
+      color: "hsl(var(--chart-1))", // Default, overridden by cell
     },
-     // Add configs for each account type to ensure legend items can be generated if needed
     "Traditional IRA": { label: "Traditional IRA", color: accountTypeColors['Traditional IRA'] },
     "Roth IRA": { label: "Roth IRA", color: accountTypeColors['Roth IRA'] },
     "SEP IRA": { label: "SEP IRA", color: accountTypeColors['SEP IRA'] },
     "SIMPLE IRA": { label: "SIMPLE IRA", color: accountTypeColors['SIMPLE IRA'] },
   } satisfies ChartConfig;
 
+  const formattedData = data.map(item => ({
+    ...item,
+    // The 'name' field is already the account type string, good for YAxis
+    label: chartConfig[item.accountType as keyof typeof chartConfig]?.label || item.accountType,
+  }));
+
+
   return (
     <ChartContainer config={chartConfig} className="h-full w-full">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart
-          data={data}
+          data={formattedData}
           layout="vertical"
           margin={{
             top: 5,
-            right: 20,
-            left: 60, // Increased left margin for longer account names
-            bottom: 5,
+            right: 30, // Increased right margin for value labels
+            left: 20, 
+            bottom: 20, // Increased bottom margin for legend
           }}
-          barCategoryGap="20%"
+          barCategoryGap="25%"
         >
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border)/0.5)" horizontal={false} />
           <XAxis 
@@ -64,15 +72,15 @@ export function RevenueOpportunityBarChart({ data }: RevenueOpportunityBarChartP
             tickLine={false}
           />
           <YAxis
-            dataKey="name"
+            dataKey="name" // This is the account type string
             type="category"
             stroke="hsl(var(--muted-foreground))"
             fontSize={12}
             tickMargin={5}
             axisLine={false}
             tickLine={false}
-            width={120} // Adjust width for YAxis labels
-            tickFormatter={(value) => value.length > 15 ? `${value.substring(0,15)}...` : value} // Truncate long names
+            width={100} 
+            interval={0} // Ensure all labels are shown
           />
           <ChartTooltip
             cursor={{ fill: 'hsl(var(--muted)/0.3)' }}
@@ -81,13 +89,12 @@ export function RevenueOpportunityBarChart({ data }: RevenueOpportunityBarChartP
                 const dataPoint = payload[0].payload;
                 return (
                   <div className="rounded-lg border bg-card p-2.5 shadow-sm text-sm">
-                    <p className="font-medium text-foreground">{dataPoint.name}</p>
-                    <p className="text-muted-foreground">{dataPoint.accountType}</p>
+                    <p className="font-medium text-foreground">{dataPoint.name}</p> {/* Shows Account Type */}
                     <p className="text-primary">
                       Opportunity: ${dataPoint.opportunity.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                     </p>
                      <p className="text-xs text-muted-foreground">
-                      Remaining: ${dataPoint.remainingContribution.toLocaleString()}
+                      Remaining Unfunded: ${dataPoint.remainingContribution.toLocaleString()}
                     </p>
                   </div>
                 );
@@ -95,8 +102,9 @@ export function RevenueOpportunityBarChart({ data }: RevenueOpportunityBarChartP
               return null;
             }}
           />
-          <Bar dataKey="opportunity" radius={4}>
-            {data.map((entry, index) => (
+          <ChartLegend content={<ChartLegendContent nameKey="name" />} verticalAlign="bottom" align="center" wrapperStyle={{paddingTop: 10}} />
+          <Bar dataKey="opportunity" radius={4} barSize={30}>
+            {formattedData.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={accountTypeColors[entry.accountType] || accountTypeColors['Default']} />
             ))}
           </Bar>
