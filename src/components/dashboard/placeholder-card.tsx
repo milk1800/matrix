@@ -9,7 +9,7 @@ interface PlaceholderCardProps {
   value?: string;
   description?: React.ReactNode;
   icon?: LucideIcon | string;
-  iconClassName?: string; // New prop for custom icon styling
+  iconClassName?: string;
   children?: React.ReactNode;
   className?: string;
 }
@@ -20,8 +20,10 @@ export function PlaceholderCard({ title, value, description, icon, iconClassName
 
   return (
     <Card className={cn(
-      "bg-black/[.40] backdrop-blur-sm rounded-lg shadow-white-glow-soft",
-      "transition-all duration-200 ease-out hover:-translate-y-1 hover:shadow-white-glow-hover",
+      "bg-black/[.60] backdrop-blur-sm rounded-lg shadow-white-glow-soft border border-white/10",
+      "transition-all duration-200 ease-out",
+      "hover:-translate-y-1 hover:shadow-white-glow-hover",
+      "overflow-x-hidden", // Added to hide horizontal scrollbar on the card
       className
     )}>
       <CardHeader className={cn(
@@ -29,7 +31,7 @@ export function PlaceholderCard({ title, value, description, icon, iconClassName
         isStringPathIcon ? "flex-col items-start pb-2" : "flex-row items-center space-y-0 pb-2"
       )}>
         {isStringPathIcon && icon && (
-          <div className="mb-3"> {/* Adjusted margin for visual balance with title */}
+          <div className="mb-2">
             <Image src={icon} alt={title} width={32} height={32} />
           </div>
         )}
