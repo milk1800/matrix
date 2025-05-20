@@ -2,7 +2,7 @@
 "use client"
 
 import * as React from "react"
-import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, Cell, Legend } from "recharts"
+import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, Cell, Legend, LabelList } from "recharts"
 import {
   ChartContainer,
   ChartTooltip,
@@ -43,7 +43,6 @@ export function RevenueOpportunityBarChart({ data }: RevenueOpportunityBarChartP
 
   const formattedData = data.map(item => ({
     ...item,
-    // The 'name' field is already the account type string, good for YAxis
     label: chartConfig[item.accountType as keyof typeof chartConfig]?.label || item.accountType,
   }));
 
@@ -56,9 +55,9 @@ export function RevenueOpportunityBarChart({ data }: RevenueOpportunityBarChartP
           layout="vertical"
           margin={{
             top: 5,
-            right: 30, // Increased right margin for value labels
+            right: 50, // Increased right margin for value labels
             left: 20, 
-            bottom: 20, // Increased bottom margin for legend
+            bottom: 20, 
           }}
           barCategoryGap="25%"
         >
@@ -72,7 +71,7 @@ export function RevenueOpportunityBarChart({ data }: RevenueOpportunityBarChartP
             tickLine={false}
           />
           <YAxis
-            dataKey="name" // This is the account type string
+            dataKey="name" 
             type="category"
             stroke="hsl(var(--muted-foreground))"
             fontSize={12}
@@ -80,7 +79,7 @@ export function RevenueOpportunityBarChart({ data }: RevenueOpportunityBarChartP
             axisLine={false}
             tickLine={false}
             width={100} 
-            interval={0} // Ensure all labels are shown
+            interval={0} 
           />
           <ChartTooltip
             cursor={{ fill: 'hsl(var(--muted)/0.3)' }}
@@ -89,7 +88,7 @@ export function RevenueOpportunityBarChart({ data }: RevenueOpportunityBarChartP
                 const dataPoint = payload[0].payload;
                 return (
                   <div className="rounded-lg border bg-card p-2.5 shadow-sm text-sm">
-                    <p className="font-medium text-foreground">{dataPoint.name}</p> {/* Shows Account Type */}
+                    <p className="font-medium text-foreground">{dataPoint.name}</p>
                     <p className="text-primary">
                       Opportunity: ${dataPoint.opportunity.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
                     </p>
@@ -107,10 +106,16 @@ export function RevenueOpportunityBarChart({ data }: RevenueOpportunityBarChartP
             {formattedData.map((entry, index) => (
               <Cell key={`cell-${index}`} fill={accountTypeColors[entry.accountType] || accountTypeColors['Default']} />
             ))}
+             <LabelList
+              dataKey="opportunity"
+              position="right"
+              offset={10}
+              className="fill-foreground text-xs"
+              formatter={(value: number) => `$${value.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})}`}
+            />
           </Bar>
         </BarChart>
       </ResponsiveContainer>
     </ChartContainer>
   );
 }
-

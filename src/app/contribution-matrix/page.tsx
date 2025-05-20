@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from "react";
-import { Download, TrendingUp, MessageSquare, Loader2, AlertTriangle, PieChart, BarChart2 } from 'lucide-react';
+import { Download, TrendingUp, MessageSquare, Loader2, AlertTriangle, PieChart } from 'lucide-react'; // Removed BarChart2
 import { differenceInDays, parseISO, format, isValid } from 'date-fns';
 import { PlaceholderCard } from '@/components/dashboard/placeholder-card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { CircularProgressRing } from "@/components/ui/circular-progress-ring";
 import { OverallContributionDonutChart } from "@/components/charts/overall-contribution-donut-chart";
-import { RevenueOpportunityBarChart } from "@/components/charts/revenue-opportunity-bar-chart";
+// Removed: import { RevenueOpportunityBarChart } from "@/components/charts/revenue-opportunity-bar-chart";
 
 type AccountType = 'Traditional IRA' | 'Roth IRA' | 'SEP IRA' | 'SIMPLE IRA';
 
@@ -106,6 +106,14 @@ const getDueDateInfo = (dueDateString: string): DueDateInfo => {
 
 const MOCK_FEE_RATE = 0.01; // 1%
 
+const accountTypeColors: Record<AccountType, string> = {
+  'Traditional IRA': "hsl(var(--chart-1))", // Primary Accent - Purple
+  'Roth IRA': "hsl(var(--chart-2))", // Secondary Accent - Blue/Teal
+  'SEP IRA': "hsl(var(--chart-3))", // Green
+  'SIMPLE IRA': "hsl(var(--chart-4))", // Yellow/Orange
+};
+
+
 export default function ContributionMatrixPage() {
   const accounts = initialContributionAccounts;
   const [mavenQuery, setMavenQuery] = React.useState("");
@@ -159,11 +167,11 @@ export default function ContributionMatrixPage() {
     });
 
     return (Object.keys(opportunityByType) as AccountType[]).map(type => ({
-      name: type, // 'name' is used by BarChart for YAxis dataKey
+      name: type,
       opportunity: opportunityByType[type].totalOpportunity,
       remainingContribution: opportunityByType[type].totalRemaining,
       accountType: type,
-    })).filter(item => item.opportunity > 0);
+    })).filter(item => item.opportunity > 0 || item.remainingContribution > 0); // Ensure all types with potential or limits are shown
   }, [accounts]);
 
   const overallTotalRemainingContributions = React.useMemo(() => {
@@ -301,25 +309,46 @@ export default function ContributionMatrixPage() {
             Showing % of total IRA contribution limits funded across all accounts.
           </p>
         </PlaceholderCard>
-
+        
         <PlaceholderCard 
-          title="Revenue Opportunity by Account Type" 
-          icon={BarChart2}
+          title="Revenue Opportunity by Account Type"
           description={ overallTotalRevenueOpportunity > 0 &&
             <span className="text-lg font-semibold text-green-400">
               Total Potential: ${overallTotalRevenueOpportunity.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
             </span>
           }
         >
-          <div className="h-[350px] md:h-[400px] w-full mt-2">
-            {aggregatedOpportunityByType.length > 0 ? (
-              <RevenueOpportunityBarChart data={aggregatedOpportunityByType} />
-            ) : (
-              <p className="text-muted-foreground text-center flex items-center justify-center h-full">All accounts are maxed out or no data available.</p>
-            )}
-          </div>
-          {overallTotalRevenueOpportunity > 0 && (
-            <p className="text-xs text-muted-foreground mt-2 text-center">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+                {aggregatedOpportunityByType.map((item) => (
+                    <PlaceholderCard
+                        key={item.name}
+                        title={item.name}
+                        className={cn(
+                            "border-t-4",
+                            item.name === topIraTypeByOpportunity.name && "shadow-primary/40 shadow-lg"
+                        )}
+                        style={{ borderTopColor: accountTypeColors[item.accountType as AccountType] || 'hsl(var(--border))' }}
+                    >
+                        <div className="space-y-1">
+                            <p className="text-lg font-semibold text-foreground">
+                                ${item.remainingContribution.toLocaleString()}
+                                <span className="text-xs text-muted-foreground"> left</span>
+                            </p>
+                            <p className="text-sm text-green-400 font-medium">
+                                +${item.opportunity.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                <span className="text-xs text-muted-foreground"> fee potential</span>
+                            </p>
+                        </div>
+                    </PlaceholderCard>
+                ))}
+                {aggregatedOpportunityByType.length === 0 && (
+                     <p className="text-muted-foreground text-center md:col-span-2 flex items-center justify-center h-full py-10">
+                        All accounts are maxed out or no contribution data available.
+                    </p>
+                )}
+            </div>
+            {overallTotalRevenueOpportunity > 0 && (
+            <p className="text-xs text-muted-foreground mt-4 text-center">
               Estimated based on remaining contributions and a {MOCK_FEE_RATE*100}% advisory fee. Grouped by IRA type.
             </p>
           )}
@@ -360,3 +389,4 @@ export default function ContributionMatrixPage() {
     </main>
   );
 }
+
