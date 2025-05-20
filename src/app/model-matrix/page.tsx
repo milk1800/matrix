@@ -22,8 +22,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { boxMullerTransform, getPercentile } from "@/utils/math-helpers";
-// import jsPDF from "jspdf"; // Commented out due to 'module not found'
-// import html2canvas from "html2canvas"; // Commented out due to 'module not found'
+// import jsPDF from "jspdf"; // Commented out: 'jspdf' is not installed.
+// import html2canvas from "html2canvas"; // Commented out: 'html2canvas' is not installed.
 
 
 interface ModelData {
@@ -58,10 +58,10 @@ const modelPerformanceData: ModelData[] = [
     ytdBenchmark: "+10.2%",
     oneYearReturn: "+22.1%",
     oneYearBenchmark: "+20.5%",
-    threeYearReturn: "+15.3% p.a.",
-    threeYearBenchmark: "+14.0% p.a.",
-    fiveYearReturn: "+13.8% p.a.",
-    fiveYearBenchmark: "+12.5% p.a.",
+    threeYearReturn: "+15.3%",
+    threeYearBenchmark: "+14.0%",
+    fiveYearReturn: "+13.8%",
+    fiveYearBenchmark: "+12.5%",
     sharpeRatio: "1.25",
     irr: "18.2%",
     beta: "1.10",
@@ -77,10 +77,10 @@ const modelPerformanceData: ModelData[] = [
     ytdBenchmark: "+1.8%",
     oneYearReturn: "+4.5%",
     oneYearBenchmark: "+4.2%",
-    threeYearReturn: "+3.0% p.a.",
-    threeYearBenchmark: "+2.8% p.a.",
-    fiveYearReturn: "+2.5% p.a.",
-    fiveYearBenchmark: "+2.3% p.a.",
+    threeYearReturn: "+3.0%",
+    threeYearBenchmark: "+2.8%",
+    fiveYearReturn: "+2.5%",
+    fiveYearBenchmark: "+2.3%",
     sharpeRatio: "0.95",
     irr: "3.5%",
     beta: "0.65",
@@ -96,10 +96,10 @@ const modelPerformanceData: ModelData[] = [
     ytdBenchmark: "-2.5%",
     oneYearReturn: "+8.0%",
     oneYearBenchmark: "+9.5%",
-    threeYearReturn: "+5.5% p.a.",
-    threeYearBenchmark: "+6.0% p.a.",
-    fiveYearReturn: "+7.2% p.a.",
-    fiveYearBenchmark: "+7.8% p.a.",
+    threeYearReturn: "+5.5%",
+    threeYearBenchmark: "+6.0%",
+    fiveYearReturn: "+7.2%",
+    fiveYearBenchmark: "+7.8%",
     sharpeRatio: "0.60",
     irr: "6.8%",
     beta: "1.35",
@@ -115,10 +115,10 @@ const modelPerformanceData: ModelData[] = [
     ytdBenchmark: "+7.0%",
     oneYearReturn: "+14.2%",
     oneYearBenchmark: "+13.5%",
-    threeYearReturn: "+9.1% p.a.",
-    threeYearBenchmark: "+8.5% p.a.",
-    fiveYearReturn: "+8.5% p.a.",
-    fiveYearBenchmark: "+8.0% p.a.",
+    threeYearReturn: "+9.1%",
+    threeYearBenchmark: "+8.5%",
+    fiveYearReturn: "+8.5%",
+    fiveYearBenchmark: "+8.0%",
     sharpeRatio: "1.10",
     irr: "10.5%",
     beta: "0.98",
@@ -134,10 +134,10 @@ const modelPerformanceData: ModelData[] = [
     ytdBenchmark: "+16.0%",
     oneYearReturn: "+35.2%",
     oneYearBenchmark: "+30.8%",
-    threeYearReturn: "+22.0% p.a.",
-    threeYearBenchmark: "+20.1% p.a.",
-    fiveYearReturn: "+20.5% p.a.",
-    fiveYearBenchmark: "+18.9% p.a.",
+    threeYearReturn: "+22.0%",
+    threeYearBenchmark: "+20.1%",
+    fiveYearReturn: "+20.5%",
+    fiveYearBenchmark: "+18.9%",
     sharpeRatio: "1.40",
     irr: "25.1%",
     beta: "1.20",
@@ -407,11 +407,11 @@ export default function ModelMatrixPage() {
   //   // This function is commented out because jspdf and html2canvas are not installed.
   //   // To enable, install the packages: npm install jspdf html2canvas
   //   // Then, uncomment this function and the corresponding imports.
-  //   console.warn("PDF Download: jsPDF and html2canvas libraries are required. Please install them.");
-  //   if (!monteCarloSummary || !monteCarloData || !jsPDF) {
-  //       alert("Monte Carlo data is not available, or jsPDF library is missing. Please run a simulation first.");
-  //       return;
-  //   }
+  //   // console.warn("PDF Download: jsPDF and html2canvas libraries are required. Please install them.");
+  //   // if (!monteCarloSummary || !monteCarloData) { // Removed: || !jsPDF as it's commented out
+  //   //     alert("Monte Carlo data is not available. Please run a simulation first.");
+  //   //     return;
+  //   // }
 
   //   // const pdf = new jsPDF("p", "mm", "a4");
   //   // pdf.setFontSize(18);
@@ -423,7 +423,7 @@ export default function ModelMatrixPage() {
   //   // let yPos = 30;
 
   //   // const chartElement = document.getElementById("monte-carlo-chart-container");
-  //   // if (chartElement && html2canvas) {
+  //   // if (chartElement && html2canvas) { // Added: && html2canvas check
   //   //     try {
   //   //         const canvas = await html2canvas(chartElement, { scale: 2, backgroundColor: 'hsl(var(--background))' }); 
   //   //         const imgData = canvas.toDataURL("image/png");
@@ -544,7 +544,7 @@ export default function ModelMatrixPage() {
              {sandboxSelectedManagers.length === 0 && ( <p className="text-sm text-muted-foreground text-center py-4">No managers selected for rebalancing.</p> )}
           </div>
           <PlaceholderCard title="Simulated Blended Metrics" className="bg-black/30">
-             {blendedMetrics ? ( <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm"> <div><strong className="text-muted-foreground block">YTD Return:</strong> <span className={getReturnClass(formatPercentageDisplay(blendedMetrics.ytdReturn))}>{formatPercentageDisplay(blendedMetrics.ytdReturn)}</span></div> <div><strong className="text-muted-foreground block">1Y Return:</strong> <span className={getReturnClass(formatPercentageDisplay(blendedMetrics.oneYearReturn))}>{formatPercentageDisplay(blendedMetrics.oneYearReturn)}</span></div> <div><strong className="text-muted-foreground block">3Y Return:</strong> <span className={getReturnClass(formatPercentageDisplay(blendedMetrics.threeYearReturn))}>{formatPercentageDisplay(blendedMetrics.threeYearReturn)} p.a.</span></div> <div><strong className="text-muted-foreground block">5Y Return:</strong> <span className={getReturnClass(formatPercentageDisplay(blendedMetrics.fiveYearReturn))}>{formatPercentageDisplay(blendedMetrics.fiveYearReturn)} p.a.</span></div> <div><strong className="text-muted-foreground block">Sharpe Ratio:</strong> {blendedMetrics.sharpeRatio?.toFixed(2) ?? "N/A"}</div> <div><strong className="text-muted-foreground block">IRR:</strong> {formatPercentageDisplay(blendedMetrics.irr)}</div> <div><strong className="text-muted-foreground block">Beta:</strong> {blendedMetrics.beta?.toFixed(2) ?? "N/A"}</div> <div className="md:col-span-2"><strong className="text-muted-foreground block">Weighted Total Cost:</strong> {formatPercentageDisplay(blendedMetrics.totalCost, 2)}</div> </div> ) : ( <p className="text-sm text-muted-foreground">Adjust weights to 100% to see blended metrics.</p> )}
+             {blendedMetrics ? ( <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm"> <div><strong className="text-muted-foreground block">YTD Return:</strong> <span className={getReturnClass(formatPercentageDisplay(blendedMetrics.ytdReturn))}>{formatPercentageDisplay(blendedMetrics.ytdReturn)}</span></div> <div><strong className="text-muted-foreground block">1Y Return:</strong> <span className={getReturnClass(formatPercentageDisplay(blendedMetrics.oneYearReturn))}>{formatPercentageDisplay(blendedMetrics.oneYearReturn)}</span></div> <div><strong className="text-muted-foreground block">3Y Return:</strong> <span className={getReturnClass(formatPercentageDisplay(blendedMetrics.threeYearReturn))}>{formatPercentageDisplay(blendedMetrics.threeYearReturn)}</span></div> <div><strong className="text-muted-foreground block">5Y Return:</strong> <span className={getReturnClass(formatPercentageDisplay(blendedMetrics.fiveYearReturn))}>{formatPercentageDisplay(blendedMetrics.fiveYearReturn)}</span></div> <div><strong className="text-muted-foreground block">Sharpe Ratio:</strong> {blendedMetrics.sharpeRatio?.toFixed(2) ?? "N/A"}</div> <div><strong className="text-muted-foreground block">IRR:</strong> {formatPercentageDisplay(blendedMetrics.irr)}</div> <div><strong className="text-muted-foreground block">Beta:</strong> {blendedMetrics.beta?.toFixed(2) ?? "N/A"}</div> <div className="md:col-span-2"><strong className="text-muted-foreground block">Weighted Total Cost:</strong> {formatPercentageDisplay(blendedMetrics.totalCost, 2)}</div> </div> ) : ( <p className="text-sm text-muted-foreground">Adjust weights to 100% to see blended metrics.</p> )}
           </PlaceholderCard>
         </div>
 
