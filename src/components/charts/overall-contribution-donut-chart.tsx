@@ -11,6 +11,7 @@ import {
   ChartLegendContent,
 } from "@/components/ui/chart"
 import type { ChartConfig } from "@/components/ui/chart"
+import { cn } from "@/lib/utils"
 
 interface OverallContributionDonutChartProps {
   totalContributed: number;
@@ -35,11 +36,11 @@ export function OverallContributionDonutChart({
     },
     contributed: {
       label: "Total Contributed",
-      color: "hsl(var(--chart-1))",
+      color: "hsl(var(--chart-1))", // Primary accent for "Contributed"
     },
     remaining: {
       label: "Total Remaining to Max Out",
-      color: "hsl(var(--muted))",
+      color: "hsl(var(--muted))", // Muted color for "Remaining"
     },
   } satisfies ChartConfig;
 
@@ -48,7 +49,10 @@ export function OverallContributionDonutChart({
   return (
     <ChartContainer
       config={chartConfig}
-      className="mx-auto aspect-square h-full max-h-[400px] w-full"
+      className={cn(
+        "mx-auto aspect-square h-full max-h-[400px] w-full",
+        fundedPercentage > 75 && "high-progress-glow"
+      )}
     >
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
@@ -60,29 +64,29 @@ export function OverallContributionDonutChart({
             data={chartData}
             dataKey="value"
             nameKey="name"
-            innerRadius={100}
-            outerRadius={140}
+            innerRadius={110} // Thicker ring
+            outerRadius={150} // Thicker ring
             strokeWidth={2}
-            stroke="hsl(var(--card))"
+            stroke="hsl(var(--card))" // Use card background for stroke between segments
             activeIndex={activeIndex ?? undefined}
             activeShape={({ cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, payload, percent }) => {
               return (
                 <g>
-                  <text x={cx} y={cy! - 15} textAnchor="middle" dominantBaseline="central" fill="hsl(var(--foreground))" className="text-lg font-semibold">
-                    {totalLimit > 0 ? `${fundedPercentage.toFixed(1)}%` : 'N/A'}
+                  <text x={cx} y={cy! - 15} textAnchor="middle" dominantBaseline="central" className="text-4xl font-bold" style={{ fill: 'hsl(var(--primary))' }}>
+                    {totalLimit > 0 ? `${fundedPercentage.toFixed(0)}%` : 'N/A'}
                   </text>
-                   <text x={cx} y={cy! + 10} textAnchor="middle" dominantBaseline="central" fill="hsl(var(--muted-foreground))" className="text-sm">
+                   <text x={cx} y={cy! + 15} textAnchor="middle" dominantBaseline="central" className="text-base" style={{ fill: 'hsl(var(--muted-foreground))' }}>
                     Funded
                   </text>
                   <Sector
                     cx={cx}
                     cy={cy}
                     innerRadius={innerRadius}
-                    outerRadius={outerRadius ? outerRadius + 6 : 0}
+                    outerRadius={outerRadius ? outerRadius + 8 : 0} // Pop-out effect
                     startAngle={startAngle}
                     endAngle={endAngle}
                     fill={fill}
-                    stroke={fill}
+                    stroke={fill} // Use segment color for stroke of active sector
                     strokeWidth={2}
                   />
                 </g>

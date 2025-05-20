@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from "react";
-import { Download, TrendingUp, MessageSquare, Loader2, AlertTriangle, PieChart } from 'lucide-react'; // Removed BarChart2
+import { Download, TrendingUp, MessageSquare, Loader2, AlertTriangle, PieChart } from 'lucide-react';
 import { differenceInDays, parseISO, format, isValid } from 'date-fns';
 import { PlaceholderCard } from '@/components/dashboard/placeholder-card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -13,7 +13,6 @@ import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { CircularProgressRing } from "@/components/ui/circular-progress-ring";
 import { OverallContributionDonutChart } from "@/components/charts/overall-contribution-donut-chart";
-// Removed: import { RevenueOpportunityBarChart } from "@/components/charts/revenue-opportunity-bar-chart";
 
 type AccountType = 'Traditional IRA' | 'Roth IRA' | 'SEP IRA' | 'SIMPLE IRA';
 
@@ -36,18 +35,18 @@ const initialContributionAccounts: ContributionAccount[] = [
   { id: "1", accountName: "John's Primary Roth", accountType: "Roth IRA", annualLimit: 7000, amountContributed: 3500, dueDate: getFutureDate(3) },
   { id: "2", accountName: "Jane's Traditional", accountType: "Traditional IRA", annualLimit: 7000, amountContributed: 7000, dueDate: getFutureDate(25) },
   { id: "3", accountName: "Business SEP", accountType: "SEP IRA", annualLimit: 66000, amountContributed: 25000, dueDate: getFutureDate(60) },
-  { id: "4", accountName: "Side Gig SIMPLE", accountType: "SIMPLE IRA", annualLimit: 16000, amountContributed: 8000, dueDate: getFutureDate(-5) },
+  { id: "4", accountName: "Side Gig SIMPLE", accountType: "SIMPLE IRA", annualLimit: 16000, amountContributed: 8000, dueDate: getFutureDate(-5) }, // Past due
   { id: "5", accountName: "John's Rollover IRA", accountType: "Traditional IRA", annualLimit: 7000, amountContributed: 1000, dueDate: getFutureDate(90) },
-  { id: "6", accountName: "Spouse Roth", accountType: "Roth IRA", annualLimit: 7000, amountContributed: 0, dueDate: getFutureDate(1) },
-  { id: "7", accountName: "Emergency Fund IRA", accountType: "Traditional IRA", annualLimit: 7000, amountContributed: 3000, dueDate: getFutureDate(0) },
-  { id: "8", accountName: "College Fund IRA", accountType: "Roth IRA", annualLimit: 7000, amountContributed: 1500, dueDate: getFutureDate(14) },
-  { id: "9", accountName: "Retirement Plus", accountType: "SEP IRA", annualLimit: 66000, amountContributed: 60000, dueDate: getFutureDate(40) },
-  { id: "10", accountName: "Travel Savings IRA", accountType: "Traditional IRA", annualLimit: 7000, amountContributed: 500, dueDate: getFutureDate(180) },
+  { id: "6", accountName: "Spouse Roth", accountType: "Roth IRA", annualLimit: 7000, amountContributed: 0, dueDate: getFutureDate(1) }, // Very urgent
+  { id: "7", accountName: "Emergency Fund IRA", accountType: "Traditional IRA", annualLimit: 7000, amountContributed: 3000, dueDate: getFutureDate(0) }, // Due Today
+  { id: "8", accountName: "College Fund IRA", accountType: "Roth IRA", annualLimit: 7000, amountContributed: 1500, dueDate: getFutureDate(14) }, // Approaching
+  { id: "9", accountName: "Retirement Plus", accountType: "SEP IRA", annualLimit: 66000, amountContributed: 60000, dueDate: getFutureDate(40) }, // Yellow
+  { id: "10", accountName: "Travel Savings IRA", accountType: "Traditional IRA", annualLimit: 7000, amountContributed: 500, dueDate: getFutureDate(180) }, // Green
 ];
 
 const calculateMonthsLeft = (): number => {
-  const currentMonth = new Date().getMonth(); // 0-11
-  return Math.max(1, 11 - currentMonth); 
+  const currentMonth = new Date().getMonth(); // 0-11 for Jan-Dec
+  return Math.max(1, 12 - (currentMonth + 1)); // Months remaining in the year, minimum 1
 };
 
 interface DueDateInfo {
@@ -85,13 +84,13 @@ const getDueDateInfo = (dueDateString: string): DueDateInfo => {
     mainDisplay = `${daysRemaining}d left`;
     boxClassName = "bg-red-500 text-white";
     pulseClassName = "due-pulse";
-  } else if (daysRemaining < 15) {
+  } else if (daysRemaining < 15) { // Red but no pulse
     mainDisplay = `${daysRemaining}d left`;
     boxClassName = "bg-red-500 text-white"; 
-  } else if (daysRemaining <= 45) {
+  } else if (daysRemaining <= 45) { // Yellow
     mainDisplay = `${daysRemaining}d left`;
     boxClassName = "bg-yellow-400 text-black";
-  } else {
+  } else { // Green
     mainDisplay = `${daysRemaining}d left`;
     boxClassName = "bg-green-500 text-white";
   }
@@ -107,15 +106,15 @@ const getDueDateInfo = (dueDateString: string): DueDateInfo => {
 const MOCK_FEE_RATE = 0.01; // 1%
 
 const accountTypeColors: Record<AccountType, string> = {
-  'Traditional IRA': "hsl(var(--chart-1))", // Primary Accent - Purple
-  'Roth IRA': "hsl(var(--chart-2))", // Secondary Accent - Blue/Teal
-  'SEP IRA': "hsl(var(--chart-3))", // Green
-  'SIMPLE IRA': "hsl(var(--chart-4))", // Yellow/Orange
+  'Traditional IRA': "hsl(var(--chart-1))", 
+  'Roth IRA': "hsl(var(--chart-2))", 
+  'SEP IRA': "hsl(var(--chart-3))", 
+  'SIMPLE IRA': "hsl(var(--chart-4))", 
 };
 
 
 export default function ContributionMatrixPage() {
-  const accounts = initialContributionAccounts;
+  const accounts = initialContributionAccounts; // Use initial data directly as it's not editable
   const [mavenQuery, setMavenQuery] = React.useState("");
   const [mavenResponse, setMavenResponse] = React.useState<string | null>(null);
   const [isLoadingMaven, setIsLoadingMaven] = React.useState(false);
@@ -124,7 +123,7 @@ export default function ContributionMatrixPage() {
     if (!mavenQuery.trim()) return;
     setIsLoadingMaven(true);
     setMavenResponse(null);
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    await new Promise(resolve => setTimeout(resolve, 1500)); // Simulate API call
 
     let responseText = "I'm not sure how to answer that. Try asking about maxing out a specific IRA type.";
     if (mavenQuery.toLowerCase().includes("max out my roth")) {
@@ -170,8 +169,8 @@ export default function ContributionMatrixPage() {
       name: type,
       opportunity: opportunityByType[type].totalOpportunity,
       remainingContribution: opportunityByType[type].totalRemaining,
-      accountType: type,
-    })).filter(item => item.opportunity > 0 || item.remainingContribution > 0); // Ensure all types with potential or limits are shown
+      accountType: type, 
+    })).filter(item => item.opportunity > 0 || item.remainingContribution > 0 || accounts.some(acc => acc.accountType === item.accountType));
   }, [accounts]);
 
   const overallTotalRemainingContributions = React.useMemo(() => {
@@ -223,7 +222,7 @@ export default function ContributionMatrixPage() {
                   <TableCell className="font-medium whitespace-nowrap">{account.accountName}</TableCell>
                   <TableCell className="text-muted-foreground whitespace-nowrap">{account.accountType}</TableCell>
                   <TableCell className="text-right whitespace-nowrap">${account.annualLimit.toLocaleString()}</TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className="text-right text-foreground">
                     <span>${account.amountContributed.toLocaleString()}</span>
                   </TableCell>
                   <TableCell className="text-right whitespace-nowrap">${remaining.toLocaleString()}</TableCell>
@@ -306,16 +305,18 @@ export default function ContributionMatrixPage() {
             )}
           </div>
            <p className="text-sm text-muted-foreground mt-2 text-center">
-            Showing % of total IRA contribution limits funded across all accounts.
+            {`$${overallContributionData.totalContributed.toLocaleString()} contributed of $${overallContributionData.totalLimit.toLocaleString()} goal. Let’s close the gap.`}
           </p>
         </PlaceholderCard>
         
         <PlaceholderCard 
           title="Revenue Opportunity by Account Type"
-          description={ overallTotalRevenueOpportunity > 0 &&
+          description={ overallTotalRevenueOpportunity > 0 ? (
             <span className="text-lg font-semibold text-green-400">
               Total Potential: ${overallTotalRevenueOpportunity.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
-            </span>
+            </span> ) : (
+              <span className="text-lg font-semibold text-muted-foreground">No further revenue opportunity.</span>
+            )
           }
         >
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
@@ -325,7 +326,7 @@ export default function ContributionMatrixPage() {
                         title={item.name}
                         className={cn(
                             "border-t-4",
-                            item.name === topIraTypeByOpportunity.name && "shadow-primary/40 shadow-lg"
+                            item.name === topIraTypeByOpportunity.name && item.opportunity > 0 && "shadow-primary/40 shadow-lg"
                         )}
                         style={{ borderTopColor: accountTypeColors[item.accountType as AccountType] || 'hsl(var(--border))' }}
                     >
@@ -389,4 +390,3 @@ export default function ContributionMatrixPage() {
     </main>
   );
 }
-

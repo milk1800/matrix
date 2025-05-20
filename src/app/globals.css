@@ -5,44 +5,55 @@
 
 @layer base {
   :root {
-    --background: 225 100% 0.8%; /* #000104 */
+    --background: 240 10% 3.9%; /* #000104 - Adjusted for radial gradient edge */
     --foreground: 0 0% 100%; /* #FFFFFF */
-    --card: 0 0% 0% / 0.6; /* rgba(0,0,0,0.6) for cards */
+    
+    /* Card Styling for Glassmorphism */
+    --card: 0 0% 0% / 0.6; /* rgba(0,0,0,0.6) */
     --card-foreground: 0 0% 100%; /* #FFFFFF */
-    --popover: 253 36% 15%; /* #1C1833 - Matching card for consistency */
+
+    --popover: 253 36% 15%; /* #1C1833 */
     --popover-foreground: 0 0% 100%; /* #FFFFFF */
+    
     --primary: 258 84% 61%; /* #7C3AED */
     --primary-foreground: 0 0% 100%; /* #FFFFFF */
-    --secondary: 230 15% 25%; /* Darker shade for secondary elements */
-    --secondary-foreground: 0 0% 100%; /* #FFFFFF */
-    --muted: 230 11% 20%; /* #2C2F3A */
+    
+    --secondary: 230 15% 25%; 
+    --secondary-foreground: 0 0% 100%;
+    
+    --muted: 240 5% 15%; /* Darker muted for less contrast */
     --muted-foreground: 240 4% 65%; /* #A1A1AA */
-    --accent: 258 84% 61%; /* #7C3AED */
-    --accent-foreground: 0 0% 100%; /* #FFFFFF */
+    
+    --accent: 258 84% 61%;
+    --accent-foreground: 0 0% 100%;
+    
     --destructive: 0 84% 60%; /* #EF4444 */
-    --destructive-foreground: 0 0% 100%; /* #FFFFFF */
-    --border: 230 11% 20%; /* #2C2F3A */
-    --input: 253 36% 20%; /* Slightly lighter purple than card for input fields */
-    --ring: 258 84% 70%; /* Lighter shade of primary accent for focus rings */
+    --destructive-foreground: 0 0% 100%;
+    
+    --border: 240 4% 20%; /* Slightly lighter border for subtle definition */
+    --input: 253 36% 20%; 
+    --ring: 258 84% 70%;
 
+    /* Chart Colors */
     --chart-1: 258 84% 61%; /* Primary Accent */
     --chart-2: 200 92% 60%; /* Secondary Accent */
     --chart-3: 120 61% 50%; /* Success Green e.g. #34D399 */
     --chart-4: 45 93% 57%;  /* Warning Yellow e.g. #FBBF24 */
     --chart-5: 0 72% 51%;   /* Error Red e.g. #F43F5E */
+    --chart-orange: 30 90% 55%; /* Vibrant Orange for progress */
 
 
-    --radius: 1rem; /* 16px */
+    --radius: 1rem; /* 16px for cards */
 
     /* Sidebar specific colors */
-    --sidebar-background: transparent;
-    --sidebar-foreground: 0 0% 100%; /* #FFFFFF */
-    --sidebar-primary: 258 84% 61%; /* Active item background #7C3AED */
-    --sidebar-primary-foreground: 0 0% 100%; /* Text on active item */
+    --sidebar-background: transparent; /* Fully transparent to show page gradient */
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: 258 84% 61%; /* Active item accent */
+    --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 233 27% 20%;
-    --sidebar-accent-foreground: 0 0% 100%; /* Text on hover */
-    --sidebar-border: 230 11% 15%;
-    --sidebar-ring: 258 84% 70%; /* Focus ring */
+    --sidebar-accent-foreground: 0 0% 100%; 
+    --sidebar-border: 240 4% 25%; /* Slightly lighter for subtle section divides */
+    --sidebar-ring: 258 84% 70%;
   }
 }
 
@@ -55,7 +66,7 @@
   }
   body {
     @apply text-foreground;
-    background-image: radial-gradient(circle at center, #25066b 0%, #0a041d 30%, hsl(var(--background)) 70%);
+    background: radial-gradient(circle at center, #25066b 0%, #0a041d 30%, hsl(var(--background)) 70%);
     background-color: hsl(var(--background)); /* Fallback */
     min-height: 100vh;
     height: 100%;
@@ -63,23 +74,6 @@
     font-family: var(--font-geist-sans);
   }
 }
-
-/* Pulsating Glow Animation - Used by Chatbot FAB & Brain Logo */
-@keyframes pulse-glow {
-  0%, 100% {
-    transform: scale(1);
-    filter: drop-shadow(0 0 5px #9147ff) drop-shadow(0 0 10px rgba(145, 71, 255, 0.4));
-  }
-  50% {
-    transform: scale(1.1);
-    filter: drop-shadow(0 0 10px #9147ff) drop-shadow(0 0 20px rgba(145, 71, 255, 0.6));
-  }
-}
-
-.animate-pulse-glow {
-  animation: pulse-glow 1.5s ease-in-out infinite;
-}
-
 
 /* Neon Pulse for Brain Logo */
 @keyframes neonPulse {
@@ -97,12 +91,11 @@
   animation: neonPulse 1.8s infinite ease-in-out;
 }
 
-
-/* Static glow for the main logo if needed */
 .brain-logo-static-glow {
   filter: drop-shadow(0 0 6px #8b5cf6);
 }
 
+/* Animation for missed opportunity rows */
 @keyframes flashRed {
   0%   { background-color: rgba(255, 0, 0, 0.08); }
   50%  { background-color: rgba(255, 0, 0, 0.18); }
@@ -115,6 +108,7 @@
   border-radius: 8px; 
 }
 
+/* Ask Maven Button Style */
 .ask-maven-button {
   background: linear-gradient(90deg, #8431ff, #a852ff);
   color: white;
@@ -131,6 +125,7 @@
   filter: brightness(1.1);
 }
 
+/* Ticker Animation */
 @keyframes ticker {
   0% { transform: translateX(100%); }
   100% { transform: translateX(-100%); }
@@ -161,4 +156,18 @@
 
 .due-pulse {
   animation: pulse-red 1.2s infinite;
+}
+
+/* Pulsating glow for high progress charts */
+@keyframes pulse-primary-glow {
+  0%, 100% {
+    filter: drop-shadow(0 0 8px hsla(var(--primary), 0.5)) drop-shadow(0 0 12px hsla(var(--primary), 0.3));
+  }
+  50% {
+    filter: drop-shadow(0 0 12px hsla(var(--primary), 0.7)) drop-shadow(0 0 18px hsla(var(--primary), 0.5));
+  }
+}
+
+.high-progress-glow .recharts-surface { /* Target the SVG surface for the glow */
+  animation: pulse-primary-glow 1.8s infinite ease-in-out;
 }
