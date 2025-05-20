@@ -3,7 +3,7 @@
 "use client";
 
 import * as React from "react";
-import { Download, UserCog, LibraryBig, FileText, TrendingUp, TrendingDown, DollarSign, SlidersHorizontal, FileDown, ChevronsUpDown, Brain, AlertTriangle, Loader2 } from 'lucide-react';
+import { Download, UserCog, LibraryBig, FileText, ChevronsUpDown, Brain, AlertTriangle, Loader2, FileDown } from 'lucide-react';
 import { PlaceholderCard } from '@/components/dashboard/placeholder-card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -22,8 +22,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { boxMullerTransform, getPercentile } from "@/utils/math-helpers";
-// import jsPDF from "jspdf"; // Ensure this is commented out if jspdf is not installed
-// import html2canvas from "html2canvas"; // Ensure this is commented out if html2canvas is not installed
+import jsPDF from "jspdf";
+// import html2canvas from "html2canvas";
 
 
 interface ModelData {
@@ -280,30 +280,35 @@ export default function ModelMatrixPage() {
     });
   }, [selectedManagerNames]);
 
- const handleSandboxWeightChange = (managerId: string, newWeightInput: number) => {
+  const handleSandboxWeightChange = (managerId: string, newWeightInput: number) => {
     setSandboxManagerWeights(prevWeights => {
       const newWeight = Math.max(0, Math.min(100, isNaN(newWeightInput) ? 0 : newWeightInput));
       let updatedWeights = { ...prevWeights, [managerId]: newWeight };
-      let currentTotalWeight = Object.values(updatedWeights).reduce((sum, w) => sum + w, 0);
+      
+      const currentTotalWeight = Object.values(updatedWeights).reduce((sum, w) => sum + w, 0);
 
       if (currentTotalWeight > 100) {
         let overage = currentTotalWeight - 100;
-        const otherManagerIds = sandboxSelectedManagers.map(m => m.id).filter(id => id !== managerId);
+        const otherManagerIds = sandboxSelectedManagers.map(m => m.id).filter(id => id !== managerId && (updatedWeights[id] || 0) > 0);
         
-        const reducibleManagers = otherManagerIds.filter(id => (updatedWeights[id] || 0) > 0);
-        reducibleManagers.sort((a, b) => (updatedWeights[b] || 0) - (updatedWeights[a] || 0)); 
-
-        for (const otherId of reducibleManagers) {
-          if (overage <= 0) break;
-          const currentOtherWeight = updatedWeights[otherId] || 0;
-          const reduction = Math.min(overage, currentOtherWeight);
-          updatedWeights[otherId] = Math.max(0, currentOtherWeight - reduction); // Ensure weight doesn't go below 0
-          overage -= reduction;
+        if (otherManagerIds.length > 0) {
+            // Distribute the overage reduction proportionally among other managers that have weight > 0
+            let totalReducibleWeight = otherManagerIds.reduce((sum, id) => sum + (updatedWeights[id] || 0), 0);
+            
+            if (totalReducibleWeight > 0) {
+                 for (const otherId of otherManagerIds) {
+                    const currentOtherWeight = updatedWeights[otherId] || 0;
+                    const reductionProportion = currentOtherWeight / totalReducibleWeight;
+                    const reductionAmount = overage * reductionProportion;
+                    
+                    updatedWeights[otherId] = Math.max(0, currentOtherWeight - reductionAmount);
+                }
+            }
         }
-        
-        currentTotalWeight = Object.values(updatedWeights).reduce((sum, w) => sum + w, 0);
-        if (currentTotalWeight > 100) { // If still over (e.g., only one manager had weight to reduce from)
-           const finalOverage = currentTotalWeight - 100;
+        // Recalculate total after proportional reduction
+        const finalTotalWeight = Object.values(updatedWeights).reduce((sum, w) => sum + w, 0);
+        if (finalTotalWeight > 100) { // If still over (e.g. due to rounding or only one manager having weight initially)
+           const finalOverage = finalTotalWeight - 100;
            updatedWeights[managerId] = Math.max(0, (updatedWeights[managerId] || 0) - finalOverage);
         }
       }
@@ -316,8 +321,6 @@ export default function ModelMatrixPage() {
     if (Math.abs(totalCurrentWeight - 100) > 0.1 && sandboxSelectedManagers.length > 0) {
       setWeightError("Total weight must be 100%.");
       setBlendedMetrics(null);
-      setMonteCarloData(null);
-      setMonteCarloSummary(null);
       return;
     }
     setWeightError(null);
@@ -330,7 +333,7 @@ export default function ModelMatrixPage() {
       const weight = (sandboxManagerWeights[manager.id] || 0) / 100;
       if (weight === 0 && sandboxSelectedManagers.length > 0) return;
       
-      totalAum += parseAUM(manager.aum) * weight;
+      totalAum += parseAUM(manager.aum) * weight; 
       blendedYtdReturn += parsePercentage(manager.ytdReturn) * weight;
       blendedOneYearReturn += parsePercentage(manager.oneYearReturn) * weight;
       blendedThreeYearReturn += parsePercentage(manager.threeYearReturn) * weight;
@@ -346,7 +349,7 @@ export default function ModelMatrixPage() {
       sharpeRatio: blendedSharpeRatio, irr: blendedIrr, beta: blendedBeta,
       totalCost: blendedTotalCost,
     });
-  }, [sandboxManagerWeights]);
+  }, [sandboxManagerWeights, sandboxSelectedManagers]);
 
   const runMonteCarloSimulation = React.useCallback(async () => {
     if (!blendedMetrics) return;
@@ -357,21 +360,21 @@ export default function ModelMatrixPage() {
     const params: MonteCarloSimulationParams = {
       simulations: 1000,
       years: 10,
-      startValue: blendedMetrics.totalAum || 100000,
-      meanReturn: blendedMetrics.oneYearReturn || 0.07,
-      stdDev: blendedMetrics.beta ? blendedMetrics.beta * 0.15 : 0.15,
+      startValue: blendedMetrics.totalAum || 100000, 
+      meanReturn: blendedMetrics.oneYearReturn || 0.07, 
+      stdDev: blendedMetrics.beta ? blendedMetrics.beta * 0.15 : 0.15, 
     };
 
-    await new Promise(resolve => setTimeout(resolve, 1500));
+    await new Promise(resolve => setTimeout(resolve, 1500)); 
 
     const allPaths: number[][] = [];
     for (let i = 0; i < params.simulations; i++) {
       let currentValue = params.startValue;
       const path: number[] = [currentValue];
       for (let y = 0; y < params.years; y++) {
-        const [z0] = boxMullerTransform();
+        const [z0] = boxMullerTransform(); 
         const growthFactor = Math.exp(
-          (params.meanReturn - 0.5 * Math.pow(params.stdDev, 2)) +
+          (params.meanReturn - 0.5 * Math.pow(params.stdDev, 2)) + 
           params.stdDev * z0
         );
         currentValue *= growthFactor;
@@ -405,15 +408,53 @@ export default function ModelMatrixPage() {
     setIsMonteCarloRunning(false);
   }, [blendedMetrics]);
 
-  // const handleDownloadMonteCarloReport = async () => {
-  //   console.warn("jsPDF and html2canvas are required for PDF download. Please install them.");
-  //   alert("PDF Download functionality requires 'jspdf' and 'html2canvas' libraries. Please install them to enable this feature.");
-  //   if (!monteCarloSummary) {
-  //     alert("Please run a simulation first to generate data for the report.");
-  //     return;
-  //   }
-  //   // Logic for PDF generation would go here, currently commented out
-  // };
+  const handleDownloadMonteCarloReport = async () => {
+    if (!monteCarloSummary) {
+      alert("Please run a simulation first to generate data for the report.");
+      return;
+    }
+    console.log("Attempting to download PDF. Ensure jspdf is installed.");
+    // const chartElement = document.getElementById("monte-carlo-chart-container");
+    
+    // if (!chartElement) {
+    //   alert("Chart area not found for PDF. Text summary will be generated.");
+    // }
+
+    const pdf = new jsPDF("p", "mm", "a4");
+    pdf.setFontSize(18);
+    pdf.text("Monte Carlo Simulation Report", 10, 15);
+    
+    pdf.setFontSize(10);
+    pdf.text(`Report Generated: ${new Date().toLocaleString()}`, 10, 22);
+
+    let yPos = 30;
+
+    // if (chartElement && typeof html2canvas !== 'undefined') {
+    //     try {
+    //         const canvas = await html2canvas(chartElement, { scale: 2, backgroundColor: 'hsl(var(--background))' }); 
+    //         const imgData = canvas.toDataURL("image/png");
+    //         pdf.addImage(imgData, "PNG", 10, yPos, 190, 100); 
+    //         yPos += 110;
+    //     } catch (error) {
+    //         console.error("Error generating chart image for PDF:", error);
+    //         pdf.text("Could not generate chart image. Ensure html2canvas is installed and working.", 10, yPos);
+    //         yPos += 10;
+    //     }
+    // } else {
+    //     if (!chartElement) console.warn("Chart element for PDF not found.");
+    //     if (typeof html2canvas === 'undefined') console.warn("html2canvas is not available for chart image capture.");
+    //     pdf.text("Chart image not available.", 10, yPos);
+    //     yPos += 10;
+    // }
+
+    pdf.setFontSize(12);
+    const simYears = monteCarloData ? monteCarloData[monteCarloData.length -1].year : 'N/A';
+    pdf.text(`Median End Value (${simYears} Years): ${formatCurrency(monteCarloSummary.medianEndValue)}`, 10, yPos);
+    yPos += 10;
+    pdf.text(`5th - 95th Percentile Range: ${formatCurrency(monteCarloSummary.p05EndValue)} – ${formatCurrency(monteCarloSummary.p95EndValue)}`, 10, yPos);
+    
+    pdf.save("monte-carlo-report.pdf");
+  };
 
 
   return (
@@ -535,10 +576,10 @@ export default function ModelMatrixPage() {
                     {monteCarloSummary && (
                         <div className="mt-4 text-center text-sm text-muted-foreground space-y-1">
                             <p>
-                                <span className="font-semibold text-foreground">Median End Value (10 Years):</span> {formatCurrency(monteCarloSummary.medianEndValue)}
+                                <span className="font-semibold text-foreground">Median End Value ({monteCarloData ? monteCarloData[monteCarloData.length -1].year : 'N/A'} Years):</span> {formatCurrency(monteCarloSummary.medianEndValue)}
                             </p>
                             <p>
-                                <span className="font-semibold text-foreground">5th - 95th Percentile Range:</span> {formatCurrency(monteCarloSummary.p05EndValue)} - {formatCurrency(monteCarloSummary.p95EndValue)}
+                                <span className="font-semibold text-foreground">5th - 95th Percentile Range:</span> {formatCurrency(monteCarloSummary.p05EndValue)} – {formatCurrency(monteCarloSummary.p95EndValue)}
                             </p>
                         </div>
                     )}
@@ -555,10 +596,11 @@ export default function ModelMatrixPage() {
         <div className="flex justify-end mt-6">
           <Button
             variant="outline"
-            onClick={() => alert("PDF Download requires 'jspdf' and 'html2canvas' libraries. Please install them.")} // Updated onClick
-            disabled={true} // Disabled until libraries are set up by the user
+            onClick={handleDownloadMonteCarloReport}
+            disabled={!monteCarloSummary || isMonteCarloRunning}
+            title="Ensure 'jspdf' and 'html2canvas' are installed for this feature."
           >
-            <FileDown className="mr-2 h-4 w-4" /> Download Scenario PDF (Requires jspdf/html2canvas)
+            <FileDown className="mr-2 h-4 w-4" /> Download Scenario PDF (Requires jspdf)
           </Button>
         </div>
       </PlaceholderCard>

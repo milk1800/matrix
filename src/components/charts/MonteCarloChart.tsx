@@ -96,12 +96,12 @@ export function MonteCarloChart({ data }: MonteCarloChartProps) {
                 if (name === 'p05_p95' && props.payload) {
                   const p05 = props.payload.p05;
                   const p95 = props.payload.p95;
-                  return `${p05.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0})} - ${p95.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0})}`;
+                  return `$${p05.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0})} – $${p95.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0})}`;
                 }
                 if (name === 'p25_p75' && props.payload) {
                   const p25 = props.payload.p25;
                   const p75 = props.payload.p75;
-                  return `${p25.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0})} - ${p75.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0})}`;
+                   return `$${p25.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0})} – $${p75.toLocaleString(undefined, {minimumFractionDigits: 0, maximumFractionDigits: 0})}`;
                 }
 
                 return formattedValue;
