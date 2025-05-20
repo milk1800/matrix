@@ -21,14 +21,16 @@ export function CircularProgressRing({
   const circumference = normalizedRadius * 2 * Math.PI;
   const strokeDashoffset = circumference - (progress / 100) * circumference;
 
-  let colorClass = "stroke-[hsl(var(--chart-5))]"; // Red for 0-25%
-  if (progress > 75) {
-    colorClass = "stroke-[hsl(var(--chart-3))]"; // Green for 76-100%
-  } else if (progress > 50) {
-    colorClass = "stroke-[hsl(var(--chart-4))]"; // Yellow for 51-75%
-  } else if (progress > 25) {
-    colorClass = "stroke-[hsl(var(--chart-orange))]"; // Orange for 26-50%
+  let colorClass = "stroke-[hsl(var(--chart-3))]"; // Default to Green (75-100%)
+
+  if (progress < 25) { // 0-24%
+    colorClass = "stroke-[hsl(var(--chart-5))]"; // Red
+  } else if (progress < 50) { // 25-49%
+    colorClass = "stroke-[hsl(var(--chart-orange))]"; // Orange
+  } else if (progress < 75) { // 50-74%
+    colorClass = "stroke-[hsl(var(--chart-4))]"; // Yellow
   }
+  // Else, it remains Green (for 75-100%)
 
   const glowFilter = progress > 90 ? "drop-shadow(0 0 3px hsl(var(--primary)))" : "none";
 
