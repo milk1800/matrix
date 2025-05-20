@@ -1,10 +1,11 @@
 
-"use client"; // To enable potential future interactions and for consistency
+"use client"; 
 
 import * as React from 'react';
-import { Users, DollarSign, TrendingUp, ArrowRightLeft } from 'lucide-react';
+import { Users, DollarSign, TrendingUp, ArrowRightLeft, AlertTriangle } from 'lucide-react';
 import { PlaceholderCard } from '@/components/dashboard/placeholder-card';
-import { ClientTypeByChannelChart } from '@/components/charts/client-type-by-channel-chart';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
@@ -70,6 +71,27 @@ const topClients65PlusWithChildBeneficiariesData: Client65PlusData[] = [
   { id: "c5", clientName: "Dorothy Finch", age: 80, aumDisplay: "$2.9M", primaryBeneficiaryName: "William Finch", primaryBeneficiaryAge: 45, relationshipDepthPercent: 75, beneficiaryIsClient: false, multipleChildBeneficiaries: false },
 ];
 
+interface AccountWithoutBeneficiary {
+  id: string;
+  rank: number;
+  clientName: string;
+  age: number;
+  accountType: string;
+  aumDisplay: string;
+  openDate: string;
+  isHighAum: boolean;
+}
+
+const accountsWithoutBeneficiaryData: AccountWithoutBeneficiary[] = [
+  { id: "awb1", rank: 1, clientName: "Client Kappa", age: 72, accountType: "Roth IRA", aumDisplay: "$2.1M", openDate: "01/15/2012", isHighAum: true },
+  { id: "awb2", rank: 2, clientName: "Client Lambda", age: 66, accountType: "Joint Account", aumDisplay: "$1.8M", openDate: "03/10/2015", isHighAum: true },
+  { id: "awb3", rank: 3, clientName: "Client Mu", age: 58, accountType: "Traditional IRA", aumDisplay: "$950K", openDate: "07/22/2010", isHighAum: false },
+  { id: "awb4", rank: 4, clientName: "Client Nu", age: 75, accountType: "Brokerage", aumDisplay: "$1.5M", openDate: "11/05/2018", isHighAum: true },
+  { id: "awb5", rank: 5, clientName: "Client Xi", age: 69, accountType: "SEP IRA", aumDisplay: "$750K", openDate: "09/12/2019", isHighAum: false },
+  { id: "awb6", rank: 6, clientName: "Client Omicron", age: 80, accountType: "Trust Account", aumDisplay: "$1.2M", openDate: "04/30/2014", isHighAum: true },
+  { id: "awb7", rank: 7, clientName: "Client Pi", age: 62, accountType: "401(k) Rollover", aumDisplay: "$600K", openDate: "06/18/2020", isHighAum: false },
+];
+
 export default function ClientAnalyticsPage() {
   return (
     <main className="min-h-screen bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#5b21b6]/10 to-[#000104] flex-1 p-6 space-y-8 md:p-8">
@@ -112,10 +134,50 @@ export default function ClientAnalyticsPage() {
             })}
           </div>
         </PlaceholderCard>
-        <PlaceholderCard title="Client Type by Channel">
-           <div className="h-[300px] md:h-[350px]">
-            <ClientTypeByChannelChart />
-          </div>
+        <PlaceholderCard title="Top 10 Accounts Without a Beneficiary" icon={AlertTriangle} iconClassName="text-yellow-400">
+          <TooltipProvider>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-12">Rank</TableHead>
+                  <TableHead>Client Name</TableHead>
+                  <TableHead className="text-center">Age</TableHead>
+                  <TableHead>Account Type</TableHead>
+                  <TableHead className="text-right">AUM</TableHead>
+                  <TableHead className="text-right">Open Date</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {accountsWithoutBeneficiaryData.map((account) => (
+                  <Tooltip key={account.id} delayDuration={0}>
+                    <TooltipTrigger asChild>
+                      <TableRow className="hover:bg-muted/20 cursor-pointer">
+                        <TableCell className="text-center font-medium">{account.rank}</TableCell>
+                        <TableCell>
+                          <div className="flex items-center">
+                            {account.isHighAum && (
+                              <AlertTriangle className="h-4 w-4 text-red-500 mr-2 shrink-0" />
+                            )}
+                            {account.clientName}
+                          </div>
+                        </TableCell>
+                        <TableCell className="text-center text-muted-foreground">{account.age}</TableCell>
+                        <TableCell className="text-muted-foreground">{account.accountType}</TableCell>
+                        <TableCell className="text-right font-semibold">{account.aumDisplay}</TableCell>
+                        <TableCell className="text-right text-muted-foreground">{account.openDate}</TableCell>
+                      </TableRow>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="bg-popover text-popover-foreground">
+                      <p>Tap to initiate beneficiary outreach task</p>
+                    </TooltipContent>
+                  </Tooltip>
+                ))}
+              </TableBody>
+            </Table>
+          </TooltipProvider>
+           <p className="mt-4 text-xs text-muted-foreground">
+            Top accounts missing beneficiary information, ranked by AUM. ⚠️ High AUM accounts are flagged.
+          </p>
         </PlaceholderCard>
       </div>
 
@@ -150,3 +212,4 @@ export default function ClientAnalyticsPage() {
     </main>
   );
 }
+
