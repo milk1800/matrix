@@ -110,7 +110,7 @@ export default function RootLayout({
             collapsible="none"
             className="shadow-sidebar-glow pt-10"
           >
-            <SidebarHeader className="p-4 px-5 border-b border-sidebar-border">
+            <SidebarHeader className="p-4 px-5"> {/* Removed border-b border-sidebar-border */}
               <div className="flex items-center space-x-3">
                 <Brain className="w-8 h-8 text-purple-500 animate-pulse-neon" />
                 <span className="text-3xl font-bold text-metallic-gradient">
