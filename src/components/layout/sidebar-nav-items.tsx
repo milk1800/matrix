@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from 'react';
@@ -14,9 +13,7 @@ import {
   PieChart,
   Shapes,
   FileText,
-  Layers, // Retained in case Winger Matrix is re-added or for future use
-  UserCog,
-  LibraryBig
+  FlaskConical, // Added FlaskConical for Project X
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
@@ -35,11 +32,12 @@ const navItems: NavItem[] = [
   { href: '/client-analytics', label: 'Client Analytics', icon: Users },
   { href: '/financial-analytics', label: 'Financial Analytics', icon: TrendingUp },
   { href: '/conversion-analytics', label: 'Conversion Analytics', icon: Repeat },
+  { href: '/reports', label: 'Reports', icon: FileText },
   { href: '/resource-matrix', label: 'Resource Matrix', icon: LayoutGrid },
   { href: '/portfolio-matrix', label: 'Portfolio Matrix', icon: PieChart },
   { href: '/model-matrix', label: 'Model Matrix', icon: Shapes },
   { href: '/contribution-matrix', label: 'Contribution Matrix', icon: TrendingUp },
-  { href: '/reports', label: 'Reports', icon: FileText },
+  { href: '/project-x', label: 'Project X', icon: FlaskConical }, // Added Project X
 ];
 
 export function SidebarNavItems() {
