@@ -21,6 +21,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { boxMullerTransform, getPercentile } from "@/utils/math-helpers";
+import jsPDF from "jspdf";
+// import html2canvas from "html2canvas";
 
 
 interface ModelData {
@@ -286,15 +288,18 @@ export default function ModelMatrixPage() {
       if (currentTotalWeight > 100) {
         let overage = currentTotalWeight - 100;
         const otherManagerIds = sandboxSelectedManagers.map(m => m.id).filter(id => id !== managerId);
-        otherManagerIds.sort((a, b) => (updatedWeights[b] || 0) - (updatedWeights[a] || 0));
+        
+        const reducibleManagers = otherManagerIds.filter(id => (updatedWeights[id] || 0) > 0);
+        reducibleManagers.sort((a, b) => (updatedWeights[b] || 0) - (updatedWeights[a] || 0)); 
 
-        for (const otherId of otherManagerIds) {
+        for (const otherId of reducibleManagers) {
           if (overage <= 0) break;
           const currentOtherWeight = updatedWeights[otherId] || 0;
           const reduction = Math.min(overage, currentOtherWeight);
           updatedWeights[otherId] = currentOtherWeight - reduction;
           overage -= reduction;
         }
+        
         currentTotalWeight = Object.values(updatedWeights).reduce((sum, w) => sum + w, 0);
         if (currentTotalWeight > 100) {
            const finalOverage = currentTotalWeight - 100;
@@ -310,17 +315,22 @@ export default function ModelMatrixPage() {
     const totalCurrentWeight = Object.values(sandboxManagerWeights).reduce((sum, weight) => sum + weight, 0);
     if (Math.abs(totalCurrentWeight - 100) > 0.1 && sandboxSelectedManagers.length > 0) { 
       setWeightError("Total weight must be 100%.");
-      setBlendedMetrics(null); return;
+      setBlendedMetrics(null); 
+      setMonteCarloData(null); 
+      setMonteCarloSummary(null);
+      return;
     }
     setWeightError(null);
     if (sandboxSelectedManagers.length === 0) { setBlendedMetrics(null); return; }
 
     let blendedYtdReturn = 0, blendedOneYearReturn = 0, blendedThreeYearReturn = 0, blendedFiveYearReturn = 0;
-    let blendedSharpeRatio = 0, blendedIrr = 0, blendedBeta = 0, blendedTotalCost = 0;
+    let blendedSharpeRatio = 0, blendedIrr = 0, blendedBeta = 0, blendedTotalCost = 0, totalAum = 0;
 
     sandboxSelectedManagers.forEach(manager => {
       const weight = (sandboxManagerWeights[manager.id] || 0) / 100;
       if (weight === 0 && sandboxSelectedManagers.length > 0) return;
+      
+      totalAum += parseAUM(manager.aum) * weight; 
       blendedYtdReturn += parsePercentage(manager.ytdReturn) * weight;
       blendedOneYearReturn += parsePercentage(manager.oneYearReturn) * weight;
       blendedThreeYearReturn += parsePercentage(manager.threeYearReturn) * weight;
@@ -330,24 +340,28 @@ export default function ModelMatrixPage() {
       blendedBeta += parseNumericString(manager.beta) * weight;
       blendedTotalCost += (parseFee(manager.feePercent) + PROGRAM_FEE_PERCENT) * weight;
     });
-    setBlendedMetrics({ ytdReturn: blendedYtdReturn, oneYearReturn: blendedOneYearReturn, threeYearReturn: blendedThreeYearReturn, fiveYearReturn: blendedFiveYearReturn, sharpeRatio: blendedSharpeRatio, irr: blendedIrr, beta: blendedBeta, totalCost: blendedTotalCost,});
+    setBlendedMetrics({ 
+      totalAum, ytdReturn: blendedYtdReturn, oneYearReturn: blendedOneYearReturn, 
+      threeYearReturn: blendedThreeYearReturn, fiveYearReturn: blendedFiveYearReturn, 
+      sharpeRatio: blendedSharpeRatio, irr: blendedIrr, beta: blendedBeta, 
+      totalCost: blendedTotalCost,
+    });
   }, [sandboxManagerWeights]);
 
   const runMonteCarloSimulation = React.useCallback(async () => {
+    if (!blendedMetrics) return;
     setIsMonteCarloRunning(true);
     setMonteCarloData(null);
     setMonteCarloSummary(null);
 
-    // Default parameters for the simulation
     const params: MonteCarloSimulationParams = {
-      simulations: 1000, // Number of simulation paths
-      years: 10,          // Simulation time horizon
-      startValue: blendedMetrics?.totalAum || 100000, // Use blended AUM or default
-      meanReturn: blendedMetrics?.oneYearReturn || 0.07, // Use blended 1yr return or default 7%
-      stdDev: blendedMetrics?.beta ? blendedMetrics.beta * 0.15 : 0.15, // Use blended beta * market_stdev or default 15%
+      simulations: 1000,
+      years: 10,
+      startValue: blendedMetrics.totalAum || 100000,
+      meanReturn: blendedMetrics.oneYearReturn || 0.07,
+      stdDev: blendedMetrics.beta ? blendedMetrics.beta * 0.15 : 0.15,
     };
 
-    // Simulate API call delay
     await new Promise(resolve => setTimeout(resolve, 1500));
 
     const allPaths: number[][] = [];
@@ -355,7 +369,7 @@ export default function ModelMatrixPage() {
       let currentValue = params.startValue;
       const path: number[] = [currentValue];
       for (let y = 0; y < params.years; y++) {
-        const [z0] = boxMullerTransform(); // Get one standard normal random number
+        const [z0] = boxMullerTransform();
         const growthFactor = Math.exp(
           (params.meanReturn - 0.5 * Math.pow(params.stdDev, 2)) + 
           params.stdDev * z0
@@ -390,6 +404,79 @@ export default function ModelMatrixPage() {
     }
     setIsMonteCarloRunning(false);
   }, [blendedMetrics]);
+
+  const handleDownloadMonteCarloReport = async () => {
+    if (!monteCarloSummary) {
+      alert("Please run a simulation first to generate data for the report.");
+      return;
+    }
+
+    const pdf = new jsPDF();
+    const currentDate = new Date().toLocaleString();
+    let yPos = 20; 
+
+    pdf.setFontSize(18);
+    pdf.text("Monte Carlo Simulation Report", 105, yPos, { align: "center" });
+    yPos += 10;
+    pdf.setFontSize(10);
+    pdf.text(`Generated: ${currentDate}`, 105, yPos, { align: "center" });
+    yPos += 15;
+
+    pdf.setFontSize(12);
+    pdf.text("Simulation Summary (10 Years):", 14, yPos);
+    yPos += 8;
+    pdf.text(`Median End Value: ${formatCurrency(monteCarloSummary.medianEndValue)}`, 14, yPos);
+    yPos += 8;
+    pdf.text(`5th - 95th Percentile Range: ${formatCurrency(monteCarloSummary.p05EndValue)} - ${formatCurrency(monteCarloSummary.p95EndValue)}`, 14, yPos);
+    yPos += 15;
+
+    // Commenting out html2canvas part due to module not found error
+    // const chartElement = document.getElementById("monte-carlo-chart-container");
+    // if (chartElement) {
+    //   try {
+    //     console.warn("Attempting to capture chart. If html2canvas is not installed, this will fail silently or error.");
+    //     const canvas = await html2canvas(chartElement, { 
+    //         logging: false,
+    //         useCORS: true,
+    //         backgroundColor: 'hsl(var(--background))',
+    //        });
+        
+    //     const imgData = canvas.toDataURL("image/png");
+        
+    //     const imgProps = pdf.getImageProperties(imgData);
+    //     const pdfWidth = pdf.internal.pageSize.getWidth() - 28; 
+    //     const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
+    //     const maxPdfHeight = pdf.internal.pageSize.getHeight() - yPos - 20; 
+        
+    //     let finalImgHeight = pdfHeight;
+    //     let finalImgWidth = pdfWidth;
+
+    //     if(pdfHeight > maxPdfHeight) {
+    //         finalImgHeight = maxPdfHeight;
+    //         finalImgWidth = (imgProps.width * finalImgHeight) / imgProps.height;
+    //     }
+
+    //     pdf.addImage(imgData, "PNG", 14, yPos, finalImgWidth, finalImgHeight);
+    //     yPos += finalImgHeight + 10;
+    //   } catch (error) {
+    //     console.error("Error capturing chart for PDF (html2canvas likely not installed or failed):", error);
+    //     pdf.text("Chart image could not be generated.", 14, yPos);
+    //     yPos += 10;
+    //   }
+    // } else {
+    //   pdf.text("Chart container element not found.", 14, yPos);
+    //   yPos += 10;
+    // }
+    console.warn("html2canvas is required to include the chart image in the PDF. Skipping chart image generation.");
+    pdf.text("Chart image was not included (html2canvas not available or error during capture).", 14, yPos);
+    yPos += 10;
+
+
+    pdf.setFontSize(8);
+    pdf.text("Disclaimer: This report is based on a Monte Carlo simulation and does not guarantee future results.", 14, pdf.internal.pageSize.getHeight() - 15);
+
+    pdf.save("monte-carlo-report.pdf");
+  };
 
 
   return (
@@ -528,8 +615,17 @@ export default function ModelMatrixPage() {
              )}
         </PlaceholderCard>
 
-        <div className="flex justify-end mt-6"> <Button variant="outline" disabled={!!weightError || Object.values(sandboxManagerWeights).reduce((sum, w) => sum + w, 0) !== 100}> <FileDown className="mr-2 h-4 w-4" /> Download Scenario PDF </Button> </div>
+        <div className="flex justify-end mt-6"> 
+          <Button 
+            variant="outline" 
+            onClick={handleDownloadMonteCarloReport} 
+            disabled={!monteCarloSummary || isMonteCarloRunning}
+          > 
+            <FileDown className="mr-2 h-4 w-4" /> Download Scenario PDF 
+          </Button> 
+        </div>
       </PlaceholderCard>
     </main>
   );
 }
+

@@ -49,7 +49,7 @@ export function MonteCarloChart({ data }: MonteCarloChartProps) {
   }
 
   return (
-    <ChartContainer config={chartConfig} className="aspect-video h-[400px] w-full">
+    <ChartContainer config={chartConfig} className="aspect-video h-[400px] w-full" id="monte-carlo-chart-container">
       <AreaChart
         accessibilityLayer
         data={data}
