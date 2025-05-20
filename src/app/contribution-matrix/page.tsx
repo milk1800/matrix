@@ -12,18 +12,25 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { CircularProgressRing } from "@/components/ui/circular-progress-ring";
-import { AccountTypeProgressRing } from "@/components/charts/account-type-progress-ring"; // New import
+import { AccountTypeProgressRing } from "@/components/charts/account-type-progress-ring"; 
+import { useToast } from "@/hooks/use-toast";
 
 type AccountType = 'Traditional IRA' | 'Roth IRA' | 'SEP IRA' | 'SIMPLE IRA';
 
 interface ContributionAccount {
   id: string;
-  accountName: string;
+  accountName: string; // Will now store XYZ123456 format
+  originalAccountName?: string; // For tooltip
   accountType: AccountType;
   annualLimit: number;
   amountContributed: number;
   dueDate: string; // YYYY-MM-DD format
 }
+
+const generateRandomAccountNumber = (): string => {
+  const randomNumber = Math.floor(100000 + Math.random() * 900000);
+  return `XYZ${randomNumber}`;
+};
 
 const getFutureDate = (days: number): string => {
   const date = new Date();
@@ -31,17 +38,28 @@ const getFutureDate = (days: number): string => {
   return format(date, 'yyyy-MM-dd');
 };
 
+// Ensure unique account numbers for mock data
+const usedAccountNumbers = new Set<string>();
+const generateUniqueAccountNumber = (): string => {
+  let accountNumber;
+  do {
+    accountNumber = generateRandomAccountNumber();
+  } while (usedAccountNumbers.has(accountNumber));
+  usedAccountNumbers.add(accountNumber);
+  return accountNumber;
+};
+
 const initialContributionAccounts: ContributionAccount[] = [
-  { id: "1", accountName: "John's Primary Roth", accountType: "Roth IRA", annualLimit: 7000, amountContributed: 3500, dueDate: getFutureDate(3) },
-  { id: "2", accountName: "Jane's Traditional", accountType: "Traditional IRA", annualLimit: 7000, amountContributed: 7000, dueDate: getFutureDate(25) },
-  { id: "3", accountName: "Business SEP", accountType: "SEP IRA", annualLimit: 66000, amountContributed: 25000, dueDate: getFutureDate(60) },
-  { id: "4", accountName: "Side Gig SIMPLE", accountType: "SIMPLE IRA", annualLimit: 16000, amountContributed: 8000, dueDate: getFutureDate(-5) },
-  { id: "5", accountName: "John's Rollover IRA", accountType: "Traditional IRA", annualLimit: 7000, amountContributed: 1000, dueDate: getFutureDate(90) },
-  { id: "6", accountName: "Spouse Roth", accountType: "Roth IRA", annualLimit: 7000, amountContributed: 0, dueDate: getFutureDate(1) },
-  { id: "7", accountName: "Emergency Fund IRA", accountType: "Traditional IRA", annualLimit: 7000, amountContributed: 3000, dueDate: getFutureDate(0) },
-  { id: "8", accountName: "College Fund IRA", accountType: "Roth IRA", annualLimit: 7000, amountContributed: 1500, dueDate: getFutureDate(14) },
-  { id: "9", accountName: "Retirement Plus", accountType: "SEP IRA", annualLimit: 66000, amountContributed: 60000, dueDate: getFutureDate(40) },
-  { id: "10", accountName: "Travel Savings IRA", accountType: "Traditional IRA", annualLimit: 7000, amountContributed: 500, dueDate: getFutureDate(180) },
+  { id: "1", accountName: generateUniqueAccountNumber(), originalAccountName: "John's Primary Roth", accountType: "Roth IRA", annualLimit: 7000, amountContributed: 3500, dueDate: getFutureDate(3) },
+  { id: "2", accountName: generateUniqueAccountNumber(), originalAccountName: "Jane's Traditional", accountType: "Traditional IRA", annualLimit: 7000, amountContributed: 7000, dueDate: getFutureDate(25) },
+  { id: "3", accountName: generateUniqueAccountNumber(), originalAccountName: "Business SEP", accountType: "SEP IRA", annualLimit: 66000, amountContributed: 25000, dueDate: getFutureDate(60) },
+  { id: "4", accountName: generateUniqueAccountNumber(), originalAccountName: "Side Gig SIMPLE", accountType: "SIMPLE IRA", annualLimit: 16000, amountContributed: 8000, dueDate: getFutureDate(-5) },
+  { id: "5", accountName: generateUniqueAccountNumber(), originalAccountName: "John's Rollover IRA", accountType: "Traditional IRA", annualLimit: 7000, amountContributed: 1000, dueDate: getFutureDate(90) },
+  { id: "6", accountName: generateUniqueAccountNumber(), originalAccountName: "Spouse Roth", accountType: "Roth IRA", annualLimit: 7000, amountContributed: 0, dueDate: getFutureDate(1) },
+  { id: "7", accountName: generateUniqueAccountNumber(), originalAccountName: "Emergency Fund IRA", accountType: "Traditional IRA", annualLimit: 7000, amountContributed: 3000, dueDate: getFutureDate(0) },
+  { id: "8", accountName: generateUniqueAccountNumber(), originalAccountName: "College Fund IRA", accountType: "Roth IRA", annualLimit: 7000, amountContributed: 1500, dueDate: getFutureDate(14) },
+  { id: "9", accountName: generateUniqueAccountNumber(), originalAccountName: "Retirement Plus", accountType: "SEP IRA", annualLimit: 66000, amountContributed: 60000, dueDate: getFutureDate(40) },
+  { id: "10", accountName: generateUniqueAccountNumber(), originalAccountName: "Travel Savings IRA", accountType: "Traditional IRA", annualLimit: 7000, amountContributed: 500, dueDate: getFutureDate(180) },
 ];
 
 const calculateMonthsLeft = (): number => {
@@ -113,6 +131,8 @@ export default function ContributionMatrixPage() {
   const [mavenQuery, setMavenQuery] = React.useState("");
   const [mavenResponse, setMavenResponse] = React.useState<string | null>(null);
   const [isLoadingMaven, setIsLoadingMaven] = React.useState(false);
+  const { toast } = useToast();
+
 
   const handleAskMaven = async () => {
     if (!mavenQuery.trim()) return;
@@ -126,9 +146,9 @@ export default function ContributionMatrixPage() {
       if (rothAccount) {
         const remaining = rothAccount.annualLimit - rothAccount.amountContributed;
         if (remaining > 0) {
-          responseText = `To max out your Roth IRA (${rothAccount.accountName}), you need to contribute $${remaining.toLocaleString()} more this year.`;
+          responseText = `To max out your Roth IRA (${rothAccount.originalAccountName || rothAccount.accountName}), you need to contribute $${remaining.toLocaleString()} more this year.`;
         } else {
-          responseText = `Your Roth IRA (${rothAccount.accountName}) is already maxed out for the year!`;
+          responseText = `Your Roth IRA (${rothAccount.originalAccountName || rothAccount.accountName}) is already maxed out for the year!`;
         }
       } else {
         responseText = "You don't seem to have a Roth IRA account listed.";
@@ -146,12 +166,11 @@ export default function ContributionMatrixPage() {
       totalOpportunity: number; 
       totalLimit: number;
       totalContributed: number;
-      percentageFunded: number;
     }> = {
-      "Traditional IRA": { totalRemaining: 0, totalOpportunity: 0, totalLimit: 0, totalContributed: 0, percentageFunded: 0 },
-      "Roth IRA": { totalRemaining: 0, totalOpportunity: 0, totalLimit: 0, totalContributed: 0, percentageFunded: 0 },
-      "SEP IRA": { totalRemaining: 0, totalOpportunity: 0, totalLimit: 0, totalContributed: 0, percentageFunded: 0 },
-      "SIMPLE IRA": { totalRemaining: 0, totalOpportunity: 0, totalLimit: 0, totalContributed: 0, percentageFunded: 0 },
+      "Traditional IRA": { totalRemaining: 0, totalOpportunity: 0, totalLimit: 0, totalContributed: 0 },
+      "Roth IRA": { totalRemaining: 0, totalOpportunity: 0, totalLimit: 0, totalContributed: 0 },
+      "SEP IRA": { totalRemaining: 0, totalOpportunity: 0, totalLimit: 0, totalContributed: 0 },
+      "SIMPLE IRA": { totalRemaining: 0, totalOpportunity: 0, totalLimit: 0, totalContributed: 0 },
     };
 
     accounts.forEach(acc => {
@@ -182,7 +201,7 @@ export default function ContributionMatrixPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="font-bold">Account Name</TableHead>
+              <TableHead className="font-bold">Account Number</TableHead>
               <TableHead className="font-bold">Type</TableHead>
               <TableHead className="font-bold text-right">Annual Limit</TableHead>
               <TableHead className="font-bold text-right w-40">Contributed</TableHead>
@@ -201,7 +220,20 @@ export default function ContributionMatrixPage() {
 
               return (
                 <TableRow key={account.id}>
-                  <TableCell className="font-medium whitespace-nowrap">{account.accountName}</TableCell>
+                  <TableCell className="font-medium whitespace-nowrap">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span>{account.accountName}</span>
+                        </TooltipTrigger>
+                        {account.originalAccountName && (
+                           <TooltipContent>
+                            <p>{account.originalAccountName}</p>
+                          </TooltipContent>
+                        )}
+                      </Tooltip>
+                    </TooltipProvider>
+                  </TableCell>
                   <TableCell className="text-muted-foreground whitespace-nowrap">{account.accountType}</TableCell>
                   <TableCell className="text-right whitespace-nowrap">${account.annualLimit.toLocaleString()}</TableCell>
                   <TableCell className="text-right text-foreground">
@@ -300,3 +332,4 @@ export default function ContributionMatrixPage() {
     </main>
   );
 }
+
