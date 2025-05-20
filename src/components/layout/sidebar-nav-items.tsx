@@ -5,6 +5,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
+  LayoutDashboard, // Added for Dashboard tab
   BarChart3,
   Users,
   TrendingUp,
@@ -13,7 +14,7 @@ import {
   PieChart,
   Shapes,
   FileText,
-  Layers, // Keep for Winger Matrix if added back
+  Layers,
   UserCog,
   LibraryBig
 } from 'lucide-react';
@@ -29,6 +30,7 @@ interface NavItem {
 }
 
 const navItems: NavItem[] = [
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard }, // New Dashboard item
   { href: '/asset-analytics', label: 'Asset Analytics', icon: BarChart3 },
   { href: '/client-analytics', label: 'Client Analytics', icon: Users },
   { href: '/financial-analytics', label: 'Financial Analytics', icon: TrendingUp },
@@ -38,7 +40,6 @@ const navItems: NavItem[] = [
   { href: '/portfolio-matrix', label: 'Portfolio Matrix', icon: PieChart },
   { href: '/model-matrix', label: 'Model Matrix', icon: Shapes },
   { href: '/contribution-matrix', label: 'Contribution Matrix', icon: TrendingUp },
-  // { href: '/winger-matrix', label: 'Winger Matrix', icon: Layers }, // Winger Matrix removed
 ];
 
 export function SidebarNavItems() {
