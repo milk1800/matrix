@@ -1,7 +1,7 @@
 
 "use client";
 
-import { Inter, Roboto_Mono } from 'next/font/google'; 
+import { Inter, Roboto_Mono } from 'next/font/google';
 import * as React from 'react';
 import Image from "next/image";
 import './globals.css';
@@ -12,15 +12,15 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, X, Brain } from 'lucide-react'; // Brain icon imported
+import { Send, X, Brain } from 'lucide-react';
 
-const mainFont = Inter({ // Using Inter as a valid Google Font
-  variable: '--font-geist-sans', // Keeping original variable name for CSS compatibility
+const mainFont = Inter({
+  variable: '--font-geist-sans',
   subsets: ['latin'],
 });
 
-const monoFont = Roboto_Mono({ // Using Roboto Mono as a valid Google Font
-  variable: '--font-geist-mono', // Keeping original variable name
+const monoFont = Roboto_Mono({
+  variable: '--font-geist-mono',
   subsets: ['latin'],
 });
 
@@ -57,7 +57,7 @@ export default function RootLayout({
 
     const botResponse: ChatMessage = {
       id: (Date.now() + 1).toString(),
-      text: `Maven echoes: "${currentMessage}"`, 
+      text: `Maven echoes: "${currentMessage}"`,
       sender: 'bot',
     };
 
@@ -108,13 +108,13 @@ export default function RootLayout({
         <SidebarProvider defaultOpen={true}>
           <Sidebar
             collapsible="none"
-            className="shadow-sidebar-glow pt-10" // Added pt-10 for ticker padding
+            className="shadow-sidebar-glow pt-10"
           >
             <SidebarHeader className="p-4 px-5 border-b border-sidebar-border">
               <div className="flex items-center space-x-3">
-                <Brain className="w-8 h-8 text-purple-500 animate-pulse-neon" /> 
-                <span className="text-white font-bold text-lg leading-tight">
-                  Sanctuary <br /> Matrix
+                <Brain className="w-8 h-8 text-purple-500 animate-pulse-neon" />
+                <span className="text-xl font-bold text-metallic-gradient">
+                  Matrix
                 </span>
               </div>
             </SidebarHeader>
@@ -122,7 +122,7 @@ export default function RootLayout({
               <SidebarNavItems />
             </SidebarContent>
           </Sidebar>
-          <SidebarInset className="pt-10"> {/* Added pt-10 for ticker padding */}
+          <SidebarInset className="pt-10">
             {children}
           </SidebarInset>
         </SidebarProvider>
