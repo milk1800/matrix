@@ -78,18 +78,18 @@ interface AccountWithoutBeneficiary {
   age: number;
   accountType: string;
   aumDisplay: string;
-  openDate: string;
   isHighAum: boolean;
 }
 
+// Limited to 7 accounts
 const accountsWithoutBeneficiaryData: AccountWithoutBeneficiary[] = [
-  { id: "awb1", rank: 1, clientName: "Client Kappa", age: 72, accountType: "Roth IRA", aumDisplay: "$2.1M", openDate: "01/15/2012", isHighAum: true },
-  { id: "awb2", rank: 2, clientName: "Client Lambda", age: 66, accountType: "Joint Account", aumDisplay: "$1.8M", openDate: "03/10/2015", isHighAum: true },
-  { id: "awb3", rank: 3, clientName: "Client Mu", age: 58, accountType: "Traditional IRA", aumDisplay: "$950K", openDate: "07/22/2010", isHighAum: false },
-  { id: "awb4", rank: 4, clientName: "Client Nu", age: 75, accountType: "Brokerage", aumDisplay: "$1.5M", openDate: "11/05/2018", isHighAum: true },
-  { id: "awb5", rank: 5, clientName: "Client Xi", age: 69, accountType: "SEP IRA", aumDisplay: "$750K", openDate: "09/12/2019", isHighAum: false },
-  { id: "awb6", rank: 6, clientName: "Client Omicron", age: 80, accountType: "Trust Account", aumDisplay: "$1.2M", openDate: "04/30/2014", isHighAum: true },
-  { id: "awb7", rank: 7, clientName: "Client Pi", age: 62, accountType: "401(k) Rollover", aumDisplay: "$600K", openDate: "06/18/2020", isHighAum: false },
+  { id: "awb1", rank: 1, clientName: "Client Kappa", age: 72, accountType: "Roth IRA", aumDisplay: "$2.1M", isHighAum: true },
+  { id: "awb2", rank: 2, clientName: "Client Lambda", age: 66, accountType: "Joint Account", aumDisplay: "$1.8M", isHighAum: true },
+  { id: "awb3", rank: 3, clientName: "Client Mu", age: 58, accountType: "Traditional IRA", aumDisplay: "$950K", isHighAum: false },
+  { id: "awb4", rank: 4, clientName: "Client Nu", age: 75, accountType: "Brokerage", aumDisplay: "$1.5M", isHighAum: true },
+  { id: "awb5", rank: 5, clientName: "Client Xi", age: 69, accountType: "SEP IRA", aumDisplay: "$750K", isHighAum: false },
+  { id: "awb6", rank: 6, clientName: "Client Omicron", age: 80, accountType: "Trust Account", aumDisplay: "$1.2M", isHighAum: true },
+  { id: "awb7", rank: 7, clientName: "Client Pi", age: 62, accountType: "401(k) Rollover", aumDisplay: "$600K", isHighAum: false },
 ];
 
 export default function ClientAnalyticsPage() {
@@ -134,7 +134,7 @@ export default function ClientAnalyticsPage() {
             })}
           </div>
         </PlaceholderCard>
-        <PlaceholderCard title="Top 10 Accounts Without a Beneficiary" icon={AlertTriangle} iconClassName="text-yellow-400">
+        <PlaceholderCard title="Top Accounts Without a Beneficiary" icon={AlertTriangle} iconClassName="text-yellow-400">
           <TooltipProvider>
             <Table>
               <TableHeader>
@@ -144,7 +144,6 @@ export default function ClientAnalyticsPage() {
                   <TableHead className="text-center">Age</TableHead>
                   <TableHead>Account Type</TableHead>
                   <TableHead className="text-right">AUM</TableHead>
-                  <TableHead className="text-right">Open Date</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -164,7 +163,6 @@ export default function ClientAnalyticsPage() {
                         <TableCell className="text-center text-muted-foreground">{account.age}</TableCell>
                         <TableCell className="text-muted-foreground">{account.accountType}</TableCell>
                         <TableCell className="text-right font-semibold">{account.aumDisplay}</TableCell>
-                        <TableCell className="text-right text-muted-foreground">{account.openDate}</TableCell>
                       </TableRow>
                     </TooltipTrigger>
                     <TooltipContent side="top" className="bg-popover text-popover-foreground">
@@ -176,7 +174,7 @@ export default function ClientAnalyticsPage() {
             </Table>
           </TooltipProvider>
            <p className="mt-4 text-xs text-muted-foreground">
-            Top accounts missing beneficiary information, ranked by AUM. ⚠️ High AUM accounts are flagged.
+            ⚠️ High AUM accounts are flagged. Top accounts missing beneficiary info, ranked by AUM.
           </p>
         </PlaceholderCard>
       </div>
@@ -213,3 +211,5 @@ export default function ClientAnalyticsPage() {
   );
 }
 
+
+    
