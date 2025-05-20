@@ -81,7 +81,6 @@ interface AccountWithoutBeneficiary {
   isHighAum: boolean;
 }
 
-// Limited to 7 accounts
 const accountsWithoutBeneficiaryData: AccountWithoutBeneficiary[] = [
   { id: "awb1", rank: 1, clientName: "Client Kappa", age: 72, accountType: "Roth IRA", aumDisplay: "$2.1M", isHighAum: true },
   { id: "awb2", rank: 2, clientName: "Client Lambda", age: 66, accountType: "Joint Account", aumDisplay: "$1.8M", isHighAum: true },
@@ -90,6 +89,9 @@ const accountsWithoutBeneficiaryData: AccountWithoutBeneficiary[] = [
   { id: "awb5", rank: 5, clientName: "Client Xi", age: 69, accountType: "SEP IRA", aumDisplay: "$750K", isHighAum: false },
   { id: "awb6", rank: 6, clientName: "Client Omicron", age: 80, accountType: "Trust Account", aumDisplay: "$1.2M", isHighAum: true },
   { id: "awb7", rank: 7, clientName: "Client Pi", age: 62, accountType: "401(k) Rollover", aumDisplay: "$600K", isHighAum: false },
+  { id: "awb8", rank: 8, clientName: "Client Rho", age: 70, accountType: "IRA", aumDisplay: "$550K", isHighAum: false },
+  { id: "awb9", rank: 9, clientName: "Client Sigma", age: 67, accountType: "Brokerage", aumDisplay: "$1.1M", isHighAum: true },
+  { id: "awb10", rank: 10, clientName: "Client Tau", age: 78, accountType: "Annuity", aumDisplay: "$450K", isHighAum: false },
 ];
 
 export default function ClientAnalyticsPage() {
@@ -134,7 +136,7 @@ export default function ClientAnalyticsPage() {
             })}
           </div>
         </PlaceholderCard>
-        <PlaceholderCard title="Top Accounts Without a Beneficiary" icon={AlertTriangle} iconClassName="text-yellow-400">
+        <PlaceholderCard title="Top 10 Accounts Without a Beneficiary" icon={AlertTriangle} iconClassName="text-yellow-400">
           <TooltipProvider>
             <Table>
               <TableHeader>
@@ -179,7 +181,7 @@ export default function ClientAnalyticsPage() {
         </PlaceholderCard>
       </div>
 
-      <PlaceholderCard title="Top 10 Clients Age 65+ with Children as Beneficiaries" icon={Users}>
+      <PlaceholderCard title="Top Clients Age 65+ with Children as Beneficiaries" icon={Users}>
         <div className="space-y-4 mt-2">
           {topClients65PlusWithChildBeneficiariesData.map((client) => (
             <div key={client.id} className="p-3 rounded-md border border-border/20 hover:bg-muted/10 transition-colors duration-150 ease-out">
@@ -211,5 +213,7 @@ export default function ClientAnalyticsPage() {
   );
 }
 
+
+    
 
     
