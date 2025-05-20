@@ -16,20 +16,24 @@ import {
   CalendarDays, 
   Sparkles, 
   Send,
-  Landmark, // Fallback for index icons
+  Landmark, 
   Clock,
   AlertCircle
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
-const POLYGON_API_KEY = "4eIDg99n4FM2EKLkA8voxgJBrzIwQHkV"; // IMPORTANT: Move to .env.local for production!
+// IMPORTANT: For production, move this API key to a secure environment variable (e.g., .env.local)
+// and access it via process.env.POLYGON_API_KEY.
+// If you're getting 401 errors, PLEASE VERIFY THIS KEY IS VALID AND HAS PERMISSIONS
+// FOR THE INDICES AND ENDPOINTS YOU ARE TRYING TO ACCESS.
+const POLYGON_API_KEY = "4eIDg99n4FM2EKLkA8voxgJBrzIwQHkV"; 
 
 interface MarketData {
   name: string;
   polygonTicker: string;
-  openTime: string; // HH:MM in EST
-  closeTime: string; // HH:MM in EST
-  timezone: string; // e.g., 'America/New_York'
+  openTime: string; 
+  closeTime: string; 
+  timezone: string; 
   icon?: React.ElementType;
 }
 
@@ -37,7 +41,7 @@ const initialMarketOverviewData: MarketData[] = [
   { name: 'S&P 500', polygonTicker: 'I:SPX', openTime: '09:30', closeTime: '16:00', timezone: 'America/New_York', icon: Landmark },
   { name: 'NASDAQ', polygonTicker: 'I:NDX', openTime: '09:30', closeTime: '16:00', timezone: 'America/New_York', icon: Landmark },
   { name: 'Dow Jones', polygonTicker: 'I:DJI', openTime: '09:30', closeTime: '16:00', timezone: 'America/New_York', icon: Landmark },
-  { name: 'VIX', polygonTicker: 'I:VIX', openTime: '09:15', closeTime: '16:15', timezone: 'America/New_York', icon: Landmark }, // VIX has slightly different hours often
+  { name: 'VIX', polygonTicker: 'I:VIX', openTime: '09:30', closeTime: '16:00', timezone: 'America/New_York', icon: Landmark }, // VIX actual hours differ, often 9:15-16:15 or even more extended for futures
 ];
 
 const topGainers = [ { ticker: 'AMZN', change: '+2.3%' }, { ticker: 'NVDA', change: '+1.9%' }, { ticker: 'MSFT', change: '+1.5%' } ];
@@ -81,8 +85,8 @@ interface MarketStatus {
 }
 
 interface FetchedIndexData {
-  c?: number; // Close price
-  o?: number; // Open price
+  c?: number; 
+  o?: number; 
   error?: string;
   loading?: boolean;
 }
@@ -96,9 +100,22 @@ export default function DashboardPage() {
     try {
       const response = await fetch(`https://api.polygon.io/v2/aggs/ticker/${symbol}/prev?adjusted=true&apiKey=${POLYGON_API_KEY}`);
       if (!response.ok) {
-        const errorData = await response.json();
-        console.error(`Error fetching ${symbol}: ${response.status} ${errorData.message || response.statusText}`);
-        return { error: `API Error: ${response.status}` };
+        let errorMessage = `API Error: ${response.status} ${response.statusText}`;
+        try {
+          // Attempt to parse JSON error response from Polygon.io
+          const errorData = await response.json();
+          if (errorData && errorData.message) {
+            errorMessage = `API Error: ${response.status} - ${errorData.message}`;
+          } else if (errorData && errorData.error) { // Polygon sometimes uses an "error" field for messages
+            errorMessage = `API Error: ${response.status} - ${errorData.error}`;
+          } else if (errorData && errorData.request_id && errorData.status) { // Another common Polygon error format
+             errorMessage = `API Error: ${response.status} - ${errorData.status} (Request ID: ${errorData.request_id})`;
+          }
+        } catch (e) {
+          // If response is not JSON, stick with the original statusText
+        }
+        console.error(`Error fetching ${symbol}: ${errorMessage}`);
+        return { error: `API Error: ${response.status}` }; // Keep UI error concise
       }
       const data = await response.json();
       if (data.results && data.results.length > 0) {
@@ -106,9 +123,9 @@ export default function DashboardPage() {
         return { c, o };
       }
       return { error: 'No data found' };
-    } catch (error) {
-      console.error(`Network error fetching ${symbol}:`, error);
-      return { error: 'Network error' };
+    } catch (error: any) {
+      console.error(`Network or other error fetching ${symbol}:`, error.message || error);
+      return { error: 'Network/Fetch error' };
     }
   };
 
@@ -131,11 +148,7 @@ export default function DashboardPage() {
         if (result.status === 'fulfilled') {
           newApiData[result.value.symbol] = result.value.data;
         } else {
-          // For any failed promise, we might not have result.value.symbol directly.
-          // This part may need adjustment if we want to map errors back to symbols
-          // from the original promises array if the error object doesn't contain the symbol.
-          // For now, unfulfilled promises mean their entries won't be in newApiData.
-          console.error("A fetch promise was rejected:", result.reason);
+          console.error("A fetch promise for market data was rejected:", result.reason);
         }
       });
       setMarketApiData(prevData => ({...prevData, ...newApiData}));
@@ -146,20 +159,28 @@ export default function DashboardPage() {
 
   const updateMarketStatuses = React.useCallback(() => {
     const newStatuses: Record<string, MarketStatus> = {};
-    const now = new Date();
+    const today = new Date(); // Use a single 'today' for all calculations in this tick
 
     initialMarketOverviewData.forEach(market => {
       const [openHour, openMinute] = market.openTime.split(':').map(Number);
       const [closeHour, closeMinute] = market.closeTime.split(':').map(Number);
-
-      // Get current time in market's timezone (EST for these examples)
-      const nowInMarketTimezone = new Date(now.toLocaleString('en-US', { timeZone: market.timezone }));
       
-      const marketOpenTime = new Date(nowInMarketTimezone);
-      marketOpenTime.setHours(openHour, openMinute, 0, 0);
+      const nowInMarketTimezoneStr = new Date().toLocaleString('en-US', { timeZone: market.timezone });
+      const nowInMarketTimezone = new Date(nowInMarketTimezoneStr);
 
-      const marketCloseTime = new Date(nowInMarketTimezone);
+      const currentMarketHour = nowInMarketTimezone.getHours();
+      const currentMarketMinute = nowInMarketTimezone.getMinutes();
+
+      // Create date objects for today in the local timezone, then set hours/minutes to EST equivalents
+      const marketOpenTime = new Date(today);
+      marketOpenTime.setHours(openHour, openMinute, 0, 0);
+      
+      const marketCloseTime = new Date(today);
       marketCloseTime.setHours(closeHour, closeMinute, 0, 0);
+      
+      // Use a 'current time' equivalent for logic that is also based on 'today's date
+      const nowInESTEquivalentForLogic = new Date(today);
+      nowInESTEquivalentForLogic.setHours(currentMarketHour, currentMarketMinute, nowInMarketTimezone.getSeconds(), nowInMarketTimezone.getMilliseconds());
 
       const oneHourBeforeClose = new Date(marketCloseTime);
       oneHourBeforeClose.setHours(oneHourBeforeClose.getHours() - 1);
@@ -168,11 +189,11 @@ export default function DashboardPage() {
       let statusText: string;
       let shadowClass: string;
 
-      if (nowInMarketTimezone >= marketOpenTime && nowInMarketTimezone < oneHourBeforeClose) {
+      if (nowInESTEquivalentForLogic >= marketOpenTime && nowInESTEquivalentForLogic < oneHourBeforeClose) {
         status = 'OPEN';
         statusText = `🟢 Market Open`;
         shadowClass = 'shadow-market-open';
-      } else if (nowInMarketTimezone >= oneHourBeforeClose && nowInMarketTimezone < marketCloseTime) {
+      } else if (nowInESTEquivalentForLogic >= oneHourBeforeClose && nowInESTEquivalentForLogic < marketCloseTime) {
         status = 'CLOSING_SOON';
         statusText = `🟡 Closing Soon`;
         shadowClass = 'shadow-market-closing';
@@ -193,11 +214,11 @@ export default function DashboardPage() {
   }, []);
 
   React.useEffect(() => {
-    updateMarketStatuses();
+    updateMarketStatuses(); // Initial call
     const liveTimeInterval = setInterval(() => {
       setCurrentTimeEST(new Date().toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }));
     }, 1000);
-    const statusUpdateInterval = setInterval(updateMarketStatuses, 60000); // Update statuses every minute
+    const statusUpdateInterval = setInterval(updateMarketStatuses, 60000); 
 
     return () => {
       clearInterval(liveTimeInterval);
@@ -227,8 +248,7 @@ export default function DashboardPage() {
             
             let valueDisplay = "$0.00";
             let changeDisplay: React.ReactNode = "0.00%";
-            let changeType: 'up' | 'down' | 'neutral' = 'neutral';
-
+            
             if (data?.loading) {
               valueDisplay = "Loading...";
               changeDisplay = "Loading...";
@@ -239,7 +259,7 @@ export default function DashboardPage() {
               valueDisplay = `$${data.c.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
               const percentChange = calculateChangePercent(data.c, data.o);
               if (percentChange !== null) {
-                changeType = percentChange >= 0 ? 'up' : 'down';
+                const changeType = percentChange >= 0 ? 'up' : 'down';
                 changeDisplay = (
                   <span className={changeType === 'up' ? 'text-green-400' : 'text-red-400'}>
                     {changeType === 'up' ? <TrendingUp className="inline-block w-4 h-4 mr-1" /> : <TrendingDown className="inline-block w-4 h-4 mr-1" />}
@@ -377,5 +397,6 @@ export default function DashboardPage() {
     </main>
   );
 }
+    
 
     
