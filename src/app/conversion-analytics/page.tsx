@@ -1,27 +1,47 @@
 
+"use client"; // Required for Tooltip and potential future interactions
+
+import * as React from 'react';
 import { Users, DollarSign, TrendingDown } from 'lucide-react';
 import { PlaceholderCard } from '@/components/dashboard/placeholder-card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
+
+interface EngagementInfo {
+  level: "High" | "Medium" | "Low";
+  className: string;
+}
+
+const getEngagementInfo = (logins: number): EngagementInfo => {
+  if (logins >= 15) {
+    return { level: "High", className: "text-primary font-semibold" }; // Purple, bold
+  } else if (logins >= 5) {
+    return { level: "Medium", className: "text-yellow-400" }; // Yellow
+  } else {
+    return { level: "Low", className: "text-muted-foreground" }; // Muted gray
+  }
+};
 
 export default function ConversionAnalyticsPage() {
   const metricCardsData = [
-    { 
-      title: "Total Non-Managed Accounts", 
-      value: "245", 
-      description: "Number of non-managed accounts", 
-      icon: Users 
+    {
+      title: "Total Non-Managed Accounts",
+      value: "245",
+      description: "Number of non-managed accounts",
+      icon: Users
     },
-    { 
-      title: "Total AUM in Non-Managed", 
-      value: "$82,000,000", 
-      description: "Assets not enrolled in managed programs", 
-      icon: DollarSign 
+    {
+      title: "Total AUM in Non-Managed",
+      value: "$82,000,000",
+      description: "Assets not enrolled in managed programs",
+      icon: DollarSign
     },
-    { 
-      title: "Estimated Lost Revenue (YTD)", 
-      value: "$162,000", 
-      description: "Estimated advisory revenue not earned YTD", 
-      icon: TrendingDown 
+    {
+      title: "Estimated Lost Revenue (YTD)",
+      value: "$162,000",
+      description: "Estimated advisory revenue not earned YTD",
+      icon: TrendingDown
     },
   ];
 
@@ -34,17 +54,17 @@ export default function ConversionAnalyticsPage() {
   ];
 
   const topHouseholdsOutperformanceData = [
-    { householdName: 'Thompson Wealth', accounts: 7, managedAUM: '$4.1M', nonManagedAUM: '$1.2M', managedYTD: '12.5%', nonManagedYTD: '6.1%', outperformance: '6.4%' },
-    { householdName: 'Garcia Investments', accounts: 3, managedAUM: '$2.5M', nonManagedAUM: '$800K', managedYTD: '10.2%', nonManagedYTD: '5.5%', outperformance: '4.7%' },
-    { householdName: 'Lee Capital', accounts: 5, managedAUM: '$6.0M', nonManagedAUM: '$1.5M', managedYTD: '11.8%', nonManagedYTD: '7.0%', outperformance: '4.8%' },
-    { householdName: 'Davis & Co.', accounts: 2, managedAUM: '$1.8M', nonManagedAUM: '$500K', managedYTD: '9.5%', nonManagedYTD: '4.2%', outperformance: '5.3%' },
-    { householdName: 'Miller Trust', accounts: 6, managedAUM: '$3.3M', nonManagedAUM: '$950K', managedYTD: '13.1%', nonManagedYTD: '6.8%', outperformance: '6.3%' },
+    { householdName: 'Thompson Wealth', accounts: 7, managedAUM: '$4.1M', nonManagedAUM: '$1.2M', managedYTD: '12.5%', nonManagedYTD: '6.1%', outperformance: '6.4%', nxiLoginsLast30Days: 18, avgSessionDuration: "7m 22s", lastLoginDaysAgo: 2 },
+    { householdName: 'Garcia Investments', accounts: 3, managedAUM: '$2.5M', nonManagedAUM: '$800K', managedYTD: '10.2%', nonManagedYTD: '5.5%', outperformance: '4.7%', nxiLoginsLast30Days: 7, avgSessionDuration: "5m 10s", lastLoginDaysAgo: 5 },
+    { householdName: 'Lee Capital', accounts: 5, managedAUM: '$6.0M', nonManagedAUM: '$1.5M', managedYTD: '11.8%', nonManagedYTD: '7.0%', outperformance: '4.8%', nxiLoginsLast30Days: 2, avgSessionDuration: "3m 05s", lastLoginDaysAgo: 14 },
+    { householdName: 'Davis & Co.', accounts: 2, managedAUM: '$1.8M', nonManagedAUM: '$500K', managedYTD: '9.5%', nonManagedYTD: '4.2%', outperformance: '5.3%', nxiLoginsLast30Days: 22, avgSessionDuration: "9m 45s", lastLoginDaysAgo: 1 },
+    { householdName: 'Miller Trust', accounts: 6, managedAUM: '$3.3M', nonManagedAUM: '$950K', managedYTD: '13.1%', nonManagedYTD: '6.8%', outperformance: '6.3%', nxiLoginsLast30Days: 4, avgSessionDuration: "2m 30s", lastLoginDaysAgo: 25 },
   ];
 
   return (
     <main className="min-h-screen bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#5b21b6]/10 to-[#000104] flex-1 p-6 space-y-8 md:p-8">
       <h1 className="text-3xl font-bold tracking-tight text-foreground mb-8">Conversion Analytics</h1>
-      
+
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {metricCardsData.map((card, index) => (
           <PlaceholderCard
@@ -88,32 +108,52 @@ export default function ConversionAnalyticsPage() {
       </PlaceholderCard>
 
       <PlaceholderCard title="Top Households: Managed Outperformance vs. Non-Managed (YTD)">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Household Name</TableHead>
-              <TableHead className="text-right"># of Accts</TableHead>
-              <TableHead className="text-right">Managed AUM</TableHead>
-              <TableHead className="text-right">Non-Managed AUM</TableHead>
-              <TableHead className="text-right">Managed YTD %</TableHead>
-              <TableHead className="text-right">Non-Managed YTD %</TableHead>
-              <TableHead className="text-right">Outperformance %</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {topHouseholdsOutperformanceData.map((row, index) => (
-              <TableRow key={index}>
-                <TableCell className="font-medium">{row.householdName}</TableCell>
-                <TableCell className="text-right">{row.accounts}</TableCell>
-                <TableCell className="text-right">{row.managedAUM}</TableCell>
-                <TableCell className="text-right">{row.nonManagedAUM}</TableCell>
-                <TableCell className="text-right text-green-400">{row.managedYTD}</TableCell>
-                <TableCell className="text-right">{row.nonManagedYTD}</TableCell>
-                <TableCell className="text-right text-green-400">{row.outperformance}</TableCell>
+        <TooltipProvider>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Household Name</TableHead>
+                <TableHead className="text-right"># of Accts</TableHead>
+                <TableHead className="text-right">Managed AUM</TableHead>
+                <TableHead className="text-right">Non-Managed AUM</TableHead>
+                <TableHead className="text-right">Managed YTD %</TableHead>
+                <TableHead className="text-right">Non-Managed YTD %</TableHead>
+                <TableHead className="text-right">Outperformance %</TableHead>
+                <TableHead className="text-center">Client Engagement</TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {topHouseholdsOutperformanceData.map((row, index) => {
+                const engagement = getEngagementInfo(row.nxiLoginsLast30Days);
+                return (
+                  <TableRow key={index}>
+                    <TableCell className="font-medium">{row.householdName}</TableCell>
+                    <TableCell className="text-right">{row.accounts}</TableCell>
+                    <TableCell className="text-right">{row.managedAUM}</TableCell>
+                    <TableCell className="text-right">{row.nonManagedAUM}</TableCell>
+                    <TableCell className="text-right text-green-400">{row.managedYTD}</TableCell>
+                    <TableCell className="text-right">{row.nonManagedYTD}</TableCell>
+                    <TableCell className="text-right text-green-400">{row.outperformance}</TableCell>
+                    <TableCell className="text-center">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className={cn("cursor-default", engagement.className)}>
+                            {row.nxiLoginsLast30Days} logins ({engagement.level})
+                          </span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>{row.nxiLoginsLast30Days} logins in past 30 days</p>
+                          <p>Avg. session: {row.avgSessionDuration}</p>
+                          <p>Last login: {row.lastLoginDaysAgo} days ago</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </TooltipProvider>
       </PlaceholderCard>
     </main>
   );
