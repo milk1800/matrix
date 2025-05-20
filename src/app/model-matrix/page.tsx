@@ -2,7 +2,7 @@
 "use client";
 
 import * as React from "react";
-import { Download, UserCog, LibraryBig, FileText, TrendingUp, TrendingDown, DollarSign, SlidersHorizontal, FileDown, ChevronsUpDown, Brain } from 'lucide-react';
+import { Download, UserCog, LibraryBig, FileText, TrendingUp, TrendingDown, DollarSign, SlidersHorizontal, FileDown, ChevronsUpDown, Brain, AlertTriangle } from 'lucide-react';
 import { PlaceholderCard } from '@/components/dashboard/placeholder-card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
@@ -44,7 +44,7 @@ interface ModelData {
 const modelPerformanceData: ModelData[] = [
   {
     id: "strat1",
-    manager: "Alpha Advisors",
+    manager: "Blackrock", // Updated from Alpha Advisors
     strategyName: "Global Growth Equity",
     aum: "$150M",
     feePercent: "0.85%",
@@ -120,7 +120,7 @@ const modelPerformanceData: ModelData[] = [
   },
   {
     id: "strat5",
-    manager: "Alpha Advisors",
+    manager: "Blackrock", // Updated from Alpha Advisors
     strategyName: "Tech Innovators SMA",
     aum: "$90M",
     feePercent: "1.00%",
@@ -139,12 +139,12 @@ const modelPerformanceData: ModelData[] = [
   },
 ];
 
-// Mock data for the rebalancing sandbox
-const sandboxSelectedManagers = [
-  { ...modelPerformanceData[0], weight: 50 }, // Global Growth Equity
-  { ...modelPerformanceData[1], weight: 30 }, // Core Fixed Income
-  { ...modelPerformanceData[3], weight: 20 }, // Balanced Portfolio UMA
-];
+const sandboxSelectedManagers = modelPerformanceData
+  .filter(m => ["strat1", "strat2", "strat4"].includes(m.id))
+  .map((m, index) => ({
+    ...m,
+    weight: index === 0 ? 50 : index === 1 ? 30 : 20, // Default weights: Blackrock 50%, Beta Capital 30%, Delta Asset Mgmt 20%
+  }));
 
 
 const getReturnClass = (returnValue: string) => {
@@ -184,10 +184,42 @@ interface ComparisonCardData extends Omit<ModelData, 'aum' | 'id' | 'strategyNam
   totalCostPercent: string;
 }
 
+const PROGRAM_FEE_PERCENT = 0.0020; // 0.20%
+
+const parsePercentage = (str: string | null | undefined): number => {
+  if (!str || typeof str !== 'string' || str === "N/A") return 0;
+  return parseFloat(str.replace('%', '').replace(' p.a.', '')) / 100;
+};
+
+const parseFee = (str: string | null | undefined): number => {
+  if (!str || typeof str !== 'string' || str === "N/A") return 0;
+  return parseFloat(str.replace('%', '')) / 100;
+};
+
+const parseNumericString = (str: string | null | undefined): number => {
+  if (!str || typeof str !== 'string' || str === "N/A") return 0;
+  return parseFloat(str);
+};
+
+const formatPercentageDisplay = (num: number | null | undefined, digits: number = 1): string => {
+  if (num === null || num === undefined || isNaN(num)) return "N/A";
+  const percentage = num * 100;
+  return `${percentage > 0 ? '+' : ''}${percentage.toFixed(digits)}%`;
+};
+
 
 export default function ModelMatrixPage() {
   const [selectedManagerNames, setSelectedManagerNames] = React.useState<string[]>([]);
-  const [managerWeights, setManagerWeights] = React.useState<Record<string, number>>({});
+  const [sandboxManagerWeights, setSandboxManagerWeights] = React.useState<Record<string, number>>(() => {
+    const initialWeights: Record<string, number> = {};
+    sandboxSelectedManagers.forEach(manager => {
+      initialWeights[manager.id] = manager.weight;
+    });
+    return initialWeights;
+  });
+  const [blendedMetrics, setBlendedMetrics] = React.useState<any | null>(null);
+  const [weightError, setWeightError] = React.useState<string | null>(null);
+
 
   const availableManagers = React.useMemo(() => {
     const managerNames = new Set(modelPerformanceData.map(model => model.manager));
@@ -216,7 +248,7 @@ export default function ModelMatrixPage() {
           strategies: ["N/A"],
           totalAum: 0,
           feePercent: "N/A",
-          programFeePercent: "0.20%", 
+          programFeePercent: `${(PROGRAM_FEE_PERCENT * 100).toFixed(2)}%`, 
           totalCostPercent: "N/A",
           style: "N/A",
           ytdReturn: "N/A", ytdBenchmark: "N/A",
@@ -229,16 +261,15 @@ export default function ModelMatrixPage() {
 
       const totalAum = managerStrategies.reduce((sum, strategy) => sum + parseAUM(strategy.aum), 0);
       const firstStrategy = managerStrategies[0];
-      const advisoryFee = parseFloat(firstStrategy.feePercent.replace('%', '')) / 100;
-      const programFee = 0.0020; // Mocked 0.20%
-      const totalCost = advisoryFee + programFee;
+      const advisoryFee = parseFee(firstStrategy.feePercent);
+      const totalCost = advisoryFee + PROGRAM_FEE_PERCENT;
 
       return {
         manager: managerName,
         strategies: managerStrategies.map(s => s.strategyName),
         totalAum: totalAum,
         feePercent: firstStrategy.feePercent,
-        programFeePercent: `${(programFee * 100).toFixed(2)}%`,
+        programFeePercent: `${(PROGRAM_FEE_PERCENT * 100).toFixed(2)}%`,
         totalCostPercent: `${(totalCost * 100).toFixed(2)}%`,
         style: firstStrategy.style,
         ytdReturn: firstStrategy.ytdReturn, ytdBenchmark: firstStrategy.ytdBenchmark,
@@ -252,12 +283,80 @@ export default function ModelMatrixPage() {
     });
   }, [selectedManagerNames]);
 
-  // Mock handler for slider changes
-  const handleWeightChange = (managerId: string, value: number[]) => {
-    setManagerWeights(prev => ({ ...prev, [managerId]: value[0] }));
-    // In a real app, you'd re-calculate blended metrics here
-    // and ensure total weight is 100%
+  const handleSandboxWeightChange = (managerId: string, newWeight: number) => {
+    setSandboxManagerWeights(prevWeights => {
+      const updatedWeights = { ...prevWeights, [managerId]: Math.max(0, Math.min(100, newWeight)) };
+      let currentTotalWeight = Object.values(updatedWeights).reduce((sum, w) => sum + w, 0);
+
+      if (currentTotalWeight > 100) {
+        let overage = currentTotalWeight - 100;
+        const otherManagerIds = sandboxSelectedManagers.map(m => m.id).filter(id => id !== managerId);
+        
+        // Sort other managers by weight descending, so we reduce from largest first
+        otherManagerIds.sort((a, b) => (updatedWeights[b] || 0) - (updatedWeights[a] || 0));
+
+        for (const otherId of otherManagerIds) {
+          if (overage <= 0) break;
+          const currentOtherWeight = updatedWeights[otherId] || 0;
+          const reduction = Math.min(overage, currentOtherWeight);
+          updatedWeights[otherId] = currentOtherWeight - reduction;
+          overage -= reduction;
+        }
+        // If still over, cap the initially changed manager's weight
+        if (overage > 0) {
+           updatedWeights[managerId] = (updatedWeights[managerId] || 0) - overage;
+           if(updatedWeights[managerId] < 0) updatedWeights[managerId] = 0; // Ensure it doesn't go negative
+        }
+      }
+      return updatedWeights;
+    });
   };
+
+  React.useEffect(() => {
+    const totalCurrentWeight = Object.values(sandboxManagerWeights).reduce((sum, weight) => sum + weight, 0);
+
+    if (Math.abs(totalCurrentWeight - 100) > 0.1) { // Allow for small float discrepancies
+      setWeightError("Total weight must be 100%.");
+      setBlendedMetrics(null);
+      return;
+    }
+    setWeightError(null);
+
+    let blendedYtdReturn = 0;
+    let blendedOneYearReturn = 0;
+    let blendedThreeYearReturn = 0;
+    let blendedFiveYearReturn = 0;
+    let blendedSharpeRatio = 0;
+    let blendedIrr = 0;
+    let blendedBeta = 0;
+    let blendedTotalCost = 0;
+
+    sandboxSelectedManagers.forEach(manager => {
+      const weight = (sandboxManagerWeights[manager.id] || 0) / 100;
+      if (weight === 0) return;
+
+      blendedYtdReturn += parsePercentage(manager.ytdReturn) * weight;
+      blendedOneYearReturn += parsePercentage(manager.oneYearReturn) * weight;
+      blendedThreeYearReturn += parsePercentage(manager.threeYearReturn) * weight;
+      blendedFiveYearReturn += parsePercentage(manager.fiveYearReturn) * weight;
+      blendedSharpeRatio += parseNumericString(manager.sharpeRatio) * weight;
+      blendedIrr += parsePercentage(manager.irr) * weight;
+      blendedBeta += parseNumericString(manager.beta) * weight;
+      blendedTotalCost += (parseFee(manager.feePercent) + PROGRAM_FEE_PERCENT) * weight;
+    });
+
+    setBlendedMetrics({
+      ytdReturn: blendedYtdReturn,
+      oneYearReturn: blendedOneYearReturn,
+      threeYearReturn: blendedThreeYearReturn,
+      fiveYearReturn: blendedFiveYearReturn,
+      sharpeRatio: blendedSharpeRatio,
+      irr: blendedIrr,
+      beta: blendedBeta,
+      totalCost: blendedTotalCost,
+    });
+
+  }, [sandboxManagerWeights]);
 
 
   return (
@@ -273,7 +372,7 @@ export default function ModelMatrixPage() {
                 Select Managers ({selectedManagerNames.length}/3)
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56">
+            <DropdownMenuContent className="w-56 bg-popover text-popover-foreground">
               <DropdownMenuLabel>Available Managers</DropdownMenuLabel>
               <DropdownMenuSeparator />
               {availableManagers.map((managerName) => (
@@ -418,7 +517,6 @@ export default function ModelMatrixPage() {
         </div>
       </PlaceholderCard>
 
-      {/* Model Rebalancing Sandbox Section */}
       <PlaceholderCard title="Model Rebalancing Sandbox" className="mt-8">
         <div className="space-y-6">
           <p className="text-sm text-muted-foreground">
@@ -426,10 +524,16 @@ export default function ModelMatrixPage() {
             Adjust weights to simulate blended portfolio metrics.
           </p>
           
-          {/* Selected Managers for Rebalancing */}
+          {weightError && (
+            <div className="flex items-center p-3 text-sm text-red-400 bg-red-500/10 border border-red-400/50 rounded-md">
+              <AlertTriangle className="mr-2 h-4 w-4" />
+              {weightError}
+            </div>
+          )}
+
           <div className="space-y-4">
             <h3 className="text-lg font-semibold text-foreground">Selected Managers for Rebalancing</h3>
-            {sandboxSelectedManagers.map((manager, index) => (
+            {sandboxSelectedManagers.map((manager) => (
               <div key={manager.id} className="p-4 rounded-md border border-border/50 bg-black/20 space-y-3">
                 <div className="flex justify-between items-start">
                   <div>
@@ -446,23 +550,23 @@ export default function ModelMatrixPage() {
                 </div>
                 <div>
                   <Label htmlFor={`weight-slider-${manager.id}`} className="text-xs text-muted-foreground">
-                    Weight: {managerWeights[manager.id] || manager.weight}%
+                    Weight: {sandboxManagerWeights[manager.id] || 0}%
                   </Label>
                   <div className="flex items-center gap-2 mt-1">
                     <Slider
                       id={`weight-slider-${manager.id}`}
-                      defaultValue={[manager.weight]}
+                      value={[sandboxManagerWeights[manager.id] || 0]}
                       max={100}
                       step={1}
                       className="w-[70%]"
-                      onValueChange={(value) => handleWeightChange(manager.id, value)}
+                      onValueChange={(value) => handleSandboxWeightChange(manager.id, value[0])}
                       aria-label={`Weight for ${manager.strategyName}`}
                     />
                     <Input
                       type="number"
-                      value={managerWeights[manager.id] || manager.weight}
-                      onChange={(e) => handleWeightChange(manager.id, [parseInt(e.target.value, 10) || 0])}
-                      className="w-[30%] h-8 text-xs bg-input border-border/50"
+                      value={sandboxManagerWeights[manager.id] || 0}
+                      onChange={(e) => handleSandboxWeightChange(manager.id, parseInt(e.target.value, 10) || 0)}
+                      className="w-[30%] h-8 text-xs bg-input border-border/50 text-foreground"
                       min="0"
                       max="100"
                     />
@@ -475,24 +579,23 @@ export default function ModelMatrixPage() {
             )}
           </div>
 
-          {/* Blended Portfolio Metrics */}
           <PlaceholderCard title="Simulated Blended Metrics" className="bg-black/30">
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
-              <div><strong className="text-muted-foreground block">YTD Return:</strong> <span className="text-green-400">+X.X%</span></div>
-              <div><strong className="text-muted-foreground block">1Y Return:</strong> <span className="text-green-400">+X.X%</span></div>
-              <div><strong className="text-muted-foreground block">3Y Return:</strong> <span className="text-green-400">+X.X% p.a.</span></div>
-              <div><strong className="text-muted-foreground block">5Y Return:</strong> <span className="text-green-400">+X.X% p.a.</span></div>
-              <div><strong className="text-muted-foreground block">Sharpe Ratio:</strong> X.XX</div>
-              <div><strong className="text-muted-foreground block">IRR:</strong> X.X%</div>
-              <div><strong className="text-muted-foreground block">Beta:</strong> X.XX</div>
-              <div><strong className="text-muted-foreground block md:col-span-2">Weighted Total Cost:</strong> X.XX%</div>
-            </div>
-            <p className="text-xs text-muted-foreground mt-3">
-              Metrics are placeholders and will update based on selected managers and weights.
-            </p>
+             {blendedMetrics ? (
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
+                    <div><strong className="text-muted-foreground block">YTD Return:</strong> <span className={getReturnClass(formatPercentageDisplay(blendedMetrics.ytdReturn))}>{formatPercentageDisplay(blendedMetrics.ytdReturn)}</span></div>
+                    <div><strong className="text-muted-foreground block">1Y Return:</strong> <span className={getReturnClass(formatPercentageDisplay(blendedMetrics.oneYearReturn))}>{formatPercentageDisplay(blendedMetrics.oneYearReturn)}</span></div>
+                    <div><strong className="text-muted-foreground block">3Y Return:</strong> <span className={getReturnClass(formatPercentageDisplay(blendedMetrics.threeYearReturn))}>{formatPercentageDisplay(blendedMetrics.threeYearReturn)} p.a.</span></div>
+                    <div><strong className="text-muted-foreground block">5Y Return:</strong> <span className={getReturnClass(formatPercentageDisplay(blendedMetrics.fiveYearReturn))}>{formatPercentageDisplay(blendedMetrics.fiveYearReturn)} p.a.</span></div>
+                    <div><strong className="text-muted-foreground block">Sharpe Ratio:</strong> {blendedMetrics.sharpeRatio?.toFixed(2) ?? "N/A"}</div>
+                    <div><strong className="text-muted-foreground block">IRR:</strong> {formatPercentageDisplay(blendedMetrics.irr)}</div>
+                    <div><strong className="text-muted-foreground block">Beta:</strong> {blendedMetrics.beta?.toFixed(2) ?? "N/A"}</div>
+                    <div className="md:col-span-2"><strong className="text-muted-foreground block">Weighted Total Cost:</strong> {formatPercentageDisplay(blendedMetrics.totalCost, 2)}</div>
+                </div>
+            ) : (
+                <p className="text-sm text-muted-foreground">Adjust weights to 100% to see blended metrics.</p>
+            )}
           </PlaceholderCard>
 
-          {/* Visualization Placeholder */}
           <PlaceholderCard title="Blended Performance Visualization">
             <div className="h-[300px]">
               <PlaceholderChart dataAiHint="blended portfolio performance comparison bar" />
@@ -503,7 +606,7 @@ export default function ModelMatrixPage() {
           </PlaceholderCard>
 
           <div className="flex justify-end mt-6">
-            <Button variant="outline" disabled>
+            <Button variant="outline" disabled={!!weightError || Object.values(sandboxManagerWeights).reduce((sum, w) => sum + w, 0) !== 100}>
               <FileDown className="mr-2 h-4 w-4" /> Download Scenario PDF
             </Button>
           </div>
@@ -512,3 +615,5 @@ export default function ModelMatrixPage() {
     </main>
   );
 }
+
+      
