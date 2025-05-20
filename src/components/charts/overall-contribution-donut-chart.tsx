@@ -36,11 +36,11 @@ export function OverallContributionDonutChart({
     },
     contributed: {
       label: "Total Contributed",
-      color: "hsl(var(--chart-1))", // Primary accent for "Contributed"
+      color: "hsl(var(--primary))", // Using primary accent for contributed
     },
     remaining: {
       label: "Total Remaining to Max Out",
-      color: "hsl(var(--muted))", // Muted color for "Remaining"
+      color: "hsl(var(--muted))", 
     },
   } satisfies ChartConfig;
 
@@ -51,7 +51,7 @@ export function OverallContributionDonutChart({
       config={chartConfig}
       className={cn(
         "mx-auto aspect-square h-full max-h-[400px] w-full",
-        fundedPercentage > 75 && "high-progress-glow"
+        fundedPercentage > 75 && "high-progress-glow" 
       )}
     >
       <ResponsiveContainer width="100%" height="100%">
@@ -64,10 +64,10 @@ export function OverallContributionDonutChart({
             data={chartData}
             dataKey="value"
             nameKey="name"
-            innerRadius={110} // Thicker ring
-            outerRadius={150} // Thicker ring
+            innerRadius={110} 
+            outerRadius={160} // Increased outer radius for thicker ring
             strokeWidth={2}
-            stroke="hsl(var(--card))" // Use card background for stroke between segments
+            stroke="hsl(var(--card))" 
             activeIndex={activeIndex ?? undefined}
             activeShape={({ cx, cy, innerRadius, outerRadius, startAngle, endAngle, fill, payload, percent }) => {
               return (
@@ -82,11 +82,11 @@ export function OverallContributionDonutChart({
                     cx={cx}
                     cy={cy}
                     innerRadius={innerRadius}
-                    outerRadius={outerRadius ? outerRadius + 8 : 0} // Pop-out effect
+                    outerRadius={outerRadius ? outerRadius + 8 : 0} 
                     startAngle={startAngle}
                     endAngle={endAngle}
                     fill={fill}
-                    stroke={fill} // Use segment color for stroke of active sector
+                    stroke={fill} 
                     strokeWidth={2}
                   />
                 </g>
@@ -110,3 +110,4 @@ export function OverallContributionDonutChart({
     </ChartContainer>
   );
 }
+

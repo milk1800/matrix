@@ -2,6 +2,9 @@
 "use client"
 
 import * as React from "react"
+// This component will be removed from contribution-matrix/page.tsx
+// but I'll keep its content for now in case it's used elsewhere or as a reference.
+// If it's definitively not used, it can be deleted.
 import { BarChart, Bar, XAxis, YAxis, Tooltip, CartesianGrid, ResponsiveContainer, Cell, Legend, LabelList } from "recharts"
 import {
   ChartContainer,
@@ -14,10 +17,10 @@ import type { ChartConfig } from "@/components/ui/chart"
 
 interface RevenueOpportunityBarChartProps {
   data: {
-    name: string; // This will be the AccountType (e.g., "Roth IRA")
+    name: string; 
     opportunity: number;
     remainingContribution: number;
-    accountType: string; // Explicitly keep accountType for coloring
+    accountType: string; 
   }[];
 }
 
@@ -33,7 +36,7 @@ export function RevenueOpportunityBarChart({ data }: RevenueOpportunityBarChartP
   const chartConfig = {
     opportunity: {
       label: "Revenue Opportunity",
-      color: "hsl(var(--chart-1))", // Default, overridden by cell
+      color: "hsl(var(--chart-1))", 
     },
     "Traditional IRA": { label: "Traditional IRA", color: accountTypeColors['Traditional IRA'] },
     "Roth IRA": { label: "Roth IRA", color: accountTypeColors['Roth IRA'] },
@@ -55,7 +58,7 @@ export function RevenueOpportunityBarChart({ data }: RevenueOpportunityBarChartP
           layout="vertical"
           margin={{
             top: 5,
-            right: 50, // Increased right margin for value labels
+            right: 50, 
             left: 20, 
             bottom: 20, 
           }}
@@ -119,3 +122,4 @@ export function RevenueOpportunityBarChart({ data }: RevenueOpportunityBarChartP
     </ChartContainer>
   );
 }
+
