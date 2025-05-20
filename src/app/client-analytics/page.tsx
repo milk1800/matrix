@@ -4,7 +4,7 @@
 import * as React from 'react';
 import { Users, DollarSign, TrendingUp, ArrowRightLeft } from 'lucide-react';
 import { PlaceholderCard } from '@/components/dashboard/placeholder-card';
-import { PlaceholderChart } from '@/components/dashboard/placeholder-chart';
+import { ClientTypeByChannelChart } from '@/components/charts/client-type-by-channel-chart';
 
 const metricCardsData = [
   { 
@@ -89,9 +89,9 @@ export default function ClientAnalyticsPage() {
             })}
           </div>
         </PlaceholderCard>
-        <PlaceholderCard title="Client Acquisition Channels">
-           <div className="h-[300px] md:h-[350px]"> {/* Adjusted height to match typical chart card height */}
-            <PlaceholderChart dataAiHint="client acquisition channels line revenue" />
+        <PlaceholderCard title="Client Type by Channel">
+           <div className="h-[300px] md:h-[350px]">
+            <ClientTypeByChannelChart />
           </div>
         </PlaceholderCard>
       </div>
