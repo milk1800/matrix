@@ -113,7 +113,7 @@ export default function RootLayout({
             <SidebarHeader className="p-4 px-5 border-b border-sidebar-border">
               <div className="flex items-center space-x-3">
                 <Brain className="w-8 h-8 text-purple-500 animate-pulse-neon" />
-                <span className="text-xl font-bold text-metallic-gradient">
+                <span className="text-3xl font-bold text-metallic-gradient">
                   Matrix
                 </span>
               </div>
