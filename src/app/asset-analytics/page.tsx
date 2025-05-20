@@ -13,8 +13,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 const metricCardsData = [
   {
     title: "Total AUM",
-    value: "$1.2B",
-    description: React.createElement('span', { className: 'text-green-400 text-sm' }, '+20.1% from last month'),
+    value: "$12.5B",
+    description: React.createElement('span', { className: 'text-green-400 text-sm' }, '+15.8% from last quarter'),
     icon: PiggyBank,
     iconClassName: "text-green-500",
   },
