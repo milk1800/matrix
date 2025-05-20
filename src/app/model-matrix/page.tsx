@@ -25,7 +25,7 @@ interface ModelData {
   id: string;
   manager: string;
   strategyName: string;
-  aum: string; // Keep as string for original table, parse for comparison
+  aum: string;
   feePercent: string;
   style: string;
   ytdReturn: string;
@@ -44,7 +44,7 @@ interface ModelData {
 const modelPerformanceData: ModelData[] = [
   {
     id: "strat1",
-    manager: "Blackrock", // Updated from Alpha Advisors
+    manager: "Blackrock",
     strategyName: "Global Growth Equity",
     aum: "$150M",
     feePercent: "0.85%",
@@ -120,7 +120,7 @@ const modelPerformanceData: ModelData[] = [
   },
   {
     id: "strat5",
-    manager: "Blackrock", // Updated from Alpha Advisors
+    manager: "Blackrock",
     strategyName: "Tech Innovators SMA",
     aum: "$90M",
     feePercent: "1.00%",
@@ -143,7 +143,7 @@ const sandboxSelectedManagers = modelPerformanceData
   .filter(m => ["strat1", "strat2", "strat4"].includes(m.id))
   .map((m, index) => ({
     ...m,
-    weight: index === 0 ? 50 : index === 1 ? 30 : 20, // Default weights: Blackrock 50%, Beta Capital 30%, Delta Asset Mgmt 20%
+    weight: index === 0 ? 50 : index === 1 ? 30 : 20, // Default weights
   }));
 
 
@@ -283,16 +283,20 @@ export default function ModelMatrixPage() {
     });
   }, [selectedManagerNames]);
 
-  const handleSandboxWeightChange = (managerId: string, newWeight: number) => {
+ const handleSandboxWeightChange = (managerId: string, newWeightInput: number) => {
     setSandboxManagerWeights(prevWeights => {
-      const updatedWeights = { ...prevWeights, [managerId]: Math.max(0, Math.min(100, newWeight)) };
+      const newWeight = Math.max(0, Math.min(100, isNaN(newWeightInput) ? 0 : newWeightInput));
+      const updatedWeights = { ...prevWeights, [managerId]: newWeight };
+      
       let currentTotalWeight = Object.values(updatedWeights).reduce((sum, w) => sum + w, 0);
 
       if (currentTotalWeight > 100) {
         let overage = currentTotalWeight - 100;
-        const otherManagerIds = sandboxSelectedManagers.map(m => m.id).filter(id => id !== managerId);
+        const otherManagerIds = sandboxSelectedManagers
+          .map(m => m.id)
+          .filter(id => id !== managerId);
         
-        // Sort other managers by weight descending, so we reduce from largest first
+        // Sort other managers by weight descending, so we reduce from largest first or those with weight
         otherManagerIds.sort((a, b) => (updatedWeights[b] || 0) - (updatedWeights[a] || 0));
 
         for (const otherId of otherManagerIds) {
@@ -302,9 +306,12 @@ export default function ModelMatrixPage() {
           updatedWeights[otherId] = currentOtherWeight - reduction;
           overage -= reduction;
         }
-        // If still over, cap the initially changed manager's weight
-        if (overage > 0) {
-           updatedWeights[managerId] = (updatedWeights[managerId] || 0) - overage;
+        
+        // If still over (e.g., other managers were already 0), cap the initially changed manager's weight
+        currentTotalWeight = Object.values(updatedWeights).reduce((sum, w) => sum + w, 0); // Recalculate
+        if (currentTotalWeight > 100) {
+           const finalOverage = currentTotalWeight - 100;
+           updatedWeights[managerId] = (updatedWeights[managerId] || 0) - finalOverage;
            if(updatedWeights[managerId] < 0) updatedWeights[managerId] = 0; // Ensure it doesn't go negative
         }
       }
@@ -312,15 +319,21 @@ export default function ModelMatrixPage() {
     });
   };
 
+
   React.useEffect(() => {
     const totalCurrentWeight = Object.values(sandboxManagerWeights).reduce((sum, weight) => sum + weight, 0);
 
-    if (Math.abs(totalCurrentWeight - 100) > 0.1) { // Allow for small float discrepancies
+    if (Math.abs(totalCurrentWeight - 100) > 0.1 && sandboxSelectedManagers.length > 0) { 
       setWeightError("Total weight must be 100%.");
       setBlendedMetrics(null);
       return;
     }
     setWeightError(null);
+
+    if (sandboxSelectedManagers.length === 0) {
+      setBlendedMetrics(null);
+      return;
+    }
 
     let blendedYtdReturn = 0;
     let blendedOneYearReturn = 0;
@@ -333,7 +346,7 @@ export default function ModelMatrixPage() {
 
     sandboxSelectedManagers.forEach(manager => {
       const weight = (sandboxManagerWeights[manager.id] || 0) / 100;
-      if (weight === 0) return;
+      if (weight === 0 && sandboxSelectedManagers.length > 0) return; // If managers are selected, but this one has 0 weight, skip its contribution.
 
       blendedYtdReturn += parsePercentage(manager.ytdReturn) * weight;
       blendedOneYearReturn += parsePercentage(manager.oneYearReturn) * weight;
@@ -549,27 +562,30 @@ export default function ModelMatrixPage() {
                     )}>{manager.style}</Badge>
                 </div>
                 <div>
-                  <Label htmlFor={`weight-slider-${manager.id}`} className="text-xs text-muted-foreground">
-                    Weight: {sandboxManagerWeights[manager.id] || 0}%
+                  <Label htmlFor={`weight-slider-${manager.id}`} className="text-xs text-muted-foreground mb-1 block">
+                    Weight
                   </Label>
-                  <div className="flex items-center gap-2 mt-1">
+                  <div className="flex items-center gap-3 mt-1"> {/* Increased gap */}
                     <Slider
                       id={`weight-slider-${manager.id}`}
                       value={[sandboxManagerWeights[manager.id] || 0]}
                       max={100}
                       step={1}
-                      className="w-[70%]"
+                      className="flex-grow"
                       onValueChange={(value) => handleSandboxWeightChange(manager.id, value[0])}
                       aria-label={`Weight for ${manager.strategyName}`}
                     />
-                    <Input
-                      type="number"
-                      value={sandboxManagerWeights[manager.id] || 0}
-                      onChange={(e) => handleSandboxWeightChange(manager.id, parseInt(e.target.value, 10) || 0)}
-                      className="w-[30%] h-8 text-xs bg-input border-border/50 text-foreground"
-                      min="0"
-                      max="100"
-                    />
+                    <div className="flex items-baseline gap-1"> {/* Group input and % */}
+                      <Input
+                        type="number"
+                        value={sandboxManagerWeights[manager.id] || 0}
+                        onChange={(e) => handleSandboxWeightChange(manager.id, parseInt(e.target.value, 10) || 0)}
+                        className="w-16 h-10 text-lg font-semibold text-center bg-input border-border/50 text-foreground focus:ring-primary p-0" // Adjusted padding and width
+                        min="0"
+                        max="100"
+                      />
+                       <span className="text-lg font-semibold text-foreground">%</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -615,5 +631,3 @@ export default function ModelMatrixPage() {
     </main>
   );
 }
-
-      
