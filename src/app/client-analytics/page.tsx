@@ -5,6 +5,9 @@ import * as React from 'react';
 import { Users, DollarSign, TrendingUp, ArrowRightLeft } from 'lucide-react';
 import { PlaceholderCard } from '@/components/dashboard/placeholder-card';
 import { ClientTypeByChannelChart } from '@/components/charts/client-type-by-channel-chart';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
 
 const metricCardsData = [
   { 
@@ -46,6 +49,26 @@ const topClientsByAumData = [
 ];
 
 const maxAum = Math.max(...topClientsByAumData.map(client => client.aum), 0);
+
+interface Client65PlusData {
+  id: string;
+  clientName: string;
+  age: number;
+  aumDisplay: string;
+  primaryBeneficiaryName: string;
+  primaryBeneficiaryAge: number;
+  relationshipDepthPercent: number;
+  beneficiaryIsClient: boolean;
+  multipleChildBeneficiaries: boolean;
+}
+
+const topClients65PlusWithChildBeneficiariesData: Client65PlusData[] = [
+  { id: "c1", clientName: "Eleanor Vance", age: 72, aumDisplay: "$2.4M", primaryBeneficiaryName: "Michael Vance", primaryBeneficiaryAge: 34, relationshipDepthPercent: 85, beneficiaryIsClient: false, multipleChildBeneficiaries: true },
+  { id: "c2", clientName: "Arthur Sterling", age: 68, aumDisplay: "$1.8M", primaryBeneficiaryName: "Sophia Sterling", primaryBeneficiaryAge: 29, relationshipDepthPercent: 70, beneficiaryIsClient: true, multipleChildBeneficiaries: false },
+  { id: "c3", clientName: "Beatrice Holloway", age: 75, aumDisplay: "$3.1M", primaryBeneficiaryName: "James Holloway", primaryBeneficiaryAge: 40, relationshipDepthPercent: 95, beneficiaryIsClient: false, multipleChildBeneficiaries: true },
+  { id: "c4", clientName: "Clarence Bellwether", age: 66, aumDisplay: "$1.2M", primaryBeneficiaryName: "Olivia Bellwether", primaryBeneficiaryAge: 31, relationshipDepthPercent: 60, beneficiaryIsClient: true, multipleChildBeneficiaries: false },
+  { id: "c5", clientName: "Dorothy Finch", age: 80, aumDisplay: "$2.9M", primaryBeneficiaryName: "William Finch", primaryBeneficiaryAge: 45, relationshipDepthPercent: 75, beneficiaryIsClient: false, multipleChildBeneficiaries: false },
+];
 
 export default function ClientAnalyticsPage() {
   return (
@@ -95,6 +118,35 @@ export default function ClientAnalyticsPage() {
           </div>
         </PlaceholderCard>
       </div>
+
+      <PlaceholderCard title="Top 10 Clients Age 65+ with Children as Beneficiaries" icon={Users}>
+        <div className="space-y-4 mt-2">
+          {topClients65PlusWithChildBeneficiariesData.map((client) => (
+            <div key={client.id} className="p-3 rounded-md border border-border/20 hover:bg-muted/10 transition-colors duration-150 ease-out">
+              <div className="flex justify-between items-start mb-1">
+                <h4 className={cn("text-md font-semibold text-foreground", client.multipleChildBeneficiaries && "text-green-400")}>
+                  {client.clientName} <span className="text-sm font-normal text-muted-foreground">({client.age})</span>
+                </h4>
+                <span className="text-sm font-semibold text-primary">{client.aumDisplay}</span>
+              </div>
+              <div className="text-xs text-muted-foreground mb-1">
+                Beneficiary: {client.primaryBeneficiaryName} ({client.primaryBeneficiaryAge})
+                {!client.beneficiaryIsClient && (
+                  <Badge variant="outline" className="ml-2 text-xs bg-yellow-500/10 border-yellow-500/50 text-yellow-400">Not Onboarded</Badge>
+                )}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Relationship Depth: <span className="font-semibold text-primary">{client.relationshipDepthPercent}%</span>
+              </p>
+            </div>
+          ))}
+        </div>
+        <div className="flex justify-end mt-4">
+          <Button variant="outline" size="sm">
+            Start Next-Gen Outreach
+          </Button>
+        </div>
+      </PlaceholderCard>
     </main>
   );
 }
