@@ -14,7 +14,7 @@ import {
   Newspaper, 
   Search, 
   Send,
-  Brain,
+  Brain, // Changed from Cpu
   BarChart4,
   AlertCircle,
   Clock,
@@ -25,13 +25,9 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from '@/lib/utils';
 
-// IMPORTANT: For production, ensure NEXT_PUBLIC_POLYGON_API_KEY is set in your environment.
-// For Firebase Cloud Workstations, this might need to be set in the workstation's environment settings
-// or via a method appropriate for that environment if .env.local isn't picked up by the dev server.
-
 interface MarketData {
   name: string;
-  polygonTicker: string; // For Polygon.io API
+  polygonTicker: string; 
   icon?: React.ElementType;
   openTime?: string; 
   closeTime?: string; 
@@ -42,7 +38,7 @@ const initialMarketOverviewData: MarketData[] = [
   { name: 'S&P 500', polygonTicker: 'I:SPX', icon: Landmark, openTime: '09:30', closeTime: '16:00', timezone: 'America/New_York' },
   { name: 'NASDAQ', polygonTicker: 'I:NDX', icon: Landmark, openTime: '09:30', closeTime: '16:00', timezone: 'America/New_York' },
   { name: 'Dow Jones', polygonTicker: 'I:DJI', icon: Landmark, openTime: '09:30', closeTime: '16:00', timezone: 'America/New_York' },
-  { name: 'VIX', polygonTicker: 'I:VIX', icon: Landmark, openTime: '09:30', closeTime: '16:15', timezone: 'America/New_York' },
+  { name: 'VIX', polygonTicker: 'I:VIX', icon: Landmark, openTime: '09:30', closeTime: '16:15', timezone: 'America/New_York' }, // VIX has slightly different closing time
 ];
 
 const newsData = [
@@ -93,6 +89,42 @@ interface MarketStatusInfo {
   shadowClass: string;
 }
 
+// Function to fetch index data
+const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
+  const apiKey = process.env.NEXT_PUBLIC_POLYGON_API_KEY;
+  // Log to check if the API key is being read, masking most of it for security
+  console.log(`Fetching data for ${symbol} using API key: ${apiKey ? '******' + apiKey.slice(-4) : 'UNDEFINED'}`);
+
+  if (!apiKey) {
+    console.error("Polygon API key (NEXT_PUBLIC_POLYGON_API_KEY) is not set. Please ensure it's in .env.local and the dev server was restarted.");
+    return { error: 'API Key Missing. Configure .env.local & restart server.' };
+  }
+
+  try {
+    // Ensure the adjusted=true parameter is included as per Polygon.io documentation
+    const response = await fetch(`https://api.polygon.io/v2/aggs/ticker/${symbol}/prev?adjusted=true&apiKey=${apiKey}`);
+    if (!response.ok) {
+      let errorMessage = `API Error: ${response.status}`;
+      try {
+        const errorData = await response.json();
+        if (errorData && errorData.message) errorMessage = `API Error: ${response.status} - ${errorData.message}`;
+        else if (errorData && errorData.error) errorMessage = `API Error: ${response.status} - ${errorData.error}`;
+      } catch (e) { /* Ignore if error response is not JSON */ }
+      console.error(`Error fetching ${symbol}: ${errorMessage}`);
+      return { error: `API Error: ${response.status}` };
+    }
+    const data = await response.json();
+    if (data.results && data.results.length > 0) {
+      const { c, o } = data.results[0]; // c: close, o: open
+      return { c, o };
+    }
+    return { error: 'No data' };
+  } catch (error: any) {
+    console.error(`Network/Fetch error for ${symbol}:`, error.message || error);
+    return { error: 'Fetch error' };
+  }
+};
+
 
 export default function DashboardPage() {
   const [marketApiData, setMarketApiData] = React.useState<Record<string, FetchedIndexData>>({});
@@ -101,44 +133,11 @@ export default function DashboardPage() {
   const [isLoadingTicker, setIsLoadingTicker] = React.useState(false);
   const [marketStatuses, setMarketStatuses] = React.useState<Record<string, MarketStatusInfo>>({});
   const [currentTimeEST, setCurrentTimeEST] = React.useState<string>('Loading...');
-
-  const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
-    const apiKey = process.env.NEXT_PUBLIC_POLYGON_API_KEY;
-    console.log(`Fetching data for ${symbol} using API key: ${apiKey ? '******' + apiKey.slice(-4) : 'UNDEFINED'}`); // Log the key (partially masked) or if it's undefined
-
-    if (!apiKey) {
-      console.error("Polygon API key is not set. Please set NEXT_PUBLIC_POLYGON_API_KEY.");
-      return { error: 'API Key Missing' };
-    }
-
-    try {
-      const response = await fetch(`https://api.polygon.io/v2/aggs/ticker/${symbol}/prev?adjusted=true&apiKey=${apiKey}`);
-      if (!response.ok) {
-        let errorMessage = `API Error: ${response.status}`;
-        try {
-          const errorData = await response.json();
-          if (errorData && errorData.message) errorMessage = `API Error: ${response.status} - ${errorData.message}`;
-          else if (errorData && errorData.error) errorMessage = `API Error: ${response.status} - ${errorData.error}`;
-        } catch (e) { /* Ignore if error response is not JSON */ }
-        console.error(`Error fetching ${symbol}: ${errorMessage}`);
-        return { error: `API Error: ${response.status}` };
-      }
-      const data = await response.json();
-      if (data.results && data.results.length > 0) {
-        const { c, o } = data.results[0];
-        return { c, o };
-      }
-      return { error: 'No data' };
-    } catch (error: any) {
-      console.error(`Network/Fetch error for ${symbol}:`, error.message || error);
-      return { error: 'Fetch error' };
-    }
-  };
   
   React.useEffect(() => {
     const loadMarketData = async () => {
       if (!process.env.NEXT_PUBLIC_POLYGON_API_KEY) {
-        console.warn("Polygon API key (NEXT_PUBLIC_POLYGON_API_KEY) is not defined. Market data will not be fetched.");
+        console.warn("Polygon API key (NEXT_PUBLIC_POLYGON_API_KEY) is not defined. Market data will not be fetched. Ensure .env.local is set and server restarted.");
         const errorState: Record<string, FetchedIndexData> = {};
         initialMarketOverviewData.forEach(market => {
           errorState[market.polygonTicker] = { error: 'API Key Missing. Configure in .env.local' };
@@ -164,9 +163,9 @@ export default function DashboardPage() {
         if (result.status === 'fulfilled') {
           newApiData[result.value.symbol] = result.value.data;
         } else {
-           // This case should ideally not happen if fetchIndexData always returns an object
-           // For safety, you could log result.reason
           console.error("Promise rejected unexpectedly in loadMarketData:", result.reason);
+          // Potentially set an error state for the specific symbol if needed
+          // newApiData[symbolAssociatedWithRejectedPromise] = { error: 'Failed to fetch' };
         }
       });
       setMarketApiData(prevData => ({...prevData, ...newApiData}));
@@ -185,10 +184,11 @@ export default function DashboardPage() {
     if (!tickerQuery.trim()) return;
     setIsLoadingTicker(true);
     setTickerData(null); 
+    // Simulate API call for ticker lookup
     setTimeout(() => {
       setTickerData({
         name: `${tickerQuery.toUpperCase()} Company Inc.`,
-        logo: `https://placehold.co/40x40.png?text=${tickerQuery.toUpperCase()}`,
+        logo: `https://placehold.co/40x40.png?text=${tickerQuery.toUpperCase()}`, // Placeholder logo
         marketCap: "1.5T",
         peRatio: "25.5",
         dividendYield: "1.8%",
@@ -223,13 +223,12 @@ export default function DashboardPage() {
         });
       } catch (e) {
         console.error("Error formatting EST time, defaulting to local time for logic:", e);
-        // Fallback to local hours/minutes if Intl.DateTimeFormat fails (e.g., in some environments)
-        const localNow = new Date(); // Use a fresh Date object for fallback
+        const localNow = new Date(); 
         currentHourEST = localNow.getHours();
         currentMinuteEST = localNow.getMinutes();
       }
 
-      const todayForLogic = new Date(); // Use current local date for constructing comparison dates
+      const todayForLogic = new Date(); 
       todayForLogic.setHours(0,0,0,0);
 
 
@@ -253,7 +252,7 @@ export default function DashboardPage() {
                 nowInEstEquivalentForLogic < marketCloseTime;
 
             const timeToCloseMs = marketCloseTime.getTime() - nowInEstEquivalentForLogic.getTime();
-            const isClosingSoon = isCurrentlyOpen && timeToCloseMs > 0 && timeToCloseMs <= 60 * 60 * 1000; // 1 hour in milliseconds
+            const isClosingSoon = isCurrentlyOpen && timeToCloseMs > 0 && timeToCloseMs <= 60 * 60 * 1000; // 1 hour
 
             let statusText = "🔴 Market Closed";
             let shadowClass = "shadow-market-closed";
@@ -277,15 +276,15 @@ export default function DashboardPage() {
       setMarketStatuses(newStatuses);
     };
     
-    updateMarketStatuses();
-    const intervalId = setInterval(updateMarketStatuses, 60000); 
+    updateMarketStatuses(); // Initial call
+    const intervalId = setInterval(updateMarketStatuses, 60000); // Update every minute
     const clockIntervalId = setInterval(() => {
         try {
             setCurrentTimeEST(new Date().toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', second:'2-digit' }));
         } catch (e) {
             setCurrentTimeEST(new Date().toLocaleTimeString()); // Fallback
         }
-    }, 1000);
+    }, 1000); // Update every second
 
     return () => {
         clearInterval(intervalId);
@@ -295,7 +294,7 @@ export default function DashboardPage() {
 
 
   return (
-    <main className="min-h-screen flex-1 p-6 space-y-8 md:p-8">
+    <main className="min-h-screen bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#5b21b6]/10 to-[#000104] flex-1 p-6 space-y-8 md:p-8">
       <h1 className="text-3xl font-bold tracking-tight text-foreground">
         Welcome Josh!
       </h1>
@@ -349,6 +348,7 @@ export default function DashboardPage() {
                     <TooltipTrigger asChild>
                       <div className="text-xs text-muted-foreground mt-auto pt-2 border-t border-border/20 flex justify-between items-center">
                         <span>{statusInfo.statusText}</span>
+                        {/* Displaying current EST time */}
                         <span className="flex items-center"><Clock className="w-3 h-3 mr-1" />{currentTimeEST.replace(/\s(AM|PM)/, '')}</span>
                       </div>
                     </TooltipTrigger>
@@ -409,6 +409,7 @@ export default function DashboardPage() {
           {tickerData && !isLoadingTicker && (
             <div className="mt-4 space-y-3 text-sm">
               <div className="flex items-center space-x-3 mb-3">
+                {/* Using placeholder directly as next/image can be tricky without known image dimensions for arbitrary tickers */}
                 <img src={tickerData.logo} alt={`${tickerData.name} logo`} className="w-10 h-10 rounded-md bg-muted p-1" data-ai-hint="company logo" />
                 <h4 className="text-lg font-semibold text-foreground">{tickerData.name}</h4>
               </div>
