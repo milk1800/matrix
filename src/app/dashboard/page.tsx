@@ -14,7 +14,7 @@ import {
   Newspaper, 
   Search, 
   Send,
-  Brain, // Changed from Cpu
+  Brain, 
   BarChart4,
   AlertCircle,
   Clock,
@@ -38,7 +38,7 @@ const initialMarketOverviewData: MarketData[] = [
   { name: 'S&P 500', polygonTicker: 'I:SPX', icon: Landmark, openTime: '09:30', closeTime: '16:00', timezone: 'America/New_York' },
   { name: 'NASDAQ', polygonTicker: 'I:NDX', icon: Landmark, openTime: '09:30', closeTime: '16:00', timezone: 'America/New_York' },
   { name: 'Dow Jones', polygonTicker: 'I:DJI', icon: Landmark, openTime: '09:30', closeTime: '16:00', timezone: 'America/New_York' },
-  { name: 'VIX', polygonTicker: 'I:VIX', icon: Landmark, openTime: '09:30', closeTime: '16:15', timezone: 'America/New_York' }, // VIX has slightly different closing time
+  { name: 'VIX', polygonTicker: 'I:VIX', icon: Landmark, openTime: '09:30', closeTime: '16:15', timezone: 'America/New_York' },
 ];
 
 const newsData = [
@@ -97,7 +97,7 @@ const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
 
   if (!apiKey) {
     console.error("Polygon API key (NEXT_PUBLIC_POLYGON_API_KEY) is not set. Please ensure it's in .env.local and the dev server was restarted.");
-    return { error: 'API Key Missing. Configure .env.local & restart server.' };
+    return { error: 'API Key Missing. Configure in .env.local & restart server.' };
   }
 
   try {
@@ -140,7 +140,7 @@ export default function DashboardPage() {
         console.warn("Polygon API key (NEXT_PUBLIC_POLYGON_API_KEY) is not defined. Market data will not be fetched. Ensure .env.local is set and server restarted.");
         const errorState: Record<string, FetchedIndexData> = {};
         initialMarketOverviewData.forEach(market => {
-          errorState[market.polygonTicker] = { error: 'API Key Missing. Configure in .env.local' };
+          errorState[market.polygonTicker] = { error: 'API Key Missing. Check .env.local & restart server.' };
         });
         setMarketApiData(errorState);
         return;
@@ -336,7 +336,10 @@ export default function DashboardPage() {
                 key={market.name} 
                 title={market.name} 
                 icon={market.icon || Landmark}
-                className={cn("transition-all duration-300 ease-in-out", statusInfo.shadowClass)}
+                className={cn(
+                  "transition-all duration-300 ease-in-out", 
+                  statusInfo.shadowClass
+                )}
               >
                 <div className="text-2xl font-bold text-foreground mb-1">{valueDisplay}</div>
                 <div className="text-sm mb-3">{changeDisplay}</div>
@@ -348,7 +351,6 @@ export default function DashboardPage() {
                     <TooltipTrigger asChild>
                       <div className="text-xs text-muted-foreground mt-auto pt-2 border-t border-border/20 flex justify-between items-center">
                         <span>{statusInfo.statusText}</span>
-                        {/* Displaying current EST time */}
                         <span className="flex items-center"><Clock className="w-3 h-3 mr-1" />{currentTimeEST.replace(/\s(AM|PM)/, '')}</span>
                       </div>
                     </TooltipTrigger>
@@ -409,7 +411,6 @@ export default function DashboardPage() {
           {tickerData && !isLoadingTicker && (
             <div className="mt-4 space-y-3 text-sm">
               <div className="flex items-center space-x-3 mb-3">
-                {/* Using placeholder directly as next/image can be tricky without known image dimensions for arbitrary tickers */}
                 <img src={tickerData.logo} alt={`${tickerData.name} logo`} className="w-10 h-10 rounded-md bg-muted p-1" data-ai-hint="company logo" />
                 <h4 className="text-lg font-semibold text-foreground">{tickerData.name}</h4>
               </div>
