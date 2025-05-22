@@ -13,10 +13,13 @@ import {
   Newspaper, 
   Search, 
   Send,
-  Brain,
+  Brain, // Changed from Cpu to Brain as per specific card title
   BarChart4,
   AlertCircle,
-  Clock
+  Clock,
+  Sparkles,
+  CalendarDays,
+  Loader2 // Added Loader2 for ticker lookup
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from '@/lib/utils';
@@ -29,7 +32,6 @@ interface MarketData {
   name: string;
   polygonTicker: string;
   icon?: React.ElementType;
-  // Simplified status for this layout iteration
   openTime?: string; 
   closeTime?: string; 
   timezone?: string;
@@ -39,7 +41,7 @@ const initialMarketOverviewData: MarketData[] = [
   { name: 'S&P 500', polygonTicker: 'I:SPX', icon: Landmark, openTime: '09:30', closeTime: '16:00', timezone: 'America/New_York' },
   { name: 'NASDAQ', polygonTicker: 'I:NDX', icon: Landmark, openTime: '09:30', closeTime: '16:00', timezone: 'America/New_York' },
   { name: 'Dow Jones', polygonTicker: 'I:DJI', icon: Landmark, openTime: '09:30', closeTime: '16:00', timezone: 'America/New_York' },
-  { name: 'VIX', polygonTicker: 'I:VIX', icon: Landmark, openTime: '09:30', closeTime: '16:15', timezone: 'America/New_York' },
+  { name: 'VIX', polygonTicker: 'I:VIX', icon: Landmark, openTime: '09:30', closeTime: '16:15', timezone: 'America/New_York' }, // Note: VIX often has slightly different hours
 ];
 
 const newsData = [
@@ -85,8 +87,8 @@ const getNewsSentimentBadgeClass = (sentiment: string) => {
 };
 
 interface FetchedIndexData {
-  c?: number; 
-  o?: number; 
+  c?: number; // Close price
+  o?: number; // Open price
   error?: string;
   loading?: boolean;
 }
@@ -94,6 +96,7 @@ interface FetchedIndexData {
 interface MarketStatusInfo {
   statusText: string;
   tooltipText: string;
+  shadowClass: string;
 }
 
 
@@ -106,6 +109,7 @@ export default function DashboardPage() {
   const [currentTimeEST, setCurrentTimeEST] = React.useState<string>('Loading...');
 
   const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
+    // Ensure API key is handled securely in production
     try {
       const response = await fetch(`https://api.polygon.io/v2/aggs/ticker/${symbol}/prev?adjusted=true&apiKey=${POLYGON_API_KEY}`);
       if (!response.ok) {
@@ -136,7 +140,7 @@ export default function DashboardPage() {
       initialMarketOverviewData.forEach(market => {
         initialApiData[market.polygonTicker] = { loading: true };
       });
-      setMarketApiData(initialApiData);
+      setMarketApiData(initialApiData); // Set loading state immediately
 
       const promises = initialMarketOverviewData.map(market => 
         fetchIndexData(market.polygonTicker).then(data => ({ symbol: market.polygonTicker, data }))
@@ -149,7 +153,8 @@ export default function DashboardPage() {
         if (result.status === 'fulfilled') {
           newApiData[result.value.symbol] = result.value.data;
         } else {
-          // Handle rejected promises if needed, though fetchIndexData returns an error object
+          // Error already handled within fetchIndexData and stored in result.value.data.error
+          // For robustness, you might want to log result.reason if the promise itself was rejected.
         }
       });
       setMarketApiData(prevData => ({...prevData, ...newApiData}));
@@ -167,11 +172,13 @@ export default function DashboardPage() {
   const handleTickerLookup = () => {
     if (!tickerQuery.trim()) return;
     setIsLoadingTicker(true);
-    // Simulate API call
+    setTickerData(null); // Clear previous results
+    // Simulate API call for ticker lookup
     setTimeout(() => {
+      // Mock data - replace with actual API call in a real application
       setTickerData({
         name: `${tickerQuery.toUpperCase()} Company Inc.`,
-        logo: `https://placehold.co/40x40.png?text=${tickerQuery.toUpperCase()}`,
+        logo: `https://placehold.co/40x40.png?text=${tickerQuery.toUpperCase()}`, // Placeholder logo
         marketCap: "1.5T",
         peRatio: "25.5",
         dividendYield: "1.8%",
@@ -184,43 +191,62 @@ export default function DashboardPage() {
     }, 1500);
   };
 
-   // Simplified Market Status Logic for this iteration (focus on data display)
    React.useEffect(() => {
-    const updateStatuses = () => {
+    const updateMarketStatuses = () => {
       const newStatuses: Record<string, MarketStatusInfo> = {};
       const now = new Date();
-      const estOffset = -4 * 60; // EDT offset, adjust if standard time
-      const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-      const estTime = new Date(utc + (3600000 * (estOffset/60)));
       
-      const currentHourEST = estTime.getHours();
-      const currentMinuteEST = estTime.getMinutes();
+      // Get current hours and minutes in EST/EDT
+      const estFormatter = new Intl.DateTimeFormat('en-US', {
+        hour: 'numeric',
+        minute: 'numeric',
+        hour12: false,
+        timeZone: 'America/New_York',
+      });
+      const parts = estFormatter.formatToParts(now);
+      let currentHourEST = 0;
+      let currentMinuteEST = 0;
+      parts.forEach(part => {
+        if (part.type === 'hour') currentHourEST = parseInt(part.value);
+        if (part.type === 'minute') currentMinuteEST = parseInt(part.value);
+      });
 
       initialMarketOverviewData.forEach(market => {
         if (market.openTime && market.closeTime) {
             const [openHour, openMinute] = market.openTime.split(':').map(Number);
             const [closeHour, closeMinute] = market.closeTime.split(':').map(Number);
 
-            const isOpen = (currentHourEST > openHour || (currentHourEST === openHour && currentMinuteEST >= openMinute)) &&
-                           (currentHourEST < closeHour || (currentHourEST === closeHour && currentMinuteEST < closeMinute));
-            
-            let statusText = "🔴 Market Closed";
-            if (isOpen) statusText = "🟢 Market Open";
-            // Simplified: Not adding "Closing Soon" for this pass to focus on Polygon data integration
+            const isCurrentlyOpen = 
+                (currentHourEST > openHour || (currentHourEST === openHour && currentMinuteEST >= openMinute)) &&
+                (currentHourEST < closeHour || (currentHourEST === closeHour && currentMinuteEST < closeMinute));
 
-            newStatuses[market.name] = {
-                statusText,
-                tooltipText: `Market Hours: ${market.openTime} - ${market.closeTime} EST`
-            };
+            const timeToClose = (closeHour * 60 + closeMinute) - (currentHourEST * 60 + currentMinuteEST);
+            const isClosingSoon = isCurrentlyOpen && timeToClose > 0 && timeToClose <= 60;
+
+            let statusText = "🔴 Market Closed";
+            let shadowClass = "shadow-market-closed";
+            let tooltipText = `Market Hours: ${market.openTime} - ${market.closeTime} ET`;
+
+            if (isClosingSoon) {
+                statusText = "🟡 Closing Soon";
+                shadowClass = "shadow-market-closing";
+                tooltipText = `Market closes at ${market.closeTime} ET`;
+            } else if (isCurrentlyOpen) {
+                statusText = "🟢 Market Open";
+                shadowClass = "shadow-market-open";
+                tooltipText = `Market closes at ${market.closeTime} ET`;
+            }
+            
+            newStatuses[market.name] = { statusText, tooltipText, shadowClass };
         } else {
-            newStatuses[market.name] = { statusText: "Status N/A", tooltipText: "Market hours not defined"};
+            newStatuses[market.name] = { statusText: "Status N/A", tooltipText: "Market hours not defined", shadowClass: "" };
         }
       });
       setMarketStatuses(newStatuses);
     };
     
-    updateStatuses(); // Initial call
-    const intervalId = setInterval(updateStatuses, 60000); // Update every minute
+    updateMarketStatuses(); // Initial call
+    const intervalId = setInterval(updateMarketStatuses, 60000); // Update every minute
     const clockIntervalId = setInterval(() => {
         setCurrentTimeEST(new Date().toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', second:'2-digit' }));
     }, 1000);
@@ -234,37 +260,39 @@ export default function DashboardPage() {
 
   return (
     <main className="min-h-screen bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#5b21b6]/10 to-[#000104] flex-1 p-6 space-y-8 md:p-8">
-      {/* Header removed as per prompt "Top Index Overview (Top Row)" suggesting content starts directly */}
+      <h1 className="text-3xl font-bold tracking-tight text-foreground">
+        Welcome Josh!
+      </h1>
       
       <section>
         <h2 className="text-xl font-semibold text-foreground mb-6">Market Overview</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {initialMarketOverviewData.map((market) => {
-            const data = marketApiData[market.polygonTicker];
-            const status = marketStatuses[market.name] || { statusText: "Loading...", tooltipText: "Fetching status..."};
+            const apiResult = marketApiData[market.polygonTicker];
+            const statusInfo = marketStatuses[market.name] || { statusText: "Loading...", tooltipText: "Fetching status...", shadowClass: ""};
             
-            let valueDisplay = "$0.00";
+            let valueDisplay: React.ReactNode = "$0.00";
             let changeDisplay: React.ReactNode = "0.00%";
             
-            if (data?.loading) {
-              valueDisplay = "Loading...";
-              changeDisplay = "Loading...";
-            } else if (data?.error) {
-              valueDisplay = <span className="text-sm text-red-400/80 flex items-center"><AlertCircle className="w-4 h-4 mr-1" /> {data.error}</span>;
+            if (apiResult?.loading) {
+              valueDisplay = <span className="text-sm text-muted-foreground">Loading...</span>;
+              changeDisplay = <span className="text-xs text-muted-foreground">Loading...</span>;
+            } else if (apiResult?.error) {
+              valueDisplay = <span className="text-sm text-red-400/80 flex items-center"><AlertCircle className="w-4 h-4 mr-1" /> {apiResult.error}</span>;
               changeDisplay = "";
-            } else if (data?.c !== undefined && data?.o !== undefined) {
-              valueDisplay = `$${data.c.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-              const percentChange = calculateChangePercent(data.c, data.o);
+            } else if (apiResult?.c !== undefined && apiResult?.o !== undefined) {
+              valueDisplay = `$${apiResult.c.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+              const percentChange = calculateChangePercent(apiResult.c, apiResult.o);
               if (percentChange !== null) {
                 const changeType = percentChange >= 0 ? 'up' : 'down';
                 changeDisplay = (
-                  <span className={cn("text-sm", changeType === 'up' ? 'text-green-400' : 'text-red-400')}>
+                  <span className={cn("text-sm font-semibold", changeType === 'up' ? 'text-green-400' : 'text-red-400')}>
                     {changeType === 'up' ? <TrendingUp className="inline-block w-4 h-4 mr-1" /> : <TrendingDown className="inline-block w-4 h-4 mr-1" />}
                     {percentChange.toFixed(2)}%
                   </span>
                 );
               } else {
-                changeDisplay = "N/A";
+                changeDisplay = <span className="text-xs text-muted-foreground">N/A</span>;
               }
             }
 
@@ -273,7 +301,7 @@ export default function DashboardPage() {
                 key={market.name} 
                 title={market.name} 
                 icon={market.icon || Landmark}
-                className="transition-all duration-300 ease-in-out"
+                className={cn("transition-all duration-300 ease-in-out", statusInfo.shadowClass)}
               >
                 <div className="text-2xl font-bold text-foreground mb-1">{valueDisplay}</div>
                 <div className="text-sm mb-3">{changeDisplay}</div>
@@ -284,14 +312,14 @@ export default function DashboardPage() {
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <div className="text-xs text-muted-foreground mt-auto pt-2 border-t border-border/20 flex justify-between items-center">
-                        <span>{status.statusText}</span>
-                        <span className="flex items-center"><Clock className="w-3 h-3 mr-1" />{currentTimeEST.replace(' EST','')}</span>
+                        <span>{statusInfo.statusText}</span>
+                        <span className="flex items-center"><Clock className="w-3 h-3 mr-1" />{currentTimeEST.replace(/\s(AM|PM)/, '')}</span>
                       </div>
                     </TooltipTrigger>
                     <TooltipContent side="bottom" className="bg-popover text-popover-foreground">
-                      <p>{status.tooltipText}</p>
-                       {data?.c !== undefined && <p>Prev. Close: ${data.c.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>}
-                       {data?.o !== undefined && <p>Prev. Open: ${data.o.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>}
+                      <p>{statusInfo.tooltipText}</p>
+                       {apiResult?.c !== undefined && <p>Prev. Close: ${apiResult.c.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>}
+                       {apiResult?.o !== undefined && <p>Prev. Open: ${apiResult.o.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>}
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -301,18 +329,17 @@ export default function DashboardPage() {
         </div>
       </section>
 
+      {/* Row for Why Market Moved & Top News Stories */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1 space-y-6">
+        <div className="lg:col-span-1">
           <PlaceholderCard title="Why the Market Moved" icon={Brain} className="h-full">
-            {/* Glowing header simulated by CardTitle style */}
             <p className="text-sm text-muted-foreground leading-relaxed font-serif mt-2">
               Market sentiment turned positive following the release of favorable inflation data, suggesting that price pressures may be easing. This led to a broad rally across major indices, particularly in growth-oriented sectors like technology and consumer discretionary. Investors are now keenly awaiting upcoming corporate earnings reports for further direction.
             </p>
           </PlaceholderCard>
         </div>
-
-        <div className="lg:col-span-2 space-y-6">
-          <PlaceholderCard title="Top News Stories" icon={Newspaper}>
+        <div className="lg:col-span-2">
+          <PlaceholderCard title="Top News Stories" icon={Newspaper} className="h-full">
             <ul className="space-y-4">
               {newsData.map((news) => (
                 <li key={news.id} className="pb-3 border-b border-border/30 last:border-b-0 last:pb-0">
@@ -328,7 +355,13 @@ export default function DashboardPage() {
               ))}
             </ul>
           </PlaceholderCard>
+        </div>
+      </div>
 
+      {/* Row for Ticker Lookup Tool, aligned to the right */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-1 hidden lg:block"> {/* Spacer on the left */} </div>
+        <div className="lg:col-span-2">
           <PlaceholderCard title="Ticker Lookup Tool" icon={Search}>
             <div className="flex space-x-2 mb-4">
               <Input 
@@ -340,7 +373,7 @@ export default function DashboardPage() {
                 onKeyPress={(e) => e.key === 'Enter' && handleTickerLookup()}
               />
               <Button onClick={handleTickerLookup} disabled={isLoadingTicker}>
-                {isLoadingTicker ? <Loader2 className="animate-spin" /> : <Send />}
+                {isLoadingTicker ? <Loader2 className="animate-spin h-4 w-4" /> : <Send className="h-4 w-4" />}
               </Button>
             </div>
             {isLoadingTicker && <p className="text-sm text-muted-foreground text-center">Fetching data...</p>}
@@ -370,4 +403,3 @@ export default function DashboardPage() {
     </main>
   );
 }
-
