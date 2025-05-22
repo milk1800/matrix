@@ -2,7 +2,7 @@
 "use client"; // Required for Tooltip and potential future interactions
 
 import * as React from 'react';
-import { Users, DollarSign, TrendingDown } from 'lucide-react';
+import { Users, DollarSign, TrendingDown, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { PlaceholderCard } from '@/components/dashboard/placeholder-card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
@@ -21,6 +21,10 @@ const getEngagementInfo = (logins: number): EngagementInfo => {
   } else {
     return { level: "Low", className: "text-muted-foreground" }; // Muted gray
   }
+};
+
+const parseFloatPercentage = (value: string): number => {
+  return parseFloat(value.replace('%', ''));
 };
 
 export default function ConversionAnalyticsPage() {
@@ -54,11 +58,11 @@ export default function ConversionAnalyticsPage() {
   ];
 
   const topHouseholdsOutperformanceData = [
-    { householdName: 'Thompson Wealth', accounts: 7, managedAUM: '$4.1M', nonManagedAUM: '$1.2M', managedYTD: '12.5%', nonManagedYTD: '6.1%', outperformance: '6.4%', nxiLoginsLast30Days: 18, avgSessionDuration: "7m 22s", lastLoginDaysAgo: 2 },
-    { householdName: 'Garcia Investments', accounts: 3, managedAUM: '$2.5M', nonManagedAUM: '$800K', managedYTD: '10.2%', nonManagedYTD: '5.5%', outperformance: '4.7%', nxiLoginsLast30Days: 7, avgSessionDuration: "5m 10s", lastLoginDaysAgo: 5 },
-    { householdName: 'Lee Capital', accounts: 5, managedAUM: '$6.0M', nonManagedAUM: '$1.5M', managedYTD: '11.8%', nonManagedYTD: '7.0%', outperformance: '4.8%', nxiLoginsLast30Days: 2, avgSessionDuration: "3m 05s", lastLoginDaysAgo: 14 },
-    { householdName: 'Davis & Co.', accounts: 2, managedAUM: '$1.8M', nonManagedAUM: '$500K', managedYTD: '9.5%', nonManagedYTD: '4.2%', outperformance: '5.3%', nxiLoginsLast30Days: 22, avgSessionDuration: "9m 45s", lastLoginDaysAgo: 1 },
-    { householdName: 'Miller Trust', accounts: 6, managedAUM: '$3.3M', nonManagedAUM: '$950K', managedYTD: '13.1%', nonManagedYTD: '6.8%', outperformance: '6.3%', nxiLoginsLast30Days: 4, avgSessionDuration: "2m 30s", lastLoginDaysAgo: 25 },
+    { householdName: 'Thompson Wealth', accounts: 7, managedAUM: '$4.1M', nonManagedAUM: '$1.2M', managedYTD: '12.5%', managedYTDPrev: '10.2%', nonManagedYTD: '6.1%', outperformance: '6.4%', nxiLoginsLast30Days: 18, avgSessionDuration: "7m 22s", lastLoginDaysAgo: 2 },
+    { householdName: 'Garcia Investments', accounts: 3, managedAUM: '$2.5M', nonManagedAUM: '$800K', managedYTD: '10.2%', managedYTDPrev: '10.5%', nonManagedYTD: '5.5%', outperformance: '4.7%', nxiLoginsLast30Days: 7, avgSessionDuration: "5m 10s", lastLoginDaysAgo: 5 },
+    { householdName: 'Lee Capital', accounts: 5, managedAUM: '$6.0M', nonManagedAUM: '$1.5M', managedYTD: '11.8%', managedYTDPrev: '11.0%', nonManagedYTD: '7.0%', outperformance: '4.8%', nxiLoginsLast30Days: 2, avgSessionDuration: "3m 05s", lastLoginDaysAgo: 14 },
+    { householdName: 'Davis & Co.', accounts: 2, managedAUM: '$1.8M', nonManagedAUM: '$500K', managedYTD: '9.5%', managedYTDPrev: '9.8%', nonManagedYTD: '4.2%', outperformance: '5.3%', nxiLoginsLast30Days: 22, avgSessionDuration: "9m 45s", lastLoginDaysAgo: 1 },
+    { householdName: 'Miller Trust', accounts: 6, managedAUM: '$3.3M', nonManagedAUM: '$950K', managedYTD: '13.1%', managedYTDPrev: '12.5%', nonManagedYTD: '6.8%', outperformance: '6.3%', nxiLoginsLast30Days: 4, avgSessionDuration: "2m 30s", lastLoginDaysAgo: 25 },
   ];
 
   return (
@@ -125,13 +129,26 @@ export default function ConversionAnalyticsPage() {
             <TableBody>
               {topHouseholdsOutperformanceData.map((row, index) => {
                 const engagement = getEngagementInfo(row.nxiLoginsLast30Days);
+                const currentYTD = parseFloatPercentage(row.managedYTD);
+                const prevYTD = parseFloatPercentage(row.managedYTDPrev);
+                const trendUp = currentYTD > prevYTD;
+
                 return (
                   <TableRow key={index}>
                     <TableCell className="font-medium">{row.householdName}</TableCell>
                     <TableCell className="text-right">{row.accounts}</TableCell>
                     <TableCell className="text-right">{row.managedAUM}</TableCell>
                     <TableCell className="text-right">{row.nonManagedAUM}</TableCell>
-                    <TableCell className="text-right text-green-400">{row.managedYTD}</TableCell>
+                    <TableCell className="text-right text-green-400">
+                      <div className="flex items-center justify-end gap-1">
+                        <span>{row.managedYTD}</span>
+                        {trendUp ? (
+                          <ArrowUpRight className="text-green-500 h-4 w-4" />
+                        ) : (
+                          <ArrowDownRight className="text-red-500 h-4 w-4" />
+                        )}
+                      </div>
+                    </TableCell>
                     <TableCell className="text-right">{row.nonManagedYTD}</TableCell>
                     <TableCell className="text-right text-green-400">{row.outperformance}</TableCell>
                     <TableCell className="text-center">
@@ -158,3 +175,4 @@ export default function ConversionAnalyticsPage() {
     </main>
   );
 }
+
