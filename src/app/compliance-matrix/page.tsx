@@ -17,7 +17,6 @@ interface FlaggedActivity {
   tradesLast30Days: number;
   daysSinceLastTrade: number | null;
   complianceFlag: "Excessive Trading" | "No Activity" | "Trade Frequency Anomaly" | "Unsuitable Product";
-  flagDate: string;
   aiSuggestion: string;
 }
 
@@ -30,18 +29,18 @@ const summaryCardsData = [
 ];
 
 const flaggedActivityData: FlaggedActivity[] = [
-  { id: "fa1", accountName: "Client Gamma - IRA", accountType: "Non-Managed", tradesLast30Days: 152, daysSinceLastTrade: 1, complianceFlag: "Excessive Trading", flagDate: "2024-10-20", aiSuggestion: "Review trading activity against client's risk profile and IPS." },
-  { id: "fa2", accountName: "Client Delta - Trust", accountType: "Managed", tradesLast30Days: 0, daysSinceLastTrade: 45, complianceFlag: "No Activity", flagDate: "2024-10-18", aiSuggestion: "Contact client to discuss portfolio and reconfirm investment objectives." },
-  { id: "fa3", accountName: "Client Epsilon - Joint", accountType: "Non-Managed", tradesLast30Days: 5, daysSinceLastTrade: 3, complianceFlag: "Trade Frequency Anomaly", flagDate: "2024-10-15", aiSuggestion: "Verify trades align with recent market news or client instructions." },
-  { id: "fa4", accountName: "Client Zeta - Brokerage", accountType: "Managed", tradesLast30Days: 0, daysSinceLastTrade: 62, complianceFlag: "No Activity", flagDate: "2024-10-10", aiSuggestion: "Schedule portfolio review; ensure strategy alignment." },
-  { id: "fa5", accountName: "Client Alpha - Roth IRA", accountType: "Non-Managed", tradesLast30Days: 98, daysSinceLastTrade: 2, complianceFlag: "Excessive Trading", flagDate: "2024-10-22", aiSuggestion: "Assess if self-directed trading aligns with stated goals." },
-  { id: "fa6", accountName: "Client Beta - Conservative", accountType: "Managed", tradesLast30Days: 10, daysSinceLastTrade: 5, complianceFlag: "Unsuitable Product", flagDate: "2024-10-25", aiSuggestion: "Review account holdings (e.g., Leveraged ETFs) against the client's stated conservative risk tolerance. Document suitability or reposition." },
-  { id: "fa7", accountName: "Client Sigma - Retirement", accountType: "Managed", tradesLast30Days: 2, daysSinceLastTrade: 80, complianceFlag: "No Activity", flagDate: "2024-10-23", aiSuggestion: "Client nearing RMD age. Verify account activity expectations and confirm objectives." },
-  { id: "fa8", accountName: "Client Omega - Aggressive", accountType: "Non-Managed", tradesLast30Days: 200, daysSinceLastTrade: 1, complianceFlag: "Excessive Trading", flagDate: "2024-10-24", aiSuggestion: "High trading volume. Cross-reference with documented strategy and risk profile." },
-  { id: "fa9", accountName: "Client Rho - Education Fund", accountType: "Managed", tradesLast30Days: 1, daysSinceLastTrade: 15, complianceFlag: "Unsuitable Product", flagDate: "2024-10-26", aiSuggestion: "Account holds highly speculative assets inconsistent with 'Education Fund' goal. Review IPS and realign strategy." },
-  { id: "fa10", accountName: "Client Kappa - High Growth", accountType: "Managed", tradesLast30Days: 15, daysSinceLastTrade: 2, complianceFlag: "Trade Frequency Anomaly", flagDate: "2024-10-27", aiSuggestion: "Recent shift to high-frequency, small-cap trades. Verify if this aligns with a recent change in client strategy or IPS." },
-  { id: "fa11", accountName: "Client Iota - Balanced", accountType: "Managed", tradesLast30Days: 0, daysSinceLastTrade: 95, complianceFlag: "No Activity", flagDate: "2024-10-28", aiSuggestion: "Extended period of no activity in a balanced portfolio. Initiate client contact for review." },
-  { id: "fa12", accountName: "Client Mu - Income Portfolio", accountType: "Managed", tradesLast30Days: 7, daysSinceLastTrade: 8, complianceFlag: "Unsuitable Product", flagDate: "2024-10-29", aiSuggestion: "Portfolio includes non-income generating, high-volatility crypto assets. Re-evaluate suitability for income objective." }
+  { id: "fa1", accountName: "Client Gamma - IRA", accountType: "Non-Managed", tradesLast30Days: 152, daysSinceLastTrade: 1, complianceFlag: "Excessive Trading", aiSuggestion: "Review trading activity against client's risk profile and IPS." },
+  { id: "fa2", accountName: "Client Delta - Trust", accountType: "Managed", tradesLast30Days: 0, daysSinceLastTrade: 45, complianceFlag: "No Activity", aiSuggestion: "Contact client to discuss portfolio and reconfirm investment objectives." },
+  { id: "fa3", accountName: "Client Epsilon - Joint", accountType: "Non-Managed", tradesLast30Days: 5, daysSinceLastTrade: 3, complianceFlag: "Trade Frequency Anomaly", aiSuggestion: "Verify trades align with recent market news or client instructions." },
+  { id: "fa4", accountName: "Client Zeta - Brokerage", accountType: "Managed", tradesLast30Days: 0, daysSinceLastTrade: 62, complianceFlag: "No Activity", aiSuggestion: "Schedule portfolio review; ensure strategy alignment." },
+  { id: "fa5", accountName: "Client Alpha - Roth IRA", accountType: "Non-Managed", tradesLast30Days: 98, daysSinceLastTrade: 2, complianceFlag: "Excessive Trading", aiSuggestion: "Assess if self-directed trading aligns with stated goals." },
+  { id: "fa6", accountName: "Client Beta - Conservative", accountType: "Managed", tradesLast30Days: 10, daysSinceLastTrade: 5, complianceFlag: "Unsuitable Product", aiSuggestion: "Review account holdings (e.g., Leveraged ETFs) against the client's stated conservative risk tolerance. Document suitability or reposition." },
+  { id: "fa7", accountName: "Client Sigma - Retirement", accountType: "Managed", tradesLast30Days: 2, daysSinceLastTrade: 80, complianceFlag: "No Activity", aiSuggestion: "Client nearing RMD age. Verify account activity expectations and confirm objectives." },
+  { id: "fa8", accountName: "Client Omega - Aggressive", accountType: "Non-Managed", tradesLast30Days: 200, daysSinceLastTrade: 1, complianceFlag: "Excessive Trading", aiSuggestion: "High trading volume. Cross-reference with documented strategy and risk profile." },
+  { id: "fa9", accountName: "Client Rho - Education Fund", accountType: "Managed", tradesLast30Days: 1, daysSinceLastTrade: 15, complianceFlag: "Unsuitable Product", aiSuggestion: "Account holds highly speculative assets inconsistent with 'Education Fund' goal. Review IPS and realign strategy." },
+  { id: "fa10", accountName: "Client Kappa - High Growth", accountType: "Managed", tradesLast30Days: 15, daysSinceLastTrade: 2, complianceFlag: "Trade Frequency Anomaly", aiSuggestion: "Recent shift to high-frequency, small-cap trades. Verify if this aligns with a recent change in client strategy or IPS." },
+  { id: "fa11", accountName: "Client Iota - Balanced", accountType: "Managed", tradesLast30Days: 0, daysSinceLastTrade: 95, complianceFlag: "No Activity", aiSuggestion: "Extended period of no activity in a balanced portfolio. Initiate client contact for review." },
+  { id: "fa12", accountName: "Client Mu - Income Portfolio", accountType: "Managed", tradesLast30Days: 7, daysSinceLastTrade: 8, complianceFlag: "Unsuitable Product", aiSuggestion: "Portfolio includes non-income generating, high-volatility crypto assets. Re-evaluate suitability for income objective." }
 ];
 
 const getFlagBadgeVariant = (flag: FlaggedActivity["complianceFlag"]): "destructive" | "default" => {
@@ -133,7 +132,6 @@ export default function ComplianceMatrixPage() {
               <TableHead className="text-right">Trades (30d)</TableHead>
               <TableHead className="text-right">Days Since Last Trade</TableHead>
               <TableHead>Compliance Flag</TableHead>
-              <TableHead>Flag Date</TableHead>
               <TableHead>AI Suggestion</TableHead>
             </TableRow>
           </TableHeader>
@@ -149,7 +147,6 @@ export default function ComplianceMatrixPage() {
                     {activity.complianceFlag}
                   </Badge>
                 </TableCell>
-                <TableCell>{activity.flagDate}</TableCell>
                 <TableCell className="text-xs text-muted-foreground">{activity.aiSuggestion}</TableCell>
               </TableRow>
             ))}
@@ -181,6 +178,3 @@ export default function ComplianceMatrixPage() {
     </main>
   );
 }
-
-
-    
