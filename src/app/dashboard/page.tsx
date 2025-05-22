@@ -13,24 +13,24 @@ import {
   Newspaper, 
   Search, 
   Send,
-  Brain, // Changed from Cpu to Brain as per specific card title
+  Brain,
   BarChart4,
   AlertCircle,
   Clock,
   Sparkles,
   CalendarDays,
-  Loader2 // Added Loader2 for ticker lookup
+  Loader2
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from '@/lib/utils';
 
 // IMPORTANT: For production, move this API key to a secure environment variable (e.g., .env.local)
-// and access it via process.env.POLYGON_API_KEY.
+// and access it via process.env.POLYGON_API_KEY. Verify this key is active and has permissions.
 const POLYGON_API_KEY = "4eIDg99n4FM2EKLkA8voxgJBrzIwQHkV"; 
 
 interface MarketData {
   name: string;
-  polygonTicker: string;
+  polygonTicker: string; // For Polygon.io API
   icon?: React.ElementType;
   openTime?: string; 
   closeTime?: string; 
@@ -41,7 +41,7 @@ const initialMarketOverviewData: MarketData[] = [
   { name: 'S&P 500', polygonTicker: 'I:SPX', icon: Landmark, openTime: '09:30', closeTime: '16:00', timezone: 'America/New_York' },
   { name: 'NASDAQ', polygonTicker: 'I:NDX', icon: Landmark, openTime: '09:30', closeTime: '16:00', timezone: 'America/New_York' },
   { name: 'Dow Jones', polygonTicker: 'I:DJI', icon: Landmark, openTime: '09:30', closeTime: '16:00', timezone: 'America/New_York' },
-  { name: 'VIX', polygonTicker: 'I:VIX', icon: Landmark, openTime: '09:30', closeTime: '16:15', timezone: 'America/New_York' }, // Note: VIX often has slightly different hours
+  { name: 'VIX', polygonTicker: 'I:VIX', icon: Landmark, openTime: '09:30', closeTime: '16:15', timezone: 'America/New_York' },
 ];
 
 const newsData = [
@@ -65,13 +65,6 @@ const newsData = [
     summary: "Crude oil futures jumped over 3% today following new developments in international relations, impacting energy stocks.",
     timestamp: "1d ago",
     sentiment: "negative",
-  },
-  {
-    id: 4,
-    headline: "Central Bank Hints at Future Monetary Policy Shift",
-    summary: "Analysts are closely watching statements from the central bank, which indicated a potential adjustment to its current monetary policy.",
-    timestamp: "2d ago",
-    sentiment: "neutral",
   },
 ];
 
@@ -103,13 +96,12 @@ interface MarketStatusInfo {
 export default function DashboardPage() {
   const [marketApiData, setMarketApiData] = React.useState<Record<string, FetchedIndexData>>({});
   const [tickerQuery, setTickerQuery] = React.useState('');
-  const [tickerData, setTickerData] = React.useState<any>(null); // Placeholder for actual ticker lookup data
+  const [tickerData, setTickerData] = React.useState<any>(null); 
   const [isLoadingTicker, setIsLoadingTicker] = React.useState(false);
   const [marketStatuses, setMarketStatuses] = React.useState<Record<string, MarketStatusInfo>>({});
   const [currentTimeEST, setCurrentTimeEST] = React.useState<string>('Loading...');
 
   const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
-    // Ensure API key is handled securely in production
     try {
       const response = await fetch(`https://api.polygon.io/v2/aggs/ticker/${symbol}/prev?adjusted=true&apiKey=${POLYGON_API_KEY}`);
       if (!response.ok) {
@@ -140,7 +132,7 @@ export default function DashboardPage() {
       initialMarketOverviewData.forEach(market => {
         initialApiData[market.polygonTicker] = { loading: true };
       });
-      setMarketApiData(initialApiData); // Set loading state immediately
+      setMarketApiData(initialApiData);
 
       const promises = initialMarketOverviewData.map(market => 
         fetchIndexData(market.polygonTicker).then(data => ({ symbol: market.polygonTicker, data }))
@@ -154,7 +146,7 @@ export default function DashboardPage() {
           newApiData[result.value.symbol] = result.value.data;
         } else {
           // Error already handled within fetchIndexData and stored in result.value.data.error
-          // For robustness, you might want to log result.reason if the promise itself was rejected.
+          // Consider logging result.reason if needed
         }
       });
       setMarketApiData(prevData => ({...prevData, ...newApiData}));
@@ -172,13 +164,11 @@ export default function DashboardPage() {
   const handleTickerLookup = () => {
     if (!tickerQuery.trim()) return;
     setIsLoadingTicker(true);
-    setTickerData(null); // Clear previous results
-    // Simulate API call for ticker lookup
+    setTickerData(null); 
     setTimeout(() => {
-      // Mock data - replace with actual API call in a real application
       setTickerData({
         name: `${tickerQuery.toUpperCase()} Company Inc.`,
-        logo: `https://placehold.co/40x40.png?text=${tickerQuery.toUpperCase()}`, // Placeholder logo
+        logo: `https://placehold.co/40x40.png?text=${tickerQuery.toUpperCase()}`,
         marketCap: "1.5T",
         peRatio: "25.5",
         dividendYield: "1.8%",
@@ -196,20 +186,27 @@ export default function DashboardPage() {
       const newStatuses: Record<string, MarketStatusInfo> = {};
       const now = new Date();
       
-      // Get current hours and minutes in EST/EDT
-      const estFormatter = new Intl.DateTimeFormat('en-US', {
-        hour: 'numeric',
-        minute: 'numeric',
-        hour12: false,
-        timeZone: 'America/New_York',
-      });
-      const parts = estFormatter.formatToParts(now);
       let currentHourEST = 0;
       let currentMinuteEST = 0;
-      parts.forEach(part => {
-        if (part.type === 'hour') currentHourEST = parseInt(part.value);
-        if (part.type === 'minute') currentMinuteEST = parseInt(part.value);
-      });
+      
+      try {
+        const estFormatter = new Intl.DateTimeFormat('en-US', {
+          hour: 'numeric',
+          minute: 'numeric',
+          hour12: false,
+          timeZone: 'America/New_York',
+        });
+        const parts = estFormatter.formatToParts(now);
+        parts.forEach(part => {
+          if (part.type === 'hour') currentHourEST = parseInt(part.value);
+          if (part.type === 'minute') currentMinuteEST = parseInt(part.value);
+        });
+      } catch (e) {
+        console.error("Error formatting EST time, defaulting to local time for logic:", e);
+        // Fallback to local hours/minutes if Intl.DateTimeFormat fails (e.g., in some environments)
+        currentHourEST = now.getHours();
+        currentMinuteEST = now.getMinutes();
+      }
 
       initialMarketOverviewData.forEach(market => {
         if (market.openTime && market.closeTime) {
@@ -245,10 +242,14 @@ export default function DashboardPage() {
       setMarketStatuses(newStatuses);
     };
     
-    updateMarketStatuses(); // Initial call
-    const intervalId = setInterval(updateMarketStatuses, 60000); // Update every minute
+    updateMarketStatuses();
+    const intervalId = setInterval(updateMarketStatuses, 60000); 
     const clockIntervalId = setInterval(() => {
-        setCurrentTimeEST(new Date().toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', second:'2-digit' }));
+        try {
+            setCurrentTimeEST(new Date().toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', second:'2-digit' }));
+        } catch (e) {
+            setCurrentTimeEST(new Date().toLocaleTimeString()); // Fallback
+        }
     }, 1000);
 
     return () => {
@@ -329,77 +330,70 @@ export default function DashboardPage() {
         </div>
       </section>
 
-      {/* Row for Why Market Moved & Top News Stories */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1">
-          <PlaceholderCard title="Why the Market Moved" icon={Brain} className="h-full">
-            <p className="text-sm text-muted-foreground leading-relaxed font-serif mt-2">
-              Market sentiment turned positive following the release of favorable inflation data, suggesting that price pressures may be easing. This led to a broad rally across major indices, particularly in growth-oriented sectors like technology and consumer discretionary. Investors are now keenly awaiting upcoming corporate earnings reports for further direction.
-            </p>
-          </PlaceholderCard>
-        </div>
-        <div className="lg:col-span-2">
-          <PlaceholderCard title="Top News Stories" icon={Newspaper} className="h-full">
-            <ul className="space-y-4">
-              {newsData.map((news) => (
-                <li key={news.id} className="pb-3 border-b border-border/30 last:border-b-0 last:pb-0">
-                  <div className="flex items-center justify-between mb-1">
-                    <h4 className="text-base font-semibold text-foreground">{news.headline}</h4>
-                    <Badge variant="outline" className={cn("text-xs", getNewsSentimentBadgeClass(news.sentiment))}>
-                      {news.sentiment}
-                    </Badge>
-                  </div>
-                  <p className="text-xs text-muted-foreground mb-1">{news.summary}</p>
-                  <p className="text-xs text-muted-foreground/70">{news.timestamp}</p>
-                </li>
-              ))}
-            </ul>
-          </PlaceholderCard>
-        </div>
+        <PlaceholderCard title="Why the Market Moved" icon={Brain} className="lg:col-span-1 h-full">
+          <p className="text-sm text-muted-foreground leading-relaxed font-serif mt-2">
+            Market sentiment turned positive following the release of favorable inflation data, suggesting that price pressures may be easing. This led to a broad rally across major indices, particularly in growth-oriented sectors like technology and consumer discretionary. Investors are now keenly awaiting upcoming corporate earnings reports for further direction.
+          </p>
+        </PlaceholderCard>
+        <PlaceholderCard title="Top News Stories" icon={Newspaper} className="lg:col-span-2 h-full">
+          <ul className="space-y-4">
+            {newsData.map((news) => (
+              <li key={news.id} className="pb-3 border-b border-border/30 last:border-b-0 last:pb-0">
+                <div className="flex items-center justify-between mb-1">
+                  <h4 className="text-base font-semibold text-foreground">{news.headline}</h4>
+                  <Badge variant="outline" className={cn("text-xs", getNewsSentimentBadgeClass(news.sentiment))}>
+                    {news.sentiment}
+                  </Badge>
+                </div>
+                <p className="text-xs text-muted-foreground mb-1">{news.summary}</p>
+                <p className="text-xs text-muted-foreground/70">{news.timestamp}</p>
+              </li>
+            ))}
+          </ul>
+        </PlaceholderCard>
       </div>
 
-      {/* Row for Ticker Lookup Tool, aligned to the right */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1 hidden lg:block"> {/* Spacer on the left */} </div>
-        <div className="lg:col-span-2">
-          <PlaceholderCard title="Ticker Lookup Tool" icon={Search}>
-            <div className="flex space-x-2 mb-4">
-              <Input 
-                type="text" 
-                placeholder="Enter stock ticker (e.g., AAPL)" 
-                className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary"
-                value={tickerQuery}
-                onChange={(e) => setTickerQuery(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleTickerLookup()}
-              />
-              <Button onClick={handleTickerLookup} disabled={isLoadingTicker}>
-                {isLoadingTicker ? <Loader2 className="animate-spin h-4 w-4" /> : <Send className="h-4 w-4" />}
-              </Button>
-            </div>
-            {isLoadingTicker && <p className="text-sm text-muted-foreground text-center">Fetching data...</p>}
-            {tickerData && !isLoadingTicker && (
-              <div className="mt-4 space-y-3 text-sm">
-                <div className="flex items-center space-x-3 mb-3">
-                  <img src={tickerData.logo} alt={`${tickerData.name} logo`} className="w-10 h-10 rounded-md bg-muted p-1" data-ai-hint="company logo" />
-                  <h4 className="text-lg font-semibold text-foreground">{tickerData.name}</h4>
-                </div>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                  <div><strong className="text-muted-foreground">Market Cap:</strong> {tickerData.marketCap}</div>
-                  <div><strong className="text-muted-foreground">P/E Ratio:</strong> {tickerData.peRatio}</div>
-                  <div><strong className="text-muted-foreground">Dividend Yield:</strong> {tickerData.dividendYield}</div>
-                  <div><strong className="text-muted-foreground">52W High:</strong> {tickerData.fiftyTwoWeekHigh}</div>
-                  <div><strong className="text-muted-foreground">52W Low:</strong> {tickerData.fiftyTwoWeekLow}</div>
-                </div>
-                <div className="pt-3 border-t border-border/30">
-                    <strong className="text-muted-foreground block mb-1">Performance:</strong>
-                    <div className="flex justify-between"><span>YTD: <span className={cn(tickerData.ytdReturn.startsWith('+') ? "text-green-400" : "text-red-400")}>{tickerData.ytdReturn}</span></span></div>
-                    <div className="flex justify-between"><span>1Y: <span className={cn(tickerData.oneYearReturn.startsWith('+') ? "text-green-400" : "text-red-400")}>{tickerData.oneYearReturn}</span></span></div>
-                </div>
+        <div className="lg:col-span-1 hidden lg:block"> {/* Spacer */} </div>
+        <PlaceholderCard title="Ticker Lookup Tool" icon={Search} className="lg:col-span-2">
+          <div className="flex space-x-2 mb-4">
+            <Input 
+              type="text" 
+              placeholder="Enter stock ticker (e.g., AAPL)" 
+              className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary"
+              value={tickerQuery}
+              onChange={(e) => setTickerQuery(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleTickerLookup()}
+            />
+            <Button onClick={handleTickerLookup} disabled={isLoadingTicker}>
+              {isLoadingTicker ? <Loader2 className="animate-spin h-4 w-4" /> : <Send className="h-4 w-4" />}
+            </Button>
+          </div>
+          {isLoadingTicker && <p className="text-sm text-muted-foreground text-center">Fetching data...</p>}
+          {tickerData && !isLoadingTicker && (
+            <div className="mt-4 space-y-3 text-sm">
+              <div className="flex items-center space-x-3 mb-3">
+                <img src={tickerData.logo} alt={`${tickerData.name} logo`} className="w-10 h-10 rounded-md bg-muted p-1" data-ai-hint="company logo" />
+                <h4 className="text-lg font-semibold text-foreground">{tickerData.name}</h4>
               </div>
-            )}
-          </PlaceholderCard>
-        </div>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                <div><strong className="text-muted-foreground">Market Cap:</strong> {tickerData.marketCap}</div>
+                <div><strong className="text-muted-foreground">P/E Ratio:</strong> {tickerData.peRatio}</div>
+                <div><strong className="text-muted-foreground">Dividend Yield:</strong> {tickerData.dividendYield}</div>
+                <div><strong className="text-muted-foreground">52W High:</strong> {tickerData.fiftyTwoWeekHigh}</div>
+                <div><strong className="text-muted-foreground">52W Low:</strong> {tickerData.fiftyTwoWeekLow}</div>
+              </div>
+              <div className="pt-3 border-t border-border/30">
+                  <strong className="text-muted-foreground block mb-1">Performance:</strong>
+                  <div className="flex justify-between"><span>YTD: <span className={cn(tickerData.ytdReturn.startsWith('+') ? "text-green-400" : "text-red-400")}>{tickerData.ytdReturn}</span></span></div>
+                  <div className="flex justify-between"><span>1Y: <span className={cn(tickerData.oneYearReturn.startsWith('+') ? "text-green-400" : "text-red-400")}>{tickerData.oneYearReturn}</span></span></div>
+              </div>
+            </div>
+          )}
+        </PlaceholderCard>
       </div>
     </main>
   );
 }
+
