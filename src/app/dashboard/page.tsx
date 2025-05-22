@@ -2,6 +2,7 @@
 "use client";
 
 import * as React from 'react';
+import Image from "next/image";
 import { PlaceholderCard } from '@/components/dashboard/placeholder-card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,9 +25,9 @@ import {
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from '@/lib/utils';
 
-// IMPORTANT: For production, move this API key to a secure environment variable (e.g., .env.local)
-// and access it via process.env.POLYGON_API_KEY. Verify this key is active and has permissions.
-const POLYGON_API_KEY = "4eIDg99n4FM2EKLkA8voxgJBrzIwQHkV"; 
+// IMPORTANT: For production, ensure NEXT_PUBLIC_POLYGON_API_KEY is set in your environment.
+// For Firebase Cloud Workstations, this might need to be set in the workstation's environment settings
+// or via a method appropriate for that environment if .env.local isn't picked up by the dev server.
 
 interface MarketData {
   name: string;
@@ -102,8 +103,16 @@ export default function DashboardPage() {
   const [currentTimeEST, setCurrentTimeEST] = React.useState<string>('Loading...');
 
   const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
+    const apiKey = process.env.NEXT_PUBLIC_POLYGON_API_KEY;
+    console.log(`Fetching data for ${symbol} using API key: ${apiKey ? '******' + apiKey.slice(-4) : 'UNDEFINED'}`); // Log the key (partially masked) or if it's undefined
+
+    if (!apiKey) {
+      console.error("Polygon API key is not set. Please set NEXT_PUBLIC_POLYGON_API_KEY.");
+      return { error: 'API Key Missing' };
+    }
+
     try {
-      const response = await fetch(`https://api.polygon.io/v2/aggs/ticker/${symbol}/prev?adjusted=true&apiKey=${POLYGON_API_KEY}`);
+      const response = await fetch(`https://api.polygon.io/v2/aggs/ticker/${symbol}/prev?adjusted=true&apiKey=${apiKey}`);
       if (!response.ok) {
         let errorMessage = `API Error: ${response.status}`;
         try {
@@ -128,6 +137,16 @@ export default function DashboardPage() {
   
   React.useEffect(() => {
     const loadMarketData = async () => {
+      if (!process.env.NEXT_PUBLIC_POLYGON_API_KEY) {
+        console.warn("Polygon API key (NEXT_PUBLIC_POLYGON_API_KEY) is not defined. Market data will not be fetched.");
+        const errorState: Record<string, FetchedIndexData> = {};
+        initialMarketOverviewData.forEach(market => {
+          errorState[market.polygonTicker] = { error: 'API Key Missing. Configure in .env.local' };
+        });
+        setMarketApiData(errorState);
+        return;
+      }
+
       const initialApiData: Record<string, FetchedIndexData> = {};
       initialMarketOverviewData.forEach(market => {
         initialApiData[market.polygonTicker] = { loading: true };
@@ -145,8 +164,9 @@ export default function DashboardPage() {
         if (result.status === 'fulfilled') {
           newApiData[result.value.symbol] = result.value.data;
         } else {
-          // Error already handled within fetchIndexData and stored in result.value.data.error
-          // Consider logging result.reason if needed
+           // This case should ideally not happen if fetchIndexData always returns an object
+           // For safety, you could log result.reason
+          console.error("Promise rejected unexpectedly in loadMarketData:", result.reason);
         }
       });
       setMarketApiData(prevData => ({...prevData, ...newApiData}));
@@ -204,21 +224,36 @@ export default function DashboardPage() {
       } catch (e) {
         console.error("Error formatting EST time, defaulting to local time for logic:", e);
         // Fallback to local hours/minutes if Intl.DateTimeFormat fails (e.g., in some environments)
-        currentHourEST = now.getHours();
-        currentMinuteEST = now.getMinutes();
+        const localNow = new Date(); // Use a fresh Date object for fallback
+        currentHourEST = localNow.getHours();
+        currentMinuteEST = localNow.getMinutes();
       }
+
+      const todayForLogic = new Date(); // Use current local date for constructing comparison dates
+      todayForLogic.setHours(0,0,0,0);
+
 
       initialMarketOverviewData.forEach(market => {
         if (market.openTime && market.closeTime) {
             const [openHour, openMinute] = market.openTime.split(':').map(Number);
             const [closeHour, closeMinute] = market.closeTime.split(':').map(Number);
 
-            const isCurrentlyOpen = 
-                (currentHourEST > openHour || (currentHourEST === openHour && currentMinuteEST >= openMinute)) &&
-                (currentHourEST < closeHour || (currentHourEST === closeHour && currentMinuteEST < closeMinute));
+            const marketOpenTime = new Date(todayForLogic);
+            marketOpenTime.setHours(openHour, openMinute, 0, 0);
 
-            const timeToClose = (closeHour * 60 + closeMinute) - (currentHourEST * 60 + currentMinuteEST);
-            const isClosingSoon = isCurrentlyOpen && timeToClose > 0 && timeToClose <= 60;
+            const marketCloseTime = new Date(todayForLogic);
+            marketCloseTime.setHours(closeHour, closeMinute, 0, 0);
+            
+            const nowInEstEquivalentForLogic = new Date(todayForLogic);
+            nowInEstEquivalentForLogic.setHours(currentHourEST, currentMinuteEST, 0, 0);
+
+
+            const isCurrentlyOpen = 
+                nowInEstEquivalentForLogic >= marketOpenTime &&
+                nowInEstEquivalentForLogic < marketCloseTime;
+
+            const timeToCloseMs = marketCloseTime.getTime() - nowInEstEquivalentForLogic.getTime();
+            const isClosingSoon = isCurrentlyOpen && timeToCloseMs > 0 && timeToCloseMs <= 60 * 60 * 1000; // 1 hour in milliseconds
 
             let statusText = "🔴 Market Closed";
             let shadowClass = "shadow-market-closed";
@@ -260,7 +295,7 @@ export default function DashboardPage() {
 
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#5b21b6]/10 to-[#000104] flex-1 p-6 space-y-8 md:p-8">
+    <main className="min-h-screen flex-1 p-6 space-y-8 md:p-8">
       <h1 className="text-3xl font-bold tracking-tight text-foreground">
         Welcome Josh!
       </h1>
