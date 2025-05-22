@@ -15,10 +15,11 @@ import {
   Shapes,
   PiggyBank,
   FlaskConical,
+  ShieldAlert, // Added ShieldAlert
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from '@/components/ui/tooltip';
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from '@/lib/utils';
 
 interface NavItem {
@@ -33,12 +34,14 @@ const navItems: NavItem[] = [
   { href: '/client-analytics', label: 'Client Analytics', icon: Users },
   { href: '/financial-analytics', label: 'Financial Analytics', icon: TrendingUp },
   { href: '/conversion-analytics', label: 'Conversion Analytics', icon: Repeat },
+  { href: '/compliance-matrix', label: 'Compliance Matrix', icon: ShieldAlert }, // Added Compliance Matrix
   { href: '/resource-matrix', label: 'Resource Matrix', icon: LayoutGrid },
   { href: '/portfolio-matrix', label: 'Portfolio Matrix', icon: PieChart },
   { href: '/model-matrix', label: 'Model Matrix', icon: Shapes },
   { href: '/contribution-matrix', label: 'Contribution Matrix', icon: PiggyBank },
   { href: '/project-x', label: 'Project X', icon: FlaskConical },
 ];
+
 
 export function SidebarNavItems() {
   const pathname = usePathname();
@@ -58,7 +61,7 @@ export function SidebarNavItems() {
                       isActive={isActive}
                       className={cn(
                         "w-full justify-start transform-gpu text-base font-medium",
-                        "py-[10px] px-4 rounded-[8px]",
+                        "py-[10px] px-4 rounded-[8px]", // Standardized padding
                         "bg-white/[.02] text-sidebar-foreground transition-all duration-300 ease-out",
                         isActive
                           ? "bg-primary/[.15] shadow-[0_2px_10px_hsla(var(--primary),0.5)] -translate-y-0.5 text-sidebar-primary-foreground"
