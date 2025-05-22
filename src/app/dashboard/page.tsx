@@ -3,86 +3,86 @@
 
 import * as React from 'react';
 import { PlaceholderCard } from '@/components/dashboard/placeholder-card';
-import { PlaceholderChart } from '@/components/dashboard/placeholder-chart';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { 
+  Landmark, 
   TrendingUp, 
   TrendingDown, 
-  BarChart4, 
-  Cpu, 
   Newspaper, 
-  CalendarDays, 
-  Sparkles, 
+  Search, 
   Send,
-  Landmark, 
-  Clock,
-  AlertCircle
+  Brain,
+  BarChart4,
+  AlertCircle,
+  Clock
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { cn } from '@/lib/utils';
 
 // IMPORTANT: For production, move this API key to a secure environment variable (e.g., .env.local)
 // and access it via process.env.POLYGON_API_KEY.
-// If you're getting 401 errors, PLEASE VERIFY THIS KEY IS VALID AND HAS PERMISSIONS
-// FOR THE INDICES AND ENDPOINTS YOU ARE TRYING TO ACCESS.
 const POLYGON_API_KEY = "4eIDg99n4FM2EKLkA8voxgJBrzIwQHkV"; 
 
 interface MarketData {
   name: string;
   polygonTicker: string;
-  openTime: string; 
-  closeTime: string; 
-  timezone: string; 
   icon?: React.ElementType;
+  // Simplified status for this layout iteration
+  openTime?: string; 
+  closeTime?: string; 
+  timezone?: string;
 }
 
 const initialMarketOverviewData: MarketData[] = [
-  { name: 'S&P 500', polygonTicker: 'I:SPX', openTime: '09:30', closeTime: '16:00', timezone: 'America/New_York', icon: Landmark },
-  { name: 'NASDAQ', polygonTicker: 'I:NDX', openTime: '09:30', closeTime: '16:00', timezone: 'America/New_York', icon: Landmark },
-  { name: 'Dow Jones', polygonTicker: 'I:DJI', openTime: '09:30', closeTime: '16:00', timezone: 'America/New_York', icon: Landmark },
-  { name: 'VIX', polygonTicker: 'I:VIX', openTime: '09:30', closeTime: '16:00', timezone: 'America/New_York', icon: Landmark }, // VIX actual hours differ, often 9:15-16:15 or even more extended for futures
+  { name: 'S&P 500', polygonTicker: 'I:SPX', icon: Landmark, openTime: '09:30', closeTime: '16:00', timezone: 'America/New_York' },
+  { name: 'NASDAQ', polygonTicker: 'I:NDX', icon: Landmark, openTime: '09:30', closeTime: '16:00', timezone: 'America/New_York' },
+  { name: 'Dow Jones', polygonTicker: 'I:DJI', icon: Landmark, openTime: '09:30', closeTime: '16:00', timezone: 'America/New_York' },
+  { name: 'VIX', polygonTicker: 'I:VIX', icon: Landmark, openTime: '09:30', closeTime: '16:15', timezone: 'America/New_York' },
 ];
 
-const topGainers = [ { ticker: 'AMZN', change: '+2.3%' }, { ticker: 'NVDA', change: '+1.9%' }, { ticker: 'MSFT', change: '+1.5%' } ];
-const topLosers = [ { ticker: 'TSLA', change: '-1.8%' }, { ticker: 'AAPL', change: '-0.9%' }, { ticker: 'GOOG', change: '-0.5%' } ];
-
-const latestNews = [
-  { headline: 'Tech stocks surge on AI optimism as new chipsets announced.', time: '2h ago', sentiment: 'positive' },
-  { headline: 'Inflation fears ease as CPI data comes in slightly lower than expected.', time: '5h ago', sentiment: 'positive' },
-  { headline: 'Global markets show mixed reactions to new international trade policies.', time: '1d ago', sentiment: 'neutral' },
-  { headline: 'Oil prices dip amid concerns of slowing global demand.', time: '2d ago', sentiment: 'negative' },
+const newsData = [
+  {
+    id: 1,
+    headline: "Global Markets Rally on Positive Inflation Outlook",
+    summary: "Major indices saw significant gains as new inflation data suggests a cooling trend, boosting investor confidence.",
+    timestamp: "2h ago",
+    sentiment: "positive",
+  },
+  {
+    id: 2,
+    headline: "Tech Sector Faces Scrutiny Over New Regulations",
+    summary: "Upcoming regulatory changes are causing uncertainty in the tech industry, with several large-cap stocks experiencing volatility.",
+    timestamp: "5h ago",
+    sentiment: "neutral",
+  },
+  {
+    id: 3,
+    headline: "Oil Prices Surge Amid Geopolitical Tensions",
+    summary: "Crude oil futures jumped over 3% today following new developments in international relations, impacting energy stocks.",
+    timestamp: "1d ago",
+    sentiment: "negative",
+  },
+  {
+    id: 4,
+    headline: "Central Bank Hints at Future Monetary Policy Shift",
+    summary: "Analysts are closely watching statements from the central bank, which indicated a potential adjustment to its current monetary policy.",
+    timestamp: "2d ago",
+    sentiment: "neutral",
+  },
 ];
 
-const economicCalendar = [
-  { event: 'CPI Report', date: 'Oct 12', tagColor: 'orange' },
-  { event: 'Fed Meeting', date: 'Oct 25-26', tagColor: 'purple' },
-  { event: 'Jobs Report', date: 'Nov 3', tagColor: 'yellow' },
-];
-
-const getEventBadgeColor = (colorName: string) => {
-  switch (colorName.toLowerCase()) {
-    case 'orange': return 'bg-orange-500/20 text-orange-400 border-orange-500/50';
-    case 'purple': return 'bg-primary/20 text-primary border-primary/50';
-    case 'yellow': return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/50';
-    default: return 'bg-gray-500/20 text-gray-400 border-gray-500/50';
+const getNewsSentimentBadgeClass = (sentiment: string) => {
+  switch (sentiment) {
+    case "positive":
+      return "bg-green-500/20 text-green-400 border-green-500/50";
+    case "negative":
+      return "bg-red-500/20 text-red-400 border-red-500/50";
+    default:
+      return "bg-gray-500/20 text-gray-400 border-gray-500/50";
   }
 };
-
-const getNewsSentimentBadgeColor = (sentiment: string) => {
-  switch (sentiment.toLowerCase()) {
-    case 'positive': return 'bg-green-500/20 text-green-400';
-    case 'negative': return 'bg-red-500/20 text-red-400';
-    default: return 'bg-gray-500/20 text-gray-400';
-  }
-};
-
-interface MarketStatus {
-  status: 'LOADING' | 'OPEN' | 'CLOSING_SOON' | 'CLOSED' | 'ERROR';
-  statusText: string;
-  tooltipText: string;
-  shadowClass: string;
-}
 
 interface FetchedIndexData {
   c?: number; 
@@ -91,44 +91,45 @@ interface FetchedIndexData {
   loading?: boolean;
 }
 
+interface MarketStatusInfo {
+  statusText: string;
+  tooltipText: string;
+}
+
+
 export default function DashboardPage() {
-  const [marketStatuses, setMarketStatuses] = React.useState<Record<string, MarketStatus>>({});
-  const [currentTimeEST, setCurrentTimeEST] = React.useState<string>('Loading...');
   const [marketApiData, setMarketApiData] = React.useState<Record<string, FetchedIndexData>>({});
+  const [tickerQuery, setTickerQuery] = React.useState('');
+  const [tickerData, setTickerData] = React.useState<any>(null); // Placeholder for actual ticker lookup data
+  const [isLoadingTicker, setIsLoadingTicker] = React.useState(false);
+  const [marketStatuses, setMarketStatuses] = React.useState<Record<string, MarketStatusInfo>>({});
+  const [currentTimeEST, setCurrentTimeEST] = React.useState<string>('Loading...');
 
   const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
     try {
       const response = await fetch(`https://api.polygon.io/v2/aggs/ticker/${symbol}/prev?adjusted=true&apiKey=${POLYGON_API_KEY}`);
       if (!response.ok) {
-        let errorMessage = `API Error: ${response.status} ${response.statusText}`;
+        let errorMessage = `API Error: ${response.status}`;
         try {
-          // Attempt to parse JSON error response from Polygon.io
           const errorData = await response.json();
-          if (errorData && errorData.message) {
-            errorMessage = `API Error: ${response.status} - ${errorData.message}`;
-          } else if (errorData && errorData.error) { // Polygon sometimes uses an "error" field for messages
-            errorMessage = `API Error: ${response.status} - ${errorData.error}`;
-          } else if (errorData && errorData.request_id && errorData.status) { // Another common Polygon error format
-             errorMessage = `API Error: ${response.status} - ${errorData.status} (Request ID: ${errorData.request_id})`;
-          }
-        } catch (e) {
-          // If response is not JSON, stick with the original statusText
-        }
+          if (errorData && errorData.message) errorMessage = `API Error: ${response.status} - ${errorData.message}`;
+          else if (errorData && errorData.error) errorMessage = `API Error: ${response.status} - ${errorData.error}`;
+        } catch (e) { /* Ignore if error response is not JSON */ }
         console.error(`Error fetching ${symbol}: ${errorMessage}`);
-        return { error: `API Error: ${response.status}` }; // Keep UI error concise
+        return { error: `API Error: ${response.status}` };
       }
       const data = await response.json();
       if (data.results && data.results.length > 0) {
         const { c, o } = data.results[0];
         return { c, o };
       }
-      return { error: 'No data found' };
+      return { error: 'No data' };
     } catch (error: any) {
-      console.error(`Network or other error fetching ${symbol}:`, error.message || error);
-      return { error: 'Network/Fetch error' };
+      console.error(`Network/Fetch error for ${symbol}:`, error.message || error);
+      return { error: 'Fetch error' };
     }
   };
-
+  
   React.useEffect(() => {
     const loadMarketData = async () => {
       const initialApiData: Record<string, FetchedIndexData> = {};
@@ -148,83 +149,13 @@ export default function DashboardPage() {
         if (result.status === 'fulfilled') {
           newApiData[result.value.symbol] = result.value.data;
         } else {
-          console.error("A fetch promise for market data was rejected:", result.reason);
+          // Handle rejected promises if needed, though fetchIndexData returns an error object
         }
       });
       setMarketApiData(prevData => ({...prevData, ...newApiData}));
     };
     loadMarketData();
   }, []);
-
-
-  const updateMarketStatuses = React.useCallback(() => {
-    const newStatuses: Record<string, MarketStatus> = {};
-    const today = new Date(); // Use a single 'today' for all calculations in this tick
-
-    initialMarketOverviewData.forEach(market => {
-      const [openHour, openMinute] = market.openTime.split(':').map(Number);
-      const [closeHour, closeMinute] = market.closeTime.split(':').map(Number);
-      
-      const nowInMarketTimezoneStr = new Date().toLocaleString('en-US', { timeZone: market.timezone });
-      const nowInMarketTimezone = new Date(nowInMarketTimezoneStr);
-
-      const currentMarketHour = nowInMarketTimezone.getHours();
-      const currentMarketMinute = nowInMarketTimezone.getMinutes();
-
-      // Create date objects for today in the local timezone, then set hours/minutes to EST equivalents
-      const marketOpenTime = new Date(today);
-      marketOpenTime.setHours(openHour, openMinute, 0, 0);
-      
-      const marketCloseTime = new Date(today);
-      marketCloseTime.setHours(closeHour, closeMinute, 0, 0);
-      
-      // Use a 'current time' equivalent for logic that is also based on 'today's date
-      const nowInESTEquivalentForLogic = new Date(today);
-      nowInESTEquivalentForLogic.setHours(currentMarketHour, currentMarketMinute, nowInMarketTimezone.getSeconds(), nowInMarketTimezone.getMilliseconds());
-
-      const oneHourBeforeClose = new Date(marketCloseTime);
-      oneHourBeforeClose.setHours(oneHourBeforeClose.getHours() - 1);
-      
-      let status: MarketStatus['status'];
-      let statusText: string;
-      let shadowClass: string;
-
-      if (nowInESTEquivalentForLogic >= marketOpenTime && nowInESTEquivalentForLogic < oneHourBeforeClose) {
-        status = 'OPEN';
-        statusText = `🟢 Market Open`;
-        shadowClass = 'shadow-market-open';
-      } else if (nowInESTEquivalentForLogic >= oneHourBeforeClose && nowInESTEquivalentForLogic < marketCloseTime) {
-        status = 'CLOSING_SOON';
-        statusText = `🟡 Closing Soon`;
-        shadowClass = 'shadow-market-closing';
-      } else {
-        status = 'CLOSED';
-        statusText = `🔴 Market Closed`;
-        shadowClass = 'shadow-market-closed';
-      }
-      
-      newStatuses[market.name] = {
-        status,
-        statusText,
-        tooltipText: `Market Hours: ${market.openTime} - ${market.closeTime} ${market.timezone.split('/')[1].replace('_', ' ')} Time`,
-        shadowClass,
-      };
-    });
-    setMarketStatuses(newStatuses);
-  }, []);
-
-  React.useEffect(() => {
-    updateMarketStatuses(); // Initial call
-    const liveTimeInterval = setInterval(() => {
-      setCurrentTimeEST(new Date().toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true }));
-    }, 1000);
-    const statusUpdateInterval = setInterval(updateMarketStatuses, 60000); 
-
-    return () => {
-      clearInterval(liveTimeInterval);
-      clearInterval(statusUpdateInterval);
-    };
-  }, [updateMarketStatuses]);
 
   const calculateChangePercent = (currentPrice?: number, openPrice?: number) => {
     if (typeof currentPrice !== 'number' || typeof openPrice !== 'number' || openPrice === 0) {
@@ -233,18 +164,84 @@ export default function DashboardPage() {
     return ((currentPrice - openPrice) / openPrice) * 100;
   };
 
+  const handleTickerLookup = () => {
+    if (!tickerQuery.trim()) return;
+    setIsLoadingTicker(true);
+    // Simulate API call
+    setTimeout(() => {
+      setTickerData({
+        name: `${tickerQuery.toUpperCase()} Company Inc.`,
+        logo: `https://placehold.co/40x40.png?text=${tickerQuery.toUpperCase()}`,
+        marketCap: "1.5T",
+        peRatio: "25.5",
+        dividendYield: "1.8%",
+        fiftyTwoWeekHigh: "$200.00",
+        fiftyTwoWeekLow: "$150.00",
+        ytdReturn: "+10.5%",
+        oneYearReturn: "+22.3%",
+      });
+      setIsLoadingTicker(false);
+    }, 1500);
+  };
+
+   // Simplified Market Status Logic for this iteration (focus on data display)
+   React.useEffect(() => {
+    const updateStatuses = () => {
+      const newStatuses: Record<string, MarketStatusInfo> = {};
+      const now = new Date();
+      const estOffset = -4 * 60; // EDT offset, adjust if standard time
+      const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+      const estTime = new Date(utc + (3600000 * (estOffset/60)));
+      
+      const currentHourEST = estTime.getHours();
+      const currentMinuteEST = estTime.getMinutes();
+
+      initialMarketOverviewData.forEach(market => {
+        if (market.openTime && market.closeTime) {
+            const [openHour, openMinute] = market.openTime.split(':').map(Number);
+            const [closeHour, closeMinute] = market.closeTime.split(':').map(Number);
+
+            const isOpen = (currentHourEST > openHour || (currentHourEST === openHour && currentMinuteEST >= openMinute)) &&
+                           (currentHourEST < closeHour || (currentHourEST === closeHour && currentMinuteEST < closeMinute));
+            
+            let statusText = "🔴 Market Closed";
+            if (isOpen) statusText = "🟢 Market Open";
+            // Simplified: Not adding "Closing Soon" for this pass to focus on Polygon data integration
+
+            newStatuses[market.name] = {
+                statusText,
+                tooltipText: `Market Hours: ${market.openTime} - ${market.closeTime} EST`
+            };
+        } else {
+            newStatuses[market.name] = { statusText: "Status N/A", tooltipText: "Market hours not defined"};
+        }
+      });
+      setMarketStatuses(newStatuses);
+    };
+    
+    updateStatuses(); // Initial call
+    const intervalId = setInterval(updateStatuses, 60000); // Update every minute
+    const clockIntervalId = setInterval(() => {
+        setCurrentTimeEST(new Date().toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', second:'2-digit' }));
+    }, 1000);
+
+    return () => {
+        clearInterval(intervalId);
+        clearInterval(clockIntervalId);
+    };
+  }, []);
+
+
   return (
     <main className="min-h-screen bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#5b21b6]/10 to-[#000104] flex-1 p-6 space-y-8 md:p-8">
-      <h1 className="text-3xl font-bold text-foreground mb-4">
-        Welcome Josh!
-      </h1>
-
+      {/* Header removed as per prompt "Top Index Overview (Top Row)" suggesting content starts directly */}
+      
       <section>
-        <h2 className="text-xl font-semibold text-foreground mb-4">Market Overview</h2>
+        <h2 className="text-xl font-semibold text-foreground mb-6">Market Overview</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {initialMarketOverviewData.map((market) => {
             const data = marketApiData[market.polygonTicker];
-            const statusInfo = marketStatuses[market.name] || { statusText: 'Loading status...', tooltipText: 'Fetching market status...', shadowClass: 'shadow-white-glow-soft' };
+            const status = marketStatuses[market.name] || { statusText: "Loading...", tooltipText: "Fetching status..."};
             
             let valueDisplay = "$0.00";
             let changeDisplay: React.ReactNode = "0.00%";
@@ -253,15 +250,15 @@ export default function DashboardPage() {
               valueDisplay = "Loading...";
               changeDisplay = "Loading...";
             } else if (data?.error) {
-              valueDisplay = "N/A";
-              changeDisplay = <span className="text-xs text-red-400 flex items-center"><AlertCircle className="w-3 h-3 mr-1" /> {data.error}</span>;
+              valueDisplay = <span className="text-sm text-red-400/80 flex items-center"><AlertCircle className="w-4 h-4 mr-1" /> {data.error}</span>;
+              changeDisplay = "";
             } else if (data?.c !== undefined && data?.o !== undefined) {
               valueDisplay = `$${data.c.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
               const percentChange = calculateChangePercent(data.c, data.o);
               if (percentChange !== null) {
                 const changeType = percentChange >= 0 ? 'up' : 'down';
                 changeDisplay = (
-                  <span className={changeType === 'up' ? 'text-green-400' : 'text-red-400'}>
+                  <span className={cn("text-sm", changeType === 'up' ? 'text-green-400' : 'text-red-400')}>
                     {changeType === 'up' ? <TrendingUp className="inline-block w-4 h-4 mr-1" /> : <TrendingDown className="inline-block w-4 h-4 mr-1" />}
                     {percentChange.toFixed(2)}%
                   </span>
@@ -275,28 +272,26 @@ export default function DashboardPage() {
               <PlaceholderCard 
                 key={market.name} 
                 title={market.name} 
-                className={`flex flex-col justify-between ${statusInfo.shadowClass} transition-shadow duration-300 ease-in-out`}
                 icon={market.icon || Landmark}
+                className="transition-all duration-300 ease-in-out"
               >
-                <div>
-                  <p className="text-2xl font-bold text-foreground">{valueDisplay}</p>
-                  <div className="text-sm">{changeDisplay}</div>
-                  <div className="h-10 w-full my-3 bg-black/30 rounded-md flex items-center justify-center backdrop-blur-sm" data-ai-hint="mini trendline chart">
-                     <span className="text-xs text-muted-foreground/50">Mini Trendline</span>
-                  </div>
+                <div className="text-2xl font-bold text-foreground mb-1">{valueDisplay}</div>
+                <div className="text-sm mb-3">{changeDisplay}</div>
+                <div className="h-10 w-full my-2 bg-black/30 rounded-md flex items-center justify-center backdrop-blur-sm" data-ai-hint="mini trendline chart">
+                   <span className="text-xs text-muted-foreground/50">Mini Trend</span>
                 </div>
                 <TooltipProvider>
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <div className="text-xs text-muted-foreground mt-auto pt-2 border-t border-border/20 flex justify-between items-center">
-                        <span>{statusInfo.statusText}</span>
-                        <span className="flex items-center"><Clock className="w-3 h-3 mr-1" />{currentTimeEST}</span>
+                        <span>{status.statusText}</span>
+                        <span className="flex items-center"><Clock className="w-3 h-3 mr-1" />{currentTimeEST.replace(' EST','')}</span>
                       </div>
                     </TooltipTrigger>
                     <TooltipContent side="bottom" className="bg-popover text-popover-foreground">
-                      <p>{statusInfo.tooltipText}</p>
-                       {data?.c !== undefined && <p>Last Close: ${data.c.toLocaleString()}</p>}
-                       {data?.o !== undefined && <p>Prev. Open: ${data.o.toLocaleString()}</p>}
+                      <p>{status.tooltipText}</p>
+                       {data?.c !== undefined && <p>Prev. Close: ${data.c.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>}
+                       {data?.o !== undefined && <p>Prev. Open: ${data.o.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>}
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -308,95 +303,71 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1 space-y-6">
-          <PlaceholderCard title="Sector Performance" icon={BarChart4}>
-            <div className="h-[300px] md:h-[350px]">
-              <PlaceholderChart dataAiHint="sector performance vertical bar" />
-            </div>
-          </PlaceholderCard>
-        </div>
-
-        <div className="lg:col-span-1 space-y-6">
-          <PlaceholderCard title="AI" icon={Cpu}>
-            <h3 className="text-lg font-semibold text-foreground mb-2">Why the Market Moved</h3>
-            <p className="text-sm text-muted-foreground leading-relaxed">
-              Today's market session saw mixed signals as investors digested the latest inflation data and upcoming earnings reports from key tech giants. While the energy sector continued its upward trend due to geopolitical tensions, technology stocks experienced some profit-taking after a strong rally last week. The financial sector showed resilience, buoyed by positive stress test results.
+          <PlaceholderCard title="Why the Market Moved" icon={Brain} className="h-full">
+            {/* Glowing header simulated by CardTitle style */}
+            <p className="text-sm text-muted-foreground leading-relaxed font-serif mt-2">
+              Market sentiment turned positive following the release of favorable inflation data, suggesting that price pressures may be easing. This led to a broad rally across major indices, particularly in growth-oriented sectors like technology and consumer discretionary. Investors are now keenly awaiting upcoming corporate earnings reports for further direction.
             </p>
           </PlaceholderCard>
         </div>
 
-        <div className="lg:col-span-1 space-y-6">
-          <PlaceholderCard title="Top Movers">
-            <div className="space-y-2">
-              <h4 className="text-sm font-semibold text-green-400">Top Gainers</h4>
-              {topGainers.map(g => (
-                <div key={`g-${g.ticker}`} className="flex justify-between text-xs">
-                  <span>{g.ticker}</span>
-                  <span className="text-green-400">{g.change}</span>
-                </div>
-              ))}
-              <h4 className="text-sm font-semibold text-red-400 mt-3 pt-2 border-t border-border/20">Top Losers</h4>
-              {topLosers.map(l => (
-                <div key={`l-${l.ticker}`} className="flex justify-between text-xs">
-                  <span>{l.ticker}</span>
-                  <span className="text-red-400">{l.change}</span>
-                </div>
-              ))}
-            </div>
-          </PlaceholderCard>
-          <PlaceholderCard title="Latest News" icon={Newspaper}>
-            <ul className="space-y-3">
-              {latestNews.map((news, index) => (
-                <li key={index} className="text-xs border-b border-border/20 pb-2 last:border-b-0 last:pb-0">
-                  <div className="flex items-center mb-1">
-                    <span className={`mr-2 px-1.5 py-0.5 rounded-full text-xs font-semibold ${getNewsSentimentBadgeColor(news.sentiment)}`}>
-                      {news.sentiment.toUpperCase()}
-                    </span>
-                    <span className="text-muted-foreground/70">{news.time}</span>
+        <div className="lg:col-span-2 space-y-6">
+          <PlaceholderCard title="Top News Stories" icon={Newspaper}>
+            <ul className="space-y-4">
+              {newsData.map((news) => (
+                <li key={news.id} className="pb-3 border-b border-border/30 last:border-b-0 last:pb-0">
+                  <div className="flex items-center justify-between mb-1">
+                    <h4 className="text-base font-semibold text-foreground">{news.headline}</h4>
+                    <Badge variant="outline" className={cn("text-xs", getNewsSentimentBadgeClass(news.sentiment))}>
+                      {news.sentiment}
+                    </Badge>
                   </div>
-                  <p className="text-foreground/90">{news.headline}</p>
+                  <p className="text-xs text-muted-foreground mb-1">{news.summary}</p>
+                  <p className="text-xs text-muted-foreground/70">{news.timestamp}</p>
                 </li>
               ))}
             </ul>
           </PlaceholderCard>
+
+          <PlaceholderCard title="Ticker Lookup Tool" icon={Search}>
+            <div className="flex space-x-2 mb-4">
+              <Input 
+                type="text" 
+                placeholder="Enter stock ticker (e.g., AAPL)" 
+                className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary"
+                value={tickerQuery}
+                onChange={(e) => setTickerQuery(e.target.value)}
+                onKeyPress={(e) => e.key === 'Enter' && handleTickerLookup()}
+              />
+              <Button onClick={handleTickerLookup} disabled={isLoadingTicker}>
+                {isLoadingTicker ? <Loader2 className="animate-spin" /> : <Send />}
+              </Button>
+            </div>
+            {isLoadingTicker && <p className="text-sm text-muted-foreground text-center">Fetching data...</p>}
+            {tickerData && !isLoadingTicker && (
+              <div className="mt-4 space-y-3 text-sm">
+                <div className="flex items-center space-x-3 mb-3">
+                  <img src={tickerData.logo} alt={`${tickerData.name} logo`} className="w-10 h-10 rounded-md bg-muted p-1" data-ai-hint="company logo" />
+                  <h4 className="text-lg font-semibold text-foreground">{tickerData.name}</h4>
+                </div>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                  <div><strong className="text-muted-foreground">Market Cap:</strong> {tickerData.marketCap}</div>
+                  <div><strong className="text-muted-foreground">P/E Ratio:</strong> {tickerData.peRatio}</div>
+                  <div><strong className="text-muted-foreground">Dividend Yield:</strong> {tickerData.dividendYield}</div>
+                  <div><strong className="text-muted-foreground">52W High:</strong> {tickerData.fiftyTwoWeekHigh}</div>
+                  <div><strong className="text-muted-foreground">52W Low:</strong> {tickerData.fiftyTwoWeekLow}</div>
+                </div>
+                <div className="pt-3 border-t border-border/30">
+                    <strong className="text-muted-foreground block mb-1">Performance:</strong>
+                    <div className="flex justify-between"><span>YTD: <span className={cn(tickerData.ytdReturn.startsWith('+') ? "text-green-400" : "text-red-400")}>{tickerData.ytdReturn}</span></span></div>
+                    <div className="flex justify-between"><span>1Y: <span className={cn(tickerData.oneYearReturn.startsWith('+') ? "text-green-400" : "text-red-400")}>{tickerData.oneYearReturn}</span></span></div>
+                </div>
+              </div>
+            )}
+          </PlaceholderCard>
         </div>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <PlaceholderCard title="Watchlist Movers">
-          <ul className="space-y-1 text-sm">
-            {topGainers.slice(0,2).map(g => <li key={`watchlist-g-${g.ticker}`} className="flex justify-between py-1 border-b border-border/20 last:border-b-0"><span>{g.ticker}</span> <span className="text-green-400">{g.change}</span></li>)}
-            {topLosers.slice(0,2).map(l => <li key={`watchlist-l-${l.ticker}`} className="flex justify-between py-1 border-b border-border/20 last:border-b-0"><span>{l.ticker}</span> <span className="text-red-400">{l.change}</span></li>)}
-             <li key="watchlist-new" className="flex justify-between py-1"><span>TSM</span> <span className="text-green-400">+1.2%</span></li>
-          </ul>
-        </PlaceholderCard>
-
-        <PlaceholderCard title="Economic Calendar" icon={CalendarDays}>
-          <ul className="space-y-3">
-            {economicCalendar.map(event => (
-              <li key={event.event} className="flex items-center text-sm">
-                <Badge variant="outline" className={`mr-3 ${getEventBadgeColor(event.tagColor)}`}>{event.event}</Badge>
-                <span className="text-muted-foreground">{event.date}</span>
-              </li>
-            ))}
-          </ul>
-        </PlaceholderCard>
-
-        <PlaceholderCard title="Ask Sanctuary AI" icon={Sparkles}>
-          <div className="space-y-3">
-            <Input 
-              type="text" 
-              placeholder="Type a question..." 
-              className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary" 
-            />
-            <Button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground">
-              <Send className="mr-2 h-4 w-4" /> Send
-            </Button>
-          </div>
-        </PlaceholderCard>
       </div>
     </main>
   );
 }
-    
 
-    
