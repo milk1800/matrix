@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Inter, Roboto_Mono } from 'next/font/google';
@@ -15,12 +14,12 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, X, Brain } from 'lucide-react';
 
 const mainFont = Inter({
-  variable: '--font-inter', // Changed from --font-geist-sans
+  variable: '--font-inter',
   subsets: ['latin'],
 });
 
 const monoFont = Roboto_Mono({
-  variable: '--font-roboto-mono', // Changed from --font-geist-mono
+  variable: '--font-roboto-mono',
   subsets: ['latin'],
 });
 
@@ -111,8 +110,8 @@ export default function RootLayout({
             className="shadow-sidebar-glow pt-10" 
           >
             <SidebarHeader className="p-4 px-5">
-              <div className="flex items-center space-x-3">
-                <Brain className="w-8 h-8 text-purple-500 animate-pulse-neon" />
+              <div className="flex items-center justify-center space-x-3">
+                <Brain className="w-10 h-10 text-purple-500 animate-pulse-neon" />
                 <span className="text-4xl font-bold text-metallic-gradient">
                   Matrix
                 </span>
@@ -127,8 +126,6 @@ export default function RootLayout({
           </SidebarInset>
         </SidebarProvider>
         <Toaster />
-
-        {/* Chatbot button and dialog are removed from here */}
 
         <Dialog open={isChatOpen} onOpenChange={setIsChatOpen}>
           <DialogContent className="sm:max-w-[425px] md:max-w-[550px] lg:max-w-[40%] h-[70vh] flex flex-col bg-card/60 backdrop-blur-md border-none shadow-xl">
