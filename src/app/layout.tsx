@@ -12,15 +12,15 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, X, Brain } from 'lucide-react'; // Added Brain
+import { Send, X, Brain } from 'lucide-react';
 
 const mainFont = Inter({
-  variable: '--font-geist-sans',
+  variable: '--font-inter', // Changed from --font-geist-sans
   subsets: ['latin'],
 });
 
 const monoFont = Roboto_Mono({
-  variable: '--font-geist-mono',
+  variable: '--font-roboto-mono', // Changed from --font-geist-mono
   subsets: ['latin'],
 });
 
@@ -128,13 +128,7 @@ export default function RootLayout({
         </SidebarProvider>
         <Toaster />
 
-        <Button
-          className="fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg bg-primary hover:bg-primary/90 z-50 flex items-center justify-center animate-pulse-glow"
-          onClick={() => setIsChatOpen(true)}
-          aria-label="Open Chat with Maven AI"
-        >
-           <Image src="/icons/brain-logo.png" alt="Chat with Maven AI" width={36} height={36} />
-        </Button>
+        {/* Chatbot button and dialog are removed from here */}
 
         <Dialog open={isChatOpen} onOpenChange={setIsChatOpen}>
           <DialogContent className="sm:max-w-[425px] md:max-w-[550px] lg:max-w-[40%] h-[70vh] flex flex-col bg-card/60 backdrop-blur-md border-none shadow-xl">
