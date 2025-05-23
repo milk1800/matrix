@@ -106,7 +106,7 @@ export default function RootLayout({
 
         <SidebarProvider defaultOpen={true}>
           <Sidebar
-            collapsible="none"
+            collapsible="icon" // Changed from "none"
             className="shadow-sidebar-glow pt-10" 
           >
             <SidebarHeader className="p-4 px-5">
@@ -127,6 +127,7 @@ export default function RootLayout({
         </SidebarProvider>
         <Toaster />
 
+        {/* Chatbot UI - kept as is, can be triggered by other means if needed */}
         <Dialog open={isChatOpen} onOpenChange={setIsChatOpen}>
           <DialogContent className="sm:max-w-[425px] md:max-w-[550px] lg:max-w-[40%] h-[70vh] flex flex-col bg-card/60 backdrop-blur-md border-none shadow-xl">
             <DialogHeader className="p-4 border-b border-border/50">
