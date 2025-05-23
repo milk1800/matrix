@@ -15,12 +15,12 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, X, Brain } from 'lucide-react'; // Added Brain
 
 const mainFont = Inter({
-  variable: '--font-geist-sans', // Changed from geistSans to mainFont
+  variable: '--font-geist-sans',
   subsets: ['latin'],
 });
 
 const monoFont = Roboto_Mono({
-  variable: '--font-geist-mono', // Changed from geistMono to monoFont
+  variable: '--font-geist-mono',
   subsets: ['latin'],
 });
 
