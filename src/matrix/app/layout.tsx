@@ -12,15 +12,15 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, X, Brain } from 'lucide-react'; // Added Brain
+import { Send, X, Brain } from 'lucide-react';
 
 const mainFont = Inter({
-  variable: '--font-geist-sans', // Changed from geistSans to mainFont
+  variable: '--font-geist-sans',
   subsets: ['latin'],
 });
 
 const monoFont = Roboto_Mono({
-  variable: '--font-geist-mono', // Changed from geistMono to monoFont
+  variable: '--font-geist-mono',
   subsets: ['latin'],
 });
 
@@ -108,12 +108,12 @@ export default function RootLayout({
         <SidebarProvider defaultOpen={true}>
           <Sidebar
             collapsible="none"
-            className="shadow-sidebar-glow pt-10" 
+            className="shadow-sidebar-glow pt-10"
           >
-            <SidebarHeader className="p-4 px-5">
+            <SidebarHeader className="p-4 px-5"> {/* Removed border-b border-sidebar-border */}
               <div className="flex items-center space-x-3">
                 <Brain className="w-8 h-8 text-purple-500 animate-pulse-neon" />
-                <span className="text-4xl font-bold text-metallic-gradient">
+                <span className="text-3xl font-bold text-metallic-gradient">
                   Matrix
                 </span>
               </div>
