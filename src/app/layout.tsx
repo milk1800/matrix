@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Inter, Roboto_Mono } from 'next/font/google';
@@ -12,6 +13,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogC
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, X, Brain } from 'lucide-react';
+import { TooltipProvider } from "@/components/ui/tooltip";
+
 
 const inter = Inter({
   variable: '--font-inter',
@@ -105,29 +108,33 @@ export default function RootLayout({
         </div>
 
         <SidebarProvider defaultOpen={true}>
-          <Sidebar
-            collapsible="icon" // Changed from "none"
-            className="shadow-sidebar-glow pt-10" 
-          >
-            <SidebarHeader className="p-4 px-5">
-              <div className="flex items-center justify-center space-x-3">
-                <Brain className="w-10 h-10 text-purple-500 animate-pulse-neon" />
-                <span className="text-4xl font-bold text-metallic-gradient">
-                  Matrix
-                </span>
-              </div>
-            </SidebarHeader>
-            <SidebarContent>
-              <SidebarNavItems />
-            </SidebarContent>
-          </Sidebar>
-          <SidebarInset className="pt-10">
-            {children}
-          </SidebarInset>
+          <TooltipProvider delayDuration={0}>
+            <div style={{ "--sidebar-width": "16rem", "--sidebar-width-icon": "3rem" } as React.CSSProperties} className="group/sidebar-wrapper flex min-h-svh w-full">
+              <Sidebar
+                collapsible="icon"
+                className="shadow-sidebar-glow pt-10"
+              >
+                <SidebarHeader className="p-4 px-5">
+                  <div className="flex items-center justify-center space-x-3">
+                    <Brain className="w-10 h-10 text-purple-500 animate-pulse-neon" />
+                    <span className="text-4xl font-bold text-metallic-gradient">
+                      Matrix
+                    </span>
+                  </div>
+                </SidebarHeader>
+                <SidebarContent>
+                  <SidebarNavItems />
+                </SidebarContent>
+              </Sidebar>
+              <SidebarInset className="pt-10">
+                {children}
+              </SidebarInset>
+            </div>
+          </TooltipProvider>
         </SidebarProvider>
         <Toaster />
 
-        {/* Chatbot UI - kept as is, can be triggered by other means if needed */}
+        {/* Chatbot Dialog - No longer triggered by a FAB, but code remains if needed for other triggers */}
         <Dialog open={isChatOpen} onOpenChange={setIsChatOpen}>
           <DialogContent className="sm:max-w-[425px] md:max-w-[550px] lg:max-w-[40%] h-[70vh] flex flex-col bg-card/60 backdrop-blur-md border-none shadow-xl">
             <DialogHeader className="p-4 border-b border-border/50">
