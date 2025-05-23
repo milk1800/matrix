@@ -13,12 +13,12 @@ import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, X, Brain } from 'lucide-react';
 
-const mainFont = Inter({
+const inter = Inter({
   variable: '--font-inter',
   subsets: ['latin'],
 });
 
-const monoFont = Roboto_Mono({
+const robotoMono = Roboto_Mono({
   variable: '--font-roboto-mono',
   subsets: ['latin'],
 });
@@ -66,7 +66,7 @@ export default function RootLayout({
 
   return (
     <html lang="en" className="dark">
-      <body className={`${mainFont.variable} ${monoFont.variable} antialiased`}>
+      <body className={`${inter.variable} ${robotoMono.variable} antialiased`}>
         <div className="w-full overflow-hidden bg-black/90 border-b border-gray-700 py-2 fixed top-0 z-50">
           <div className="animate-ticker whitespace-nowrap flex space-x-6 text-sm font-mono">
             {/* Stock items - repeated for seamless scroll */}
