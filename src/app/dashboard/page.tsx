@@ -409,8 +409,7 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1 hidden lg:block"> {/* Spacer */} </div>
-        <PlaceholderCard title="Ticker Lookup Tool" icon={Search} className="lg:col-span-2">
+        <PlaceholderCard title="Ticker Lookup Tool" icon={Search} className="lg:col-span-3">
           <div className="flex space-x-2 mb-4">
             <Input
               type="text"
