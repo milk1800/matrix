@@ -14,11 +14,11 @@ import {
   Newspaper,
   Search,
   Send,
-  Brain,
+  Brain, // Changed from Cpu
   BarChart4,
   AlertCircle,
   Clock,
-  Sparkles,
+  Sparkles, // Kept Sparkles for AI Assistant
   CalendarDays,
   Loader2,
   ArrowUpRight,
@@ -94,12 +94,12 @@ interface MarketStatusInfo {
 // Function to fetch index data
 const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
   const apiKey = process.env.NEXT_PUBLIC_POLYGON_API_KEY;
+  // Log to check if the API key is being read, masking most of it for security
+  console.log(`[Polygon API] Attempting to use API key ending with: ...${apiKey ? apiKey.slice(-4) : 'UNDEFINED'} for symbol: ${symbol}`);
 
   if (!apiKey) {
     console.error(`[Polygon API] API Key (NEXT_PUBLIC_POLYGON_API_KEY) is UNDEFINED. Please set it in .env.local and restart the dev server.`);
     return { error: 'API Key Missing. Configure in .env.local & restart server.' };
-  } else {
-    console.log(`[Polygon API] Attempting to use API key ending with: ...${apiKey.slice(-4)} for symbol: ${symbol}`);
   }
 
   try {
@@ -121,7 +121,7 @@ const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
     }
     return { error: 'No data' };
   } catch (error: any) {
-    console.error(`Network/Fetch error for ${symbol}:`, error.message || error);
+    console.error(`[Polygon API] Network/Fetch error for ${symbol}:`, error.message || error);
     return { error: 'Fetch error' };
   }
 };
@@ -165,8 +165,6 @@ export default function DashboardPage() {
           newApiData[result.value.symbol] = result.value.data;
         } else {
           console.error("[Polygon API] Promise rejected unexpectedly in loadMarketData:", result.reason);
-          // Attempt to find which symbol failed if possible, though result.reason might not have symbol directly
-          // For now, we'll rely on fetchIndexData's own error reporting for specific symbols
         }
       });
       setMarketApiData(prevData => ({ ...prevData, ...newApiData }));
@@ -185,7 +183,6 @@ export default function DashboardPage() {
     if (!tickerQuery.trim()) return;
     setIsLoadingTicker(true);
     setTickerData(null);
-    // Simulate API call for ticker lookup
     setTimeout(() => {
       const companySymbol = tickerQuery.toUpperCase();
       setTickerData({
@@ -211,7 +208,7 @@ export default function DashboardPage() {
         beta: (Math.random() * 0.8 + 0.7).toFixed(2),
         nextEarningsDate: new Date(Date.now() + Math.random() * 60 * 24 * 60 * 60 * 1000).toLocaleDateString(),
         dividendDate: Math.random() > 0.5 ? new Date(Date.now() + Math.random() * 30 * 24 * 60 * 60 * 1000).toLocaleDateString() : "N/A",
-        priceHistory1D: Array.from({ length: 20 }, () => Math.random() * 5 + 150), // Dummy for sparkline
+        priceHistory1D: Array.from({ length: 20 }, () => Math.random() * 5 + 150),
         recentNews: [
           { id: 'n1', headline: `${companySymbol} announces breakthrough in AI research.`, sentiment: 'positive', source: 'Tech Times' },
           { id: 'n2', headline: `Analysts upgrade ${companySymbol} to 'Buy'.`, sentiment: 'positive', source: 'Finance Today' },
@@ -296,15 +293,15 @@ export default function DashboardPage() {
       setMarketStatuses(newStatuses);
     };
 
-    updateMarketStatuses(); // Initial call
-    const intervalId = setInterval(updateMarketStatuses, 60000); // Update every minute
+    updateMarketStatuses();
+    const intervalId = setInterval(updateMarketStatuses, 60000);
     const clockIntervalId = setInterval(() => {
       try {
         setCurrentTimeEST(new Date().toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', second: '2-digit' }));
       } catch (e) {
-        setCurrentTimeEST(new Date().toLocaleTimeString()); // Fallback
+        setCurrentTimeEST(new Date().toLocaleTimeString());
       }
-    }, 1000); // Update every second
+    }, 1000);
 
     return () => {
       clearInterval(intervalId);
@@ -523,3 +520,4 @@ export default function DashboardPage() {
     </main>
   );
 }
+
