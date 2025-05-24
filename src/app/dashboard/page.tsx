@@ -14,7 +14,7 @@ import {
   Newspaper,
   Search,
   Send,
-  Brain, // Changed from Cpu to Brain
+  Brain,
   BarChart4,
   AlertCircle,
   Clock,
@@ -94,12 +94,12 @@ interface MarketStatusInfo {
 // Function to fetch index data
 const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
   const apiKey = process.env.NEXT_PUBLIC_POLYGON_API_KEY;
-  // Log to check if the API key is being read, masking most of it for security
-  console.log(`Fetching data for ${symbol} using API key: ${apiKey ? '******' + apiKey.slice(-4) : 'UNDEFINED'}`);
 
   if (!apiKey) {
-    console.error("Polygon API key (NEXT_PUBLIC_POLYGON_API_KEY) is not set. Please ensure it's in .env.local and the dev server was restarted.");
+    console.error(`[Polygon API] API Key (NEXT_PUBLIC_POLYGON_API_KEY) is UNDEFINED. Please set it in .env.local and restart the dev server.`);
     return { error: 'API Key Missing. Configure in .env.local & restart server.' };
+  } else {
+    console.log(`[Polygon API] Attempting to use API key ending with: ...${apiKey.slice(-4)} for symbol: ${symbol}`);
   }
 
   try {
@@ -138,7 +138,7 @@ export default function DashboardPage() {
   React.useEffect(() => {
     const loadMarketData = async () => {
       if (!process.env.NEXT_PUBLIC_POLYGON_API_KEY) {
-        console.warn("Polygon API key (NEXT_PUBLIC_POLYGON_API_KEY) is not defined. Market data will not be fetched. Ensure .env.local is set and server restarted.");
+        console.warn("[Polygon API] API key (NEXT_PUBLIC_POLYGON_API_KEY) is not defined in environment variables. Market data will not be fetched. Ensure .env.local is set and the dev server was restarted.");
         const errorState: Record<string, FetchedIndexData> = {};
         initialMarketOverviewData.forEach(market => {
           errorState[market.polygonTicker] = { error: 'API Key Missing. Check .env.local & restart server.' };
@@ -164,9 +164,9 @@ export default function DashboardPage() {
         if (result.status === 'fulfilled') {
           newApiData[result.value.symbol] = result.value.data;
         } else {
-          console.error("Promise rejected unexpectedly in loadMarketData:", result.reason);
-          // Potentially set an error state for the specific symbol if needed
-          // newApiData[symbolAssociatedWithRejectedPromise] = { error: 'Failed to fetch' };
+          console.error("[Polygon API] Promise rejected unexpectedly in loadMarketData:", result.reason);
+          // Attempt to find which symbol failed if possible, though result.reason might not have symbol directly
+          // For now, we'll rely on fetchIndexData's own error reporting for specific symbols
         }
       });
       setMarketApiData(prevData => ({ ...prevData, ...newApiData }));
@@ -523,4 +523,3 @@ export default function DashboardPage() {
     </main>
   );
 }
-
