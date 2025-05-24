@@ -10,23 +10,49 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { AlertTriangle, CalendarDays, Filter, MessageSquare, Send } from "lucide-react";
-import { format, subDays, addDays } from "date-fns";
+import { AlertTriangle, CalendarDays, Filter, MessageSquare, Send, Server, Landmark, Briefcase, Video, Mail } from "lucide-react";
+import { format, subDays, addDays, subMinutes } from "date-fns";
+import { cn } from "@/lib/utils";
 
 interface AlertItem {
   id: string;
   title: string;
   messagePreview: string;
-  dateTime: string; // Store as ISO string or Date object, format for display
+  dateTime: string; 
   category: 'System' | 'Compliance' | 'Portfolio' | 'Trade' | 'Security';
   severity: 'Info' | 'Warning' | 'Urgent';
   isRead: boolean;
+}
+
+type SystemStatus = "Operational" | "Performance Issues" | "Down";
+
+interface SystemStatusItem {
+  id: string;
+  name: string;
+  icon: React.ElementType;
+  status: SystemStatus;
+  lastChecked: string;
+  details?: string;
 }
 
 const generateRandomDate = (daysAgoMin: number, daysAgoMax: number): string => {
   const days = Math.floor(Math.random() * (daysAgoMax - daysAgoMin + 1)) + daysAgoMin;
   return format(subDays(new Date(), days), "yyyy-MM-dd HH:mm:ss");
 };
+
+const generateLastCheckedTime = (minutesAgoMax: number): string => {
+  const minutes = Math.floor(Math.random() * minutesAgoMax) + 1;
+  return format(subMinutes(new Date(), minutes), "MMM dd, HH:mm");
+}
+
+const mockSystemStatuses: SystemStatusItem[] = [
+  { id: 'netx', name: 'NetXInvestor', icon: Server, status: 'Operational', lastChecked: generateLastCheckedTime(5), details: 'All systems normal.' },
+  { id: 'sanctuary', name: 'Sanctuary One', icon: Server, status: 'Performance Issues', lastChecked: generateLastCheckedTime(2), details: 'API latency detected in reporting module.' },
+  { id: 'schwab', name: 'Schwab Advisor Center', icon: Landmark, status: 'Operational', lastChecked: generateLastCheckedTime(10) },
+  { id: 'wealthscape', name: 'Wealthscape', icon: Briefcase, status: 'Down', lastChecked: generateLastCheckedTime(1), details: 'Login unavailable. Investigating.' },
+  { id: 'zoom', name: 'Zoom', icon: Video, status: 'Operational', lastChecked: generateLastCheckedTime(15) },
+  { id: 'outlook', name: 'Outlook / Exchange', icon: Mail, status: 'Operational', lastChecked: generateLastCheckedTime(3) },
+];
 
 const mockAlerts: AlertItem[] = [
   { id: '1', title: 'Compliance Breach Detected', messagePreview: 'Account XYZ123 has exceeded trading limits for Q3. Immediate review required.', dateTime: generateRandomDate(1, 2), category: 'Compliance', severity: 'Urgent', isRead: false },
@@ -68,9 +94,23 @@ const getCategoryBadgeClass = (category: AlertItem["category"]): string => {
     }
   };
 
+const getSystemStatusBadgeClass = (status: SystemStatus): string => {
+  switch (status) {
+    case "Operational":
+      return "bg-green-500/20 border-green-500/50 text-green-400";
+    case "Performance Issues":
+      return "bg-yellow-500/20 border-yellow-500/50 text-yellow-400";
+    case "Down":
+      return "bg-red-500/20 border-red-500/50 text-red-400";
+    default:
+      return "bg-muted text-muted-foreground";
+  }
+};
+
 
 export default function AlertsPage() {
   const [alerts, setAlerts] = React.useState<AlertItem[]>(mockAlerts);
+  const [systemStatuses, setSystemStatuses] = React.useState<SystemStatusItem[]>(mockSystemStatuses);
   const [broadcastMessage, setBroadcastMessage] = React.useState("");
 
   const toggleReadStatus = (alertId: string) => {
@@ -84,7 +124,6 @@ export default function AlertsPage() {
   const handleSendBroadcast = () => {
     if (broadcastMessage.trim()) {
       console.log("Broadcasting alert:", broadcastMessage);
-      // Here you would integrate with a service to actually display the broadcast
       alert(`Broadcast Sent (Simulated): ${broadcastMessage}`);
       setBroadcastMessage("");
     }
@@ -108,6 +147,33 @@ export default function AlertsPage() {
           </Button>
         </div>
         <p className="text-xs text-muted-foreground mt-2">High-visibility alerts sent here will scroll across the top of all users' dashboards.</p>
+      </PlaceholderCard>
+
+      <PlaceholderCard title="System Status Monitor">
+        <div className="space-y-2">
+          {systemStatuses.map((system) => {
+            const IconComponent = system.icon;
+            return (
+              <div key={system.id} className="flex items-center justify-between p-3 border-b border-border/20 last:border-b-0 hover:bg-muted/10 transition-colors rounded-md -m-1">
+                <div className="flex items-center gap-3">
+                  <IconComponent className={cn("h-6 w-6", 
+                    system.status === "Operational" && "text-green-400",
+                    system.status === "Performance Issues" && "text-yellow-400",
+                    system.status === "Down" && "text-red-400"
+                  )} />
+                  <span className="font-medium text-foreground">{system.name}</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Badge variant="outline" className={getSystemStatusBadgeClass(system.status)}>
+                    {system.status}
+                  </Badge>
+                  <span className="text-xs text-muted-foreground hidden sm:block">Last checked: {system.lastChecked}</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+         <p className="text-xs text-muted-foreground mt-3 text-center">Status checks are automated. For issues, contact IT support.</p>
       </PlaceholderCard>
 
       <PlaceholderCard title="Manage Alerts">
@@ -188,3 +254,5 @@ export default function AlertsPage() {
     </main>
   );
 }
+
+    
