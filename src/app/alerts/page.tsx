@@ -18,7 +18,7 @@ interface AlertItem {
   id: string;
   title: string;
   messagePreview: string;
-  dateTime: string; 
+  dateTime: string;
   category: 'System' | 'Compliance' | 'Portfolio' | 'Trade' | 'Security';
   severity: 'Info' | 'Warning' | 'Urgent';
   isRead: boolean;
@@ -46,6 +46,7 @@ const generateLastCheckedTime = (minutesAgoMax: number): string => {
 }
 
 const mockSystemStatuses: SystemStatusItem[] = [
+  { id: 'netx360plus', name: 'NetX360+', icon: Server, status: 'Operational', lastChecked: generateLastCheckedTime(7), details: 'All systems normal.' },
   { id: 'netx', name: 'NetXInvestor', icon: Server, status: 'Operational', lastChecked: generateLastCheckedTime(5), details: 'All systems normal.' },
   { id: 'sanctuary', name: 'Sanctuary One', icon: Server, status: 'Performance Issues', lastChecked: generateLastCheckedTime(2), details: 'API latency detected in reporting module.' },
   { id: 'schwab', name: 'Schwab Advisor Center', icon: Landmark, status: 'Operational', lastChecked: generateLastCheckedTime(10) },
@@ -156,7 +157,7 @@ export default function AlertsPage() {
             return (
               <div key={system.id} className="flex items-center justify-between p-3 border-b border-border/20 last:border-b-0 hover:bg-muted/10 transition-colors rounded-md -m-1">
                 <div className="flex items-center gap-3">
-                  <IconComponent className={cn("h-6 w-6", 
+                  <IconComponent className={cn("h-6 w-6",
                     system.status === "Operational" && "text-green-400",
                     system.status === "Performance Issues" && "text-yellow-400",
                     system.status === "Down" && "text-red-400"
@@ -255,4 +256,4 @@ export default function AlertsPage() {
   );
 }
 
-    
+
