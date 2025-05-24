@@ -15,7 +15,8 @@ import {
   Shapes,
   PiggyBank,
   FlaskConical,
-  ShieldAlert, // Added ShieldAlert
+  ShieldAlert,
+  BellRing, // Added BellRing
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { SidebarMenu, SidebarMenuItem, SidebarMenuButton } from '@/components/ui/sidebar';
@@ -26,6 +27,7 @@ interface NavItem {
   href: string;
   label: string;
   icon: LucideIcon;
+  hasNewAlerts?: boolean; // Optional: for the alert icon
 }
 
 const navItems: NavItem[] = [
@@ -34,11 +36,13 @@ const navItems: NavItem[] = [
   { href: '/client-analytics', label: 'Client Analytics', icon: Users },
   { href: '/financial-analytics', label: 'Financial Analytics', icon: TrendingUp },
   { href: '/conversion-analytics', label: 'Conversion Analytics', icon: Repeat },
-  { href: '/compliance-matrix', label: 'Compliance Matrix', icon: ShieldAlert }, // Added Compliance Matrix
+  { href: '/reports', label: 'Reports', icon: BarChart3 }, // Assuming BarChart3 for reports for now
+  { href: '/compliance-matrix', label: 'Compliance Matrix', icon: ShieldAlert },
   { href: '/resource-matrix', label: 'Resource Matrix', icon: LayoutGrid },
   { href: '/portfolio-matrix', label: 'Portfolio Matrix', icon: PieChart },
   { href: '/model-matrix', label: 'Model Matrix', icon: Shapes },
-  { href: '/contribution-matrix', label: 'Contribution Matrix', icon: PiggyBank },
+  { href: '/contribution-matrix', label: 'Contribution Matrix', icon: TrendingUp }, // Changed to TrendingUp
+  { href: '/alerts', label: 'Alerts', icon: BellRing, hasNewAlerts: true }, // New Alerts tab
   { href: '/project-x', label: 'Project X', icon: FlaskConical },
 ];
 
@@ -51,6 +55,7 @@ export function SidebarNavItems() {
       <SidebarMenu className="p-4 space-y-1">
         {navItems.map((item) => {
           const isActive = pathname === item.href || (pathname.startsWith(item.href) && item.href !== '/');
+          const IconComponent = item.icon;
           return (
             <SidebarMenuItem key={item.href}>
               <Tooltip>
@@ -61,15 +66,18 @@ export function SidebarNavItems() {
                       isActive={isActive}
                       className={cn(
                         "w-full justify-start transform-gpu text-base font-medium",
-                        "py-[10px] px-4 rounded-[8px]", // Standardized padding
-                        "bg-white/[.02] text-sidebar-foreground transition-all duration-300 ease-out",
+                        "py-[10px] px-4 rounded-[8px]",
+                        "bg-white/[.02] text-sidebar-foreground transition-all duration-200 ease-out",
                         isActive
-                          ? "bg-primary/[.15] shadow-[0_2px_10px_hsla(var(--primary),0.5)] -translate-y-0.5 text-sidebar-primary-foreground"
-                          : "hover:bg-white/[.05] hover:shadow-[0_2px_8px_rgba(80,0,160,0.4)] hover:-translate-y-0.5"
+                          ? "bg-primary/[.30] shadow-[0_0_12px_rgba(124,58,237,0.25)] -translate-y-px text-sidebar-primary-foreground"
+                          : "hover:bg-black/50 hover:shadow-[0_0_10px_rgba(124,58,237,0.2)] hover:-translate-y-px"
                       )}
                     >
                       <a>
-                        <item.icon className="h-5 w-5 mr-3 shrink-0" />
+                        <IconComponent className={cn(
+                          "h-5 w-5 mr-3 shrink-0",
+                          item.hasNewAlerts && "animate-red-pulse text-red-400" // Pulse effect for alerts
+                        )} />
                         <span className="truncate">{item.label}</span>
                       </a>
                     </SidebarMenuButton>
@@ -86,3 +94,4 @@ export function SidebarNavItems() {
     </TooltipProvider>
   );
 }
+

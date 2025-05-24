@@ -5,10 +5,9 @@
 
 @layer base {
   :root {
-    --background: 240 10% 3.9%; /* #000104 - Adjusted for radial gradient edge */
+    --background: 225 100% 0.8%; /* #000104 */
     --foreground: 0 0% 100%; /* #FFFFFF */
     
-    /* Card Styling for Glassmorphism */
     --card: 0 0% 0% / 0.6; /* rgba(0,0,0,0.6) */
     --card-foreground: 0 0% 100%; /* #FFFFFF */
 
@@ -43,10 +42,10 @@
     --chart-orange: 30 90% 55%; /* Vibrant Orange for progress */
 
 
-    --radius: 1rem; /* 16px for cards */
+    --radius: 1.25rem; /* 20px for cards */
 
     /* Sidebar specific colors */
-    --sidebar-background: transparent; /* Fully transparent to show page gradient */
+    --sidebar-background: transparent; 
     --sidebar-foreground: 0 0% 100%;
     --sidebar-primary: 258 84% 61%; /* Active item accent */
     --sidebar-primary-foreground: 0 0% 100%;
@@ -71,18 +70,18 @@
     min-height: 100vh;
     height: 100%;
     background-attachment: fixed;
-    font-family: var(--font-geist-sans);
+    font-family: var(--font-inter);
   }
 }
 
 /* Neon Pulse for Brain Logo */
 @keyframes neonPulse {
   0%, 100% {
-    filter: drop-shadow(0 0 4px #a855f7) drop-shadow(0 0 8px #a855f7) drop-shadow(0 0 12px #a855f7);
+    filter: drop-shadow(0 0 5px #9147ff) drop-shadow(0 0 10px rgba(145, 71, 255, 0.4));
     transform: scale(1);
   }
   50% {
-    filter: drop-shadow(0 0 6px #9333ea) drop-shadow(0 0 12px #9333ea) drop-shadow(0 0 20px #9333ea);
+    filter: drop-shadow(0 0 10px #9147ff) drop-shadow(0 0 20px rgba(145, 71, 255, 0.6));
     transform: scale(1.05);
   }
 }
@@ -113,14 +112,14 @@
 
 
 /* Animation for missed opportunity rows */
-@keyframes flashRed {
+@keyframes flashRedBackground {
   0%   { background-color: rgba(255, 0, 0, 0.08); }
   50%  { background-color: rgba(255, 0, 0, 0.18); }
   100% { background-color: rgba(255, 0, 0, 0.08); }
 }
 
 .missed-opportunity-row {
-  animation: flashRed 1.5s infinite;
+  animation: flashRedBackground 1.5s infinite;
   transition: background-color 0.3s ease;
   border-radius: 8px; 
 }
@@ -187,4 +186,17 @@
 
 .high-progress-glow .recharts-surface { /* Target the SVG surface for the glow */
   animation: pulse-primary-glow 1.8s infinite ease-in-out;
+}
+
+@keyframes redPulse {
+  0%, 100% {
+    filter: drop-shadow(0 0 0px rgba(239, 68, 68, 0.7)); /* red-500 based */
+  }
+  50% {
+    filter: drop-shadow(0 0 8px rgba(239, 68, 68, 1));
+  }
+}
+
+.animate-red-pulse {
+  animation: redPulse 1.5s infinite ease-in-out;
 }

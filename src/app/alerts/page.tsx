@@ -1,0 +1,190 @@
+
+"use client";
+
+import * as React from "react";
+import { PlaceholderCard } from "@/components/dashboard/placeholder-card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
+import { AlertTriangle, CalendarDays, Filter, MessageSquare, Send } from "lucide-react";
+import { format, subDays, addDays } from "date-fns";
+
+interface AlertItem {
+  id: string;
+  title: string;
+  messagePreview: string;
+  dateTime: string; // Store as ISO string or Date object, format for display
+  category: 'System' | 'Compliance' | 'Portfolio' | 'Trade' | 'Security';
+  severity: 'Info' | 'Warning' | 'Urgent';
+  isRead: boolean;
+}
+
+const generateRandomDate = (daysAgoMin: number, daysAgoMax: number): string => {
+  const days = Math.floor(Math.random() * (daysAgoMax - daysAgoMin + 1)) + daysAgoMin;
+  return format(subDays(new Date(), days), "yyyy-MM-dd HH:mm:ss");
+};
+
+const mockAlerts: AlertItem[] = [
+  { id: '1', title: 'Compliance Breach Detected', messagePreview: 'Account XYZ123 has exceeded trading limits for Q3. Immediate review required.', dateTime: generateRandomDate(1, 2), category: 'Compliance', severity: 'Urgent', isRead: false },
+  { id: '2', title: 'System Maintenance Scheduled', messagePreview: 'Scheduled maintenance tonight from 2 AM to 3 AM EST. Platform will be unavailable.', dateTime: generateRandomDate(0, 0), category: 'System', severity: 'Info', isRead: true },
+  { id: '3', title: 'Portfolio Rebalance Suggested', messagePreview: 'AI suggests rebalancing for client ABC portfolio due to recent market volatility and shift in risk tolerance.', dateTime: generateRandomDate(3, 5), category: 'Portfolio', severity: 'Warning', isRead: false },
+  { id: '4', title: 'Unusual Login Activity', messagePreview: 'Multiple failed login attempts detected on account JKL789 from an unrecognized IP address.', dateTime: generateRandomDate(0, 1), category: 'Security', severity: 'Urgent', isRead: false },
+  { id: '5', title: 'Trade Execution Confirmation', messagePreview: 'Buy order for 100 shares of MSFT at $450.20 executed successfully for account MNO456.', dateTime: generateRandomDate(1, 1), category: 'Trade', severity: 'Info', isRead: true },
+  { id: '6', title: 'Market Volatility Alert', messagePreview: 'High volatility detected in the energy sector. Review relevant client portfolios.', dateTime: generateRandomDate(0, 0), category: 'Portfolio', severity: 'Warning', isRead: false },
+  { id: '7', title: 'Policy Update: AML Requirements', messagePreview: 'New AML policy effective Nov 1st. Ensure all client documentation is up to date.', dateTime: generateRandomDate(7, 10), category: 'Compliance', severity: 'Info', isRead: true },
+  { id: '8', title: 'Upcoming RMD Deadline', messagePreview: 'Client GHI321 has an upcoming RMD deadline in 30 days. Initiate contact.', dateTime: generateRandomDate(0, 0), category: 'Portfolio', severity: 'Warning', isRead: false },
+];
+
+const getSeverityBadgeClass = (severity: AlertItem["severity"]): string => {
+  switch (severity) {
+    case "Urgent":
+      return "bg-red-500/20 border-red-500/50 text-red-400";
+    case "Warning":
+      return "bg-yellow-500/20 border-yellow-500/50 text-yellow-400";
+    case "Info":
+    default:
+      return "bg-blue-500/20 border-blue-500/50 text-blue-400";
+  }
+};
+
+const getCategoryBadgeClass = (category: AlertItem["category"]): string => {
+    switch (category) {
+      case "Compliance":
+        return "bg-purple-500/20 border-purple-500/50 text-purple-400";
+      case "System":
+        return "bg-gray-500/20 border-gray-500/50 text-gray-400";
+      case "Portfolio":
+        return "bg-green-500/20 border-green-500/50 text-green-400";
+      case "Trade":
+        return "bg-teal-500/20 border-teal-500/50 text-teal-400";
+      case "Security":
+        return "bg-orange-500/20 border-orange-500/50 text-orange-400";
+      default:
+        return "bg-muted text-muted-foreground";
+    }
+  };
+
+
+export default function AlertsPage() {
+  const [alerts, setAlerts] = React.useState<AlertItem[]>(mockAlerts);
+  const [broadcastMessage, setBroadcastMessage] = React.useState("");
+
+  const toggleReadStatus = (alertId: string) => {
+    setAlerts(prevAlerts =>
+      prevAlerts.map(alert =>
+        alert.id === alertId ? { ...alert, isRead: !alert.isRead } : alert
+      )
+    );
+  };
+
+  const handleSendBroadcast = () => {
+    if (broadcastMessage.trim()) {
+      console.log("Broadcasting alert:", broadcastMessage);
+      // Here you would integrate with a service to actually display the broadcast
+      alert(`Broadcast Sent (Simulated): ${broadcastMessage}`);
+      setBroadcastMessage("");
+    }
+  };
+
+  return (
+    <main className="min-h-screen bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#5b21b6]/10 to-[#000104] flex-1 p-6 space-y-8 md:p-8">
+      <h1 className="text-3xl font-bold tracking-tight text-foreground mb-8">Alert Center</h1>
+
+      <PlaceholderCard title="Broadcast New Alert">
+        <div className="flex items-center space-x-2">
+          <Input
+            type="text"
+            placeholder="Enter broadcast message..."
+            value={broadcastMessage}
+            onChange={(e) => setBroadcastMessage(e.target.value)}
+            className="flex-grow bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary"
+          />
+          <Button onClick={handleSendBroadcast} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+            <Send className="mr-2 h-4 w-4" /> Send Broadcast
+          </Button>
+        </div>
+        <p className="text-xs text-muted-foreground mt-2">High-visibility alerts sent here will scroll across the top of all users' dashboards.</p>
+      </PlaceholderCard>
+
+      <PlaceholderCard title="Manage Alerts">
+        <div className="flex flex-wrap gap-4 mb-6 items-center">
+          <Select defaultValue="all_categories">
+            <SelectTrigger className="w-full sm:w-auto bg-card border-none text-foreground shadow-white-glow-soft hover:shadow-white-glow-hover transition-shadow duration-200 ease-out">
+              <SelectValue placeholder="Filter by Category" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all_categories">All Categories</SelectItem>
+              <SelectItem value="system">System</SelectItem>
+              <SelectItem value="compliance">Compliance</SelectItem>
+              <SelectItem value="portfolio">Portfolio</SelectItem>
+              <SelectItem value="trade">Trade</SelectItem>
+              <SelectItem value="security">Security</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select defaultValue="all_severities">
+            <SelectTrigger className="w-full sm:w-auto bg-card border-none text-foreground shadow-white-glow-soft hover:shadow-white-glow-hover transition-shadow duration-200 ease-out">
+              <SelectValue placeholder="Filter by Severity" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all_severities">All Severities</SelectItem>
+              <SelectItem value="urgent">Urgent</SelectItem>
+              <SelectItem value="warning">Warning</SelectItem>
+              <SelectItem value="info">Info</SelectItem>
+            </SelectContent>
+          </Select>
+          <Button variant="outline" className="w-full sm:w-auto">
+            <CalendarDays className="mr-2 h-4 w-4" /> Date Range
+          </Button>
+          <Button variant="outline" className="w-full sm:w-auto">
+            <Filter className="mr-2 h-4 w-4" /> More Filters
+          </Button>
+        </div>
+
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-12">Status</TableHead>
+                <TableHead>Title</TableHead>
+                <TableHead>Message Preview</TableHead>
+                <TableHead>Date/Time</TableHead>
+                <TableHead>Category</TableHead>
+                <TableHead>Severity</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {alerts.map((alert) => (
+                <TableRow key={alert.id} className={!alert.isRead ? "bg-primary/5" : ""}>
+                  <TableCell>
+                    <Switch
+                      checked={alert.isRead}
+                      onCheckedChange={() => toggleReadStatus(alert.id)}
+                      aria-label={alert.isRead ? "Mark as unread" : "Mark as read"}
+                    />
+                  </TableCell>
+                  <TableCell className="font-medium">{alert.title}</TableCell>
+                  <TableCell className="text-xs text-muted-foreground max-w-xs truncate">{alert.messagePreview}</TableCell>
+                  <TableCell className="text-xs text-muted-foreground whitespace-nowrap">{format(new Date(alert.dateTime), "MMM dd, yyyy p")}</TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className={getCategoryBadgeClass(alert.category)}>
+                      {alert.category}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant="outline" className={getSeverityBadgeClass(alert.severity)}>
+                      {alert.severity}
+                    </Badge>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      </PlaceholderCard>
+    </main>
+  );
+}
