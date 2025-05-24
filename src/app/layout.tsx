@@ -5,7 +5,7 @@ import { Inter, Roboto_Mono } from 'next/font/google';
 import * as React from 'react';
 import Image from "next/image";
 import './globals.css';
-import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarInset } from '@/components/ui/sidebar';
+import { SidebarProvider, Sidebar, SidebarHeader, SidebarContent, SidebarInset, SidebarTrigger } from '@/components/ui/sidebar';
 import { SidebarNavItems } from '@/components/layout/sidebar-nav-items';
 import { Toaster } from "@/components/ui/toaster";
 import { Button } from "@/components/ui/button";
@@ -15,14 +15,13 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, X, Brain } from 'lucide-react';
 import { TooltipProvider } from "@/components/ui/tooltip";
 
-
-const inter = Inter({
-  variable: '--font-inter',
+const inter = Inter({ // Renamed from geistSans
+  variable: '--font-inter', // Updated variable name
   subsets: ['latin'],
 });
 
-const robotoMono = Roboto_Mono({
-  variable: '--font-roboto-mono',
+const robotoMono = Roboto_Mono({ // Renamed from geistMono
+  variable: '--font-roboto-mono', // Updated variable name
   subsets: ['latin'],
 });
 
@@ -107,19 +106,22 @@ export default function RootLayout({
           </div>
         </div>
 
-        <SidebarProvider defaultOpen={true}>
+        <SidebarProvider defaultOpen={true} style={{ "--sidebar-width": "16rem", "--sidebar-width-icon": "5rem" } as React.CSSProperties}>
           <TooltipProvider delayDuration={0}>
-            <div style={{ "--sidebar-width": "16rem", "--sidebar-width-icon": "3rem" } as React.CSSProperties} className="group/sidebar-wrapper flex min-h-svh w-full">
+            <div className="group/sidebar-wrapper flex min-h-svh w-full">
               <Sidebar
-                collapsible="icon"
+                collapsible="icon" // Changed from "none"
                 className="shadow-sidebar-glow pt-10"
               >
                 <SidebarHeader className="p-4 px-5">
-                  <div className="flex items-center justify-center space-x-3">
-                    <Brain className="w-10 h-10 text-purple-500 animate-pulse-neon" />
-                    <span className="text-4xl font-bold text-metallic-gradient">
-                      Matrix
-                    </span>
+                  <div className="flex items-center justify-between"> {/* Changed to justify-between for trigger */}
+                    <div className="flex items-center space-x-3">
+                      <Brain className="w-10 h-10 text-purple-500 animate-pulse-neon" />
+                      <span className="text-4xl font-bold text-metallic-gradient">
+                        Matrix
+                      </span>
+                    </div>
+                    <SidebarTrigger className="hidden group-data-[collapsible=icon]:md:flex" /> {/* Show trigger in icon mode */}
                   </div>
                 </SidebarHeader>
                 <SidebarContent>
@@ -134,7 +136,6 @@ export default function RootLayout({
         </SidebarProvider>
         <Toaster />
 
-        {/* Chatbot Dialog - No longer triggered by a FAB, but code remains if needed for other triggers */}
         <Dialog open={isChatOpen} onOpenChange={setIsChatOpen}>
           <DialogContent className="sm:max-w-[425px] md:max-w-[550px] lg:max-w-[40%] h-[70vh] flex flex-col bg-card/60 backdrop-blur-md border-none shadow-xl">
             <DialogHeader className="p-4 border-b border-border/50">
