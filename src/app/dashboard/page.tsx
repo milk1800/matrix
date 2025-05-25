@@ -91,11 +91,11 @@ interface MarketStatusInfo {
 // Function to fetch index data
 const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
   const apiKey = process.env.NEXT_PUBLIC_POLYGON_API_KEY;
-  // Log to check if the API key is being read, masking most of it for security
+  // CRITICAL LOG: Check if the API key is being read.
   console.log(`[Polygon API] Attempting to use API key ending with: ...${apiKey ? apiKey.slice(-4) : 'UNDEFINED'} for symbol: ${symbol}`);
 
   if (!apiKey) {
-    console.error(`[Polygon API] API Key (NEXT_PUBLIC_POLYGON_API_KEY) is UNDEFINED. Please set it in .env.local and restart the dev server.`);
+    console.error(`[Polygon API Error] NEXT_PUBLIC_POLYGON_API_KEY is UNDEFINED. Please ensure it's set in .env.local and the dev server was restarted.`);
     return { error: 'API Key Missing. Configure in .env.local & restart server.' };
   }
 
@@ -105,20 +105,25 @@ const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
       let errorMessage = `API Error: ${response.status}`;
       try {
         const errorData = await response.json();
+        // Log the full errorData if available
+        console.error(`[Polygon API Error] Full error response for ${symbol}:`, errorData);
         if (errorData && errorData.message) errorMessage = `API Error: ${response.status} - ${errorData.message}`;
         else if (errorData && errorData.error) errorMessage = `API Error: ${response.status} - ${errorData.error}`;
-      } catch (e) { /* Ignore if error response is not JSON */ }
-      console.error(`Error fetching ${symbol}: ${errorMessage}`);
-      return { error: `API Error: ${response.status}` };
+        else if (errorData && errorData.request_id) errorMessage = `API Error: ${response.status} (Request ID: ${errorData.request_id})`; // Some Polygon errors might only have request_id
+      } catch (e) {
+         console.warn(`[Polygon API Warn] Could not parse JSON error response for ${symbol}. Status: ${response.status}, StatusText: ${response.statusText}`);
+      }
+      console.error(`Error fetching ${symbol}: ${errorMessage}`); // This logs the compiled error message
+      return { error: `API Error: ${response.status}` }; // This is what the UI might show
     }
     const data = await response.json();
     if (data.results && data.results.length > 0) {
       const { c, o } = data.results[0]; // c: close, o: open
       return { c, o };
     }
-    return { error: 'No data' };
+    return { error: 'No data from Polygon' };
   } catch (error: any) {
-    console.error(`[Polygon API] Network/Fetch error for ${symbol}:`, error.message || error);
+    console.error(`[Polygon API Error] Network/Fetch error for ${symbol}:`, error.message || error);
     return { error: 'Fetch error' };
   }
 };
@@ -135,7 +140,7 @@ export default function DashboardPage() {
   React.useEffect(() => {
     const loadMarketData = async () => {
       if (!process.env.NEXT_PUBLIC_POLYGON_API_KEY) {
-        console.warn("[Polygon API] API key (NEXT_PUBLIC_POLYGON_API_KEY) is not defined in environment variables. Market data will not be fetched. Ensure .env.local is set and the dev server was restarted.");
+        console.warn("[Polygon API] CRITICAL: NEXT_PUBLIC_POLYGON_API_KEY is not defined in the environment. Market data will not be fetched. Ensure .env.local is set and the dev server was restarted.");
         const errorState: Record<string, FetchedIndexData> = {};
         initialMarketOverviewData.forEach(market => {
           errorState[market.polygonTicker] = { error: 'API Key Missing. Check .env.local & restart server.' };
@@ -161,9 +166,7 @@ export default function DashboardPage() {
         if (result.status === 'fulfilled') {
           newApiData[result.value.symbol] = result.value.data;
         } else {
-          // This case should ideally be caught by fetchIndexData, but as a fallback:
           console.error("[Polygon API] Promise rejected unexpectedly in loadMarketData:", result.reason);
-          // Potentially find which symbol this was for if result.reason doesn't have enough info
         }
       });
       setMarketApiData(prevData => ({ ...prevData, ...newApiData }));
@@ -349,7 +352,7 @@ export default function DashboardPage() {
 
             return (
               <PlaceholderCard
-                key={market.name}
+                key={market.polygonTicker} // Changed key to polygonTicker for more uniqueness if names could repeat
                 title={market.name}
                 icon={market.icon || Landmark}
                 className={cn(
@@ -409,7 +412,7 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1 hidden lg:block"> {/* Spacer */} </div>
-        <PlaceholderCard title="Ticker Lookup Tool" icon={Search} className="lg:col-span-3">
+        <PlaceholderCard title="Ticker Lookup Tool" icon={Search} className="lg:col-span-2">
           <div className="flex space-x-2 mb-4">
             <Input
               type="text"
@@ -519,3 +522,5 @@ export default function DashboardPage() {
     </main>
   );
 }
+
+
