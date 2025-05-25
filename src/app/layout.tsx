@@ -3,31 +3,67 @@
 
 import { Inter, Roboto_Mono } from 'next/font/google';
 import * as React from 'react';
+import Image from "next/image";
 import './globals.css';
 import Sidebar from '@/components/Sidebar';
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import Image from 'next/image'; // Added for brain icon in chatbot FAB if used
 
+// Font setup using next/font/google
 const inter = Inter({
-  variable: '--font-inter',
+  variable: '--font-inter', // Changed from --font-geist-sans
   subsets: ['latin'],
 });
 
 const robotoMono = Roboto_Mono({
-  variable: '--font-roboto-mono',
+  variable: '--font-roboto-mono', // Changed from --font-geist-mono
   subsets: ['latin'],
 });
+
+interface ChatMessage {
+  id: string;
+  text: string;
+  sender: 'user' | 'bot';
+}
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const [isChatOpen, setIsChatOpen] = React.useState(false);
+  const [chatMessages, setChatMessages] = React.useState<ChatMessage[]>([]);
+  const [currentMessage, setCurrentMessage] = React.useState('');
+  const messagesEndRef = React.useRef<HTMLDivElement>(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  React.useEffect(scrollToBottom, [chatMessages]);
+
+  const handleSendMessage = () => {
+    if (currentMessage.trim() === '') return;
+
+    const newUserMessage: ChatMessage = {
+      id: Date.now().toString(),
+      text: currentMessage,
+      sender: 'user',
+    };
+
+    const botResponse: ChatMessage = {
+      id: (Date.now() + 1).toString(),
+      text: `Maven echoes: "${currentMessage}"`,
+      sender: 'bot',
+    };
+
+    setChatMessages(prevMessages => [...prevMessages, newUserMessage, botResponse]);
+    setCurrentMessage('');
+  };
+  
   return (
     <html lang="en" className="dark">
       <body className={`${inter.variable} ${robotoMono.variable} antialiased flex flex-col`}>
-        {/* Stock Ticker - remains fixed at the top */}
         <div className="w-full overflow-hidden bg-black/90 border-b border-gray-700 py-2 fixed top-0 z-50">
           <div className="animate-ticker whitespace-nowrap flex space-x-6 text-sm font-mono">
             {/* Stock items - repeated for seamless scroll */}
@@ -65,10 +101,10 @@ export default function RootLayout({
           </div>
         </div>
 
-        <div className="flex flex-1 h-screen pt-10"> {/* Added wrapper with pt-10 */}
+        <div className="flex flex-1 h-screen pt-10"> {/* Ensures sidebar and main content are below the ticker */}
           <TooltipProvider delayDuration={0}>
             <Sidebar />
-            <main className="flex-1 overflow-y-auto bg-transparent"> {/* Removed pt-10 from main */}
+            <main className="flex-1 overflow-y-auto bg-transparent"> {/* Ensures main content takes remaining space and allows body gradient to show */}
               {children}
             </main>
           </TooltipProvider>
