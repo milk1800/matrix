@@ -8,18 +8,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import {
-  Landmark,
-  TrendingUp,
-  TrendingDown,
+  Brain,
   Newspaper,
   Search,
   Send,
-  Brain, // Changed from Cpu
-  BarChart4,
+  Landmark,
+  TrendingUp,
+  TrendingDown,
   AlertCircle,
   Clock,
-  Sparkles, // Kept Sparkles for AI Assistant
-  CalendarDays,
   Loader2,
   ArrowUpRight,
   ArrowDownRight,
@@ -164,7 +161,9 @@ export default function DashboardPage() {
         if (result.status === 'fulfilled') {
           newApiData[result.value.symbol] = result.value.data;
         } else {
+          // This case should ideally be caught by fetchIndexData, but as a fallback:
           console.error("[Polygon API] Promise rejected unexpectedly in loadMarketData:", result.reason);
+          // Potentially find which symbol this was for if result.reason doesn't have enough info
         }
       });
       setMarketApiData(prevData => ({ ...prevData, ...newApiData }));
@@ -409,6 +408,7 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-1 hidden lg:block"> {/* Spacer */} </div>
         <PlaceholderCard title="Ticker Lookup Tool" icon={Search} className="lg:col-span-3">
           <div className="flex space-x-2 mb-4">
             <Input
@@ -429,7 +429,7 @@ export default function DashboardPage() {
               {/* Header Section */}
               <div className="pb-4 border-b border-border/30">
                 <div className="flex items-start space-x-4 mb-3">
-                  <Image src={tickerData.logo} alt={`${tickerData.companyName} logo`} width={48} height={48} className="rounded-md bg-muted p-1" data-ai-hint="company logo" />
+                  <Image src={tickerData.logo} alt={`${tickerData.companyName} logo`} width={48} height={48} className="rounded-md bg-muted p-1" data-ai-hint="company logo"/>
                   <div>
                     <h3 className="text-xl font-bold text-foreground">{tickerData.companyName}</h3>
                     <p className="text-muted-foreground">
@@ -520,3 +520,4 @@ export default function DashboardPage() {
   );
 }
 
+    
