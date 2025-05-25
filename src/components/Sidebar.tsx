@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -13,36 +14,45 @@ import {
   LayoutGrid,
   PieChart,
   Shapes,
-  BellRing,
   FlaskConical,
   Brain,
   ChevronLeft,
   ChevronRight,
+  BellRing, // Added for Alerts
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
+// Updated navItems order
 const navItems = [
   { name: "Dashboard", icon: LayoutDashboard, href: "/dashboard" },
   { name: "Asset Analytics", icon: BarChart3, href: "/asset-analytics" },
   { name: "Client Analytics", icon: Users, href: "/client-analytics" },
   { name: "Financial Analytics", icon: TrendingUp, href: "/financial-analytics" },
   { name: "Conversion Analytics", icon: Repeat, href: "/conversion-analytics" },
-  { name: "Alerts", icon: BellRing, href: "/alerts", hasNewAlerts: true }, // Mocking new alerts for demo
   { name: "Compliance Matrix", icon: ShieldAlert, href: "/compliance-matrix" },
   { name: "Resource Matrix", icon: LayoutGrid, href: "/resource-matrix" },
   { name: "Portfolio Matrix", icon: PieChart, href: "/portfolio-matrix" },
   { name: "Model Matrix", icon: Shapes, href: "/model-matrix" },
-  { name: "Contribution Matrix", icon: TrendingUp, href: "/contribution-matrix" },
+  { name: "Contribution Matrix", icon: TrendingUp, href: "/contribution-matrix" }, // Kept TrendingUp, can be PiggyBank
   { name: "Project X", icon: FlaskConical, href: "/project-x" },
+  { name: "Alerts", icon: BellRing, href: "/alerts", hasNewAlerts: true }, // Moved to bottom
 ];
 
 export default function Sidebar() {
   const [collapsed, setCollapsed] = React.useState(false);
+  // Pathname state for active link highlighting - this would ideally come from Next.js router if Sidebar can access it
+  // For now, we'll manage it internally or assume it's passed as a prop if this component is used in a layout that has access to pathname
+  const [pathname, setPathname] = React.useState("/dashboard"); // Default or get from actual router
 
   React.useEffect(() => {
     const stored = localStorage.getItem("matrix-sidebar-collapsed");
     if (stored) {
       setCollapsed(stored === "true");
+    }
+    // In a real Next.js app, you'd use `usePathname()` hook here if this was a client component used within app router
+    // For this isolated component example, we'll simulate pathname updates or assume it's passed
+    if (typeof window !== "undefined") {
+        setPathname(window.location.pathname);
     }
   }, []);
 
@@ -93,30 +103,34 @@ export default function Sidebar() {
 
       <TooltipProvider delayDuration={0}>
         <nav className="mt-4 flex-1 space-y-1 px-2 overflow-y-auto">
-          {navItems.map(({ name, icon: Icon, href, hasNewAlerts }) => (
-            <Tooltip key={name}>
-              <TooltipTrigger asChild>
-                <Link
-                  href={href}
-                  className={cn(
-                    "flex items-center gap-3 px-3 py-2.5 text-sm font-medium rounded-md transition-colors duration-150 ease-out",
-                    "text-sidebar-foreground hover:bg-white/[.05] hover:shadow-[0_2px_8px_rgba(80,0,160,0.4)] hover:-translate-y-px",
-                    // Add active state styling here if you have access to pathname
-                    // For example: pathname === href ? "bg-primary/[.15] shadow-[0_2px_10px_hsla(var(--primary),0.5)] -translate-y-0.5 text-sidebar-primary-foreground" : "",
-                    collapsed && "justify-center"
-                  )}
-                >
-                  <Icon className={cn("w-5 h-5 shrink-0", hasNewAlerts && "animate-red-pulse text-red-400")} />
-                  {!collapsed && <span className="truncate">{name}</span>}
-                </Link>
-              </TooltipTrigger>
-              {collapsed && (
-                <TooltipContent side="right" className="bg-popover text-popover-foreground text-sm rounded-md px-2 py-1 shadow-lg">
-                  {name}
-                </TooltipContent>
-              )}
-            </Tooltip>
-          ))}
+          {navItems.map(({ name, icon: Icon, href, hasNewAlerts }) => {
+            const isActive = pathname === href || (pathname.startsWith(href) && href !== '/dashboard');
+            return (
+              <Tooltip key={name}>
+                <TooltipTrigger asChild>
+                  <Link
+                    href={href}
+                    className={cn(
+                      "flex items-center gap-3 px-3 py-2.5 text-base font-medium rounded-md transition-colors duration-150 ease-out transform-gpu",
+                      isActive
+                        ? "bg-primary/[.15] shadow-[0_2px_10px_hsla(var(--primary),0.5)] -translate-y-0.5 text-sidebar-primary-foreground"
+                        : "bg-white/[.02] text-sidebar-foreground hover:bg-white/[.05] hover:shadow-[0_2px_8px_rgba(80,0,160,0.4)] hover:-translate-y-0.5",
+                      collapsed && "justify-center"
+                    )}
+                    onClick={() => setPathname(href)} // Simulate pathname change on click for demo
+                  >
+                    <Icon className={cn("w-5 h-5 shrink-0", hasNewAlerts && "animate-red-pulse text-red-500")} />
+                    {!collapsed && <span className="truncate">{name}</span>}
+                  </Link>
+                </TooltipTrigger>
+                {collapsed && (
+                  <TooltipContent side="right" className="bg-popover text-popover-foreground text-sm rounded-md px-2 py-1 shadow-lg">
+                    {name}
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            );
+          })}
         </nav>
       </TooltipProvider>
     </aside>
