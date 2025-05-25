@@ -12,16 +12,15 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, X } from 'lucide-react';
-import { Brain } from 'lucide-react'; // Keep Brain import for sidebar logo
+import { Send, X } from 'lucide-react'; // Brain import removed as it's now in Sidebar.tsx
 
-const inter = Inter({ // Changed from Geist_Sans
-  variable: '--font-geist-sans', // Keep variable name for CSS consistency
+const inter = Inter({
+  variable: '--font-inter', // Updated variable name
   subsets: ['latin'],
 });
 
-const robotoMono = Roboto_Mono({ // Changed from Geist_Mono
-  variable: '--font-geist-mono', // Keep variable name for CSS consistency
+const robotoMono = Roboto_Mono({
+  variable: '--font-roboto-mono', // Updated variable name
   subsets: ['latin'],
 });
 
@@ -56,6 +55,7 @@ export default function RootLayout({
       sender: 'user',
     };
 
+    // Placeholder bot response
     const botResponse: ChatMessage = {
       id: (Date.now() + 1).toString(),
       text: `Maven echoes: "${currentMessage}"`,
@@ -68,7 +68,7 @@ export default function RootLayout({
 
   return (
     <html lang="en" className="dark">
-      <body className={`${inter.variable} ${robotoMono.variable} antialiased flex`}> {/* Added flex to body */}
+      <body className={`${inter.variable} ${robotoMono.variable} antialiased flex`}>
         <div className="w-full overflow-hidden bg-black/90 border-b border-gray-700 py-2 fixed top-0 z-50">
           <div className="animate-ticker whitespace-nowrap flex space-x-6 text-sm font-mono">
             {/* Stock items - repeated for seamless scroll */}
