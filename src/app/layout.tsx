@@ -8,10 +8,11 @@ import './globals.css';
 import Sidebar from '@/components/Sidebar'; 
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, X } from 'lucide-react'; // Brain icon is used directly in Sidebar.tsx
+import { Send, X } from 'lucide-react';
 
 const inter = Inter({
   variable: '--font-inter', 
@@ -103,11 +104,11 @@ export default function RootLayout({
             <span className="text-white">ROKU: <span className="text-green-400">$62.22 ▲2.0%</span></span>
           </div>
         </div>
-
-        <div className="flex flex-1 h-screen pt-10"> {/* Ensures sidebar and main content are below the ticker */}
+        
+        <div className="flex flex-1 h-screen pt-10">
           <TooltipProvider delayDuration={0}>
             <Sidebar />
-            <main className="flex-1 overflow-y-auto bg-transparent"> {/* Ensures main content takes remaining space and allows body gradient to show */}
+            <main className="flex-1 overflow-y-auto bg-transparent">
               {children}
             </main>
           </TooltipProvider>
@@ -156,7 +157,7 @@ export default function RootLayout({
                 <button
                   type="submit"
                   onClick={handleSendMessage}
-                  className="bg-primary hover:bg-primary/90 text-primary-foreground p-2.5 rounded-md flex items-center justify-center" // Adjusted padding & added flex for icon
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground p-2.5 rounded-md flex items-center justify-center"
                   aria-label="Send Message"
                   disabled={!currentMessage.trim()}
                 >
