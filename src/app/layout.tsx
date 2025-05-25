@@ -4,9 +4,10 @@
 import { Inter, Roboto_Mono } from 'next/font/google';
 import * as React from 'react';
 import './globals.css';
-import Sidebar from '@/components/Sidebar'; // Import the new Sidebar
+import Sidebar from '@/components/Sidebar';
 import { Toaster } from "@/components/ui/toaster";
-import { TooltipProvider } from "@/components/ui/tooltip"; // Keep TooltipProvider if other parts of the app use it
+import { TooltipProvider } from "@/components/ui/tooltip";
+import Image from 'next/image'; // Added for brain icon in chatbot FAB if used
 
 const inter = Inter({
   variable: '--font-inter',
@@ -18,9 +19,6 @@ const robotoMono = Roboto_Mono({
   subsets: ['latin'],
 });
 
-// Chatbot related state and functions are removed as the button was deleted.
-// If chatbot functionality is to be re-added, it will need a new trigger.
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -28,7 +26,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <body className={`${inter.variable} ${robotoMono.variable} antialiased flex`}>
+      <body className={`${inter.variable} ${robotoMono.variable} antialiased flex flex-col`}>
         {/* Stock Ticker - remains fixed at the top */}
         <div className="w-full overflow-hidden bg-black/90 border-b border-gray-700 py-2 fixed top-0 z-50">
           <div className="animate-ticker whitespace-nowrap flex space-x-6 text-sm font-mono">
@@ -67,12 +65,14 @@ export default function RootLayout({
           </div>
         </div>
 
-        <TooltipProvider delayDuration={0}>
-          <Sidebar />
-          <main className="flex-1 overflow-y-auto pt-10 bg-transparent"> {/* Ensure main content area is transparent to see body gradient */}
-            {children}
-          </main>
-        </TooltipProvider>
+        <div className="flex flex-1 h-screen pt-10"> {/* Added wrapper with pt-10 */}
+          <TooltipProvider delayDuration={0}>
+            <Sidebar />
+            <main className="flex-1 overflow-y-auto bg-transparent"> {/* Removed pt-10 from main */}
+              {children}
+            </main>
+          </TooltipProvider>
+        </div>
         <Toaster />
       </body>
     </html>
