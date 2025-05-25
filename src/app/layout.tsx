@@ -5,7 +5,7 @@ import { Inter, Roboto_Mono } from 'next/font/google';
 import * as React from 'react';
 import Image from "next/image";
 import './globals.css';
-import Sidebar from '@/components/Sidebar'; 
+import Sidebar from '@/components/Sidebar';
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
@@ -13,14 +13,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogC
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Send, X } from 'lucide-react';
+import { Brain } from 'lucide-react'; // Keep Brain import for sidebar logo
 
-const inter = Inter({
-  variable: '--font-inter', 
+const inter = Inter({ // Changed from Geist_Sans
+  variable: '--font-geist-sans', // Keep variable name for CSS consistency
   subsets: ['latin'],
 });
 
-const robotoMono = Roboto_Mono({
-  variable: '--font-roboto-mono',
+const robotoMono = Roboto_Mono({ // Changed from Geist_Mono
+  variable: '--font-geist-mono', // Keep variable name for CSS consistency
   subsets: ['latin'],
 });
 
@@ -57,17 +58,17 @@ export default function RootLayout({
 
     const botResponse: ChatMessage = {
       id: (Date.now() + 1).toString(),
-      text: `Maven echoes: "${currentMessage}"`, 
+      text: `Maven echoes: "${currentMessage}"`,
       sender: 'bot',
     };
 
     setChatMessages(prevMessages => [...prevMessages, newUserMessage, botResponse]);
     setCurrentMessage('');
   };
-  
+
   return (
     <html lang="en" className="dark">
-      <body className={`${inter.variable} ${robotoMono.variable} antialiased flex flex-col`}>
+      <body className={`${inter.variable} ${robotoMono.variable} antialiased flex`}> {/* Added flex to body */}
         <div className="w-full overflow-hidden bg-black/90 border-b border-gray-700 py-2 fixed top-0 z-50">
           <div className="animate-ticker whitespace-nowrap flex space-x-6 text-sm font-mono">
             {/* Stock items - repeated for seamless scroll */}
@@ -104,21 +105,22 @@ export default function RootLayout({
             <span className="text-white">ROKU: <span className="text-green-400">$62.22 ▲2.0%</span></span>
           </div>
         </div>
-        
-        <div className="flex flex-1 h-screen pt-10">
+
+        <div className="flex flex-1 h-screen pt-10"> {/* Wrapper for sidebar and main content, accounting for ticker */}
           <TooltipProvider delayDuration={0}>
             <Sidebar />
-            <main className="flex-1 overflow-y-auto bg-transparent">
+            <main className="flex-1 overflow-y-auto bg-transparent"> {/* bg-transparent to let body gradient show */}
               {children}
             </main>
           </TooltipProvider>
         </div>
         
+        {/* Chat Dialog remains, but button to trigger it is removed */}
         <Dialog open={isChatOpen} onOpenChange={setIsChatOpen}>
           <DialogContent className="sm:max-w-[425px] md:max-w-[550px] lg:max-w-[40%] h-[70vh] flex flex-col bg-card/60 backdrop-blur-md border-none shadow-xl">
             <DialogHeader className="p-4 border-b border-border/50">
               <DialogTitle className="text-lg font-semibold text-foreground">Chat with Maven AI</DialogTitle>
-               <DialogClose asChild>
+              <DialogClose asChild>
                 <button className="absolute right-4 top-4 text-muted-foreground hover:text-foreground p-1 rounded-sm focus:outline-none focus:ring-2 focus:ring-ring">
                   <X className="h-4 w-4" />
                   <span className="sr-only">Close</span>
