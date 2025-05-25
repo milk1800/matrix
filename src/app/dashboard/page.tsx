@@ -34,10 +34,10 @@ interface MarketData {
 }
 
 const initialMarketOverviewData: MarketData[] = [
-  { name: 'S&P 500', polygonTicker: 'I:SPX', icon: Landmark, openTime: '09:30', closeTime: '16:00', timezone: 'America/New_York' },
-  { name: 'NASDAQ', polygonTicker: 'I:NDX', icon: Landmark, openTime: '09:30', closeTime: '16:00', timezone: 'America/New_York' },
-  { name: 'Dow Jones', polygonTicker: 'I:DJI', icon: Landmark, openTime: '09:30', closeTime: '16:00', timezone: 'America/New_York' },
-  { name: 'VIX', polygonTicker: 'I:VIX', icon: Landmark, openTime: '09:30', closeTime: '16:15', timezone: 'America/New_York' }, // VIX closes slightly later
+  { name: 'S&P 500 (SPY)', polygonTicker: 'SPY', icon: Landmark, openTime: '09:30', closeTime: '16:00', timezone: 'America/New_York' },
+  { name: 'Dow Jones (DIA)', polygonTicker: 'DIA', icon: Landmark, openTime: '09:30', closeTime: '16:00', timezone: 'America/New_York' },
+  { name: 'Total Market (VONE)', polygonTicker: 'VONE', icon: Landmark, openTime: '09:30', closeTime: '16:00', timezone: 'America/New_York' },
+  { name: 'Small Caps (IWM)', polygonTicker: 'IWM', icon: Landmark, openTime: '09:30', closeTime: '16:00', timezone: 'America/New_York' },
 ];
 
 const newsData = [
@@ -519,5 +519,3 @@ export default function DashboardPage() {
     </main>
   );
 }
-
-    
