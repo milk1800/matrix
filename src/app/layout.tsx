@@ -5,18 +5,18 @@ import { Inter, Roboto_Mono } from 'next/font/google';
 import * as React from 'react';
 import Image from "next/image";
 import './globals.css';
-import Sidebar from '@/components/Sidebar';
+import Sidebar from '@/components/Sidebar'; 
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 
 // Font setup using next/font/google
 const inter = Inter({
-  variable: '--font-inter', // Changed from --font-geist-sans
+  variable: '--font-inter', 
   subsets: ['latin'],
 });
 
 const robotoMono = Roboto_Mono({
-  variable: '--font-roboto-mono', // Changed from --font-geist-mono
+  variable: '--font-roboto-mono',
   subsets: ['latin'],
 });
 
