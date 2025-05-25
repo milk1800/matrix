@@ -1,10 +1,14 @@
-import { redirect } from 'next/navigation';
+// src/app/page.tsx
+
+// import { redirect } from 'next/navigation'; // Temporarily commented out
 
 export default function HomePage() {
-  redirect('/asset-analytics');
-  // redirect() must be called outside of a try/catch block.
-  // It also must be the last thing called in a Server Action or Route Handler.
-  // As this is a page, it should work fine.
-  // We return null because redirect throws a NEXT_REDIRECT error.
-  return null;
+  // redirect('/asset-analytics'); // Temporarily commented out
+  
+  // Render a simple component for diagnostics
+  return (
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', backgroundColor: '#000104', color: 'white', fontFamily: 'sans-serif' }}>
+      <p>Loading Sanctuary Matrix...</p>
+    </div>
+  );
 }

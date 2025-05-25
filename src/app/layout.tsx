@@ -8,8 +8,11 @@ import './globals.css';
 import Sidebar from '@/components/Sidebar'; 
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Send, X } from 'lucide-react'; // Brain icon is used directly in Sidebar.tsx
 
-// Font setup using next/font/google
 const inter = Inter({
   variable: '--font-inter', 
   subsets: ['latin'],
@@ -53,7 +56,7 @@ export default function RootLayout({
 
     const botResponse: ChatMessage = {
       id: (Date.now() + 1).toString(),
-      text: `Maven echoes: "${currentMessage}"`,
+      text: `Maven echoes: "${currentMessage}"`, 
       sender: 'bot',
     };
 
@@ -109,6 +112,60 @@ export default function RootLayout({
             </main>
           </TooltipProvider>
         </div>
+        
+        <Dialog open={isChatOpen} onOpenChange={setIsChatOpen}>
+          <DialogContent className="sm:max-w-[425px] md:max-w-[550px] lg:max-w-[40%] h-[70vh] flex flex-col bg-card/60 backdrop-blur-md border-none shadow-xl">
+            <DialogHeader className="p-4 border-b border-border/50">
+              <DialogTitle className="text-lg font-semibold text-foreground">Chat with Maven AI</DialogTitle>
+               <DialogClose asChild>
+                <button className="absolute right-4 top-4 text-muted-foreground hover:text-foreground p-1 rounded-sm focus:outline-none focus:ring-2 focus:ring-ring">
+                  <X className="h-4 w-4" />
+                  <span className="sr-only">Close</span>
+                </button>
+              </DialogClose>
+            </DialogHeader>
+            <ScrollArea className="flex-grow p-4 space-y-3 overflow-y-auto">
+              {chatMessages.map((msg) => (
+                <div
+                  key={msg.id}
+                  className={`flex mb-3 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
+                >
+                  <div
+                    className={`p-3 rounded-lg max-w-[75%] text-sm shadow-md ${
+                      msg.sender === 'user'
+                        ? 'bg-primary text-primary-foreground rounded-br-none'
+                        : 'bg-muted text-foreground rounded-bl-none'
+                    }`}
+                  >
+                    {msg.text}
+                  </div>
+                </div>
+              ))}
+              <div ref={messagesEndRef} />
+            </ScrollArea>
+            <DialogFooter className="p-4 border-t border-border/50">
+              <div className="flex w-full items-center space-x-2">
+                <Input
+                  type="text"
+                  placeholder="Type a message..."
+                  value={currentMessage}
+                  onChange={(e) => setCurrentMessage(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                  className="flex-grow bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary"
+                />
+                <button
+                  type="submit"
+                  onClick={handleSendMessage}
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground p-2.5 rounded-md flex items-center justify-center" // Adjusted padding & added flex for icon
+                  aria-label="Send Message"
+                  disabled={!currentMessage.trim()}
+                >
+                  <Send className="h-4 w-4" />
+                </button>
+              </div>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
         <Toaster />
       </body>
     </html>
