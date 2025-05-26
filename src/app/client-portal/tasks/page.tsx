@@ -11,11 +11,137 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
-import { MoreHorizontal, ListChecks, Filter as FilterIcon, UserCircle, Tag, FilePenLine, Bold, Italic, Underline, Link2, Table as TableIcon, Smile, Mic, UploadCloud, ListOrdered } from 'lucide-react';
+import { useToast } from "@/hooks/use-toast";
+import { format, formatDistanceToNowStrict } from 'date-fns';
+import { 
+  MoreHorizontal, 
+  ListChecks, 
+  Filter as FilterIcon, 
+  UserCircle, 
+  Tag, 
+  FilePenLine, 
+  Bold, 
+  Italic, 
+  Underline, 
+  Link2, 
+  Table as TableIcon, 
+  Smile, 
+  Mic, 
+  UploadCloud, 
+  ListOrdered,
+  Trash2,
+  CalendarDays
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+
+interface TaskItem {
+  id: string;
+  name: string;
+  repeats: boolean;
+  dueDate: string; 
+  dueTime?: string;
+  priority: string;
+  category: string;
+  description: string;
+  relatedTo: string;
+  createdAt: Date;
+}
+
+const getPriorityBadgeClass = (priority: string): string => {
+  switch (priority.toLowerCase()) {
+    case "high":
+      return "bg-red-500/20 border-red-500/50 text-red-400";
+    case "medium":
+      return "bg-yellow-500/20 border-yellow-500/50 text-yellow-400";
+    case "low":
+      return "bg-green-500/20 border-green-500/50 text-green-400";
+    default:
+      return "bg-muted text-muted-foreground";
+  }
+};
 
 export default function ClientPortalTasksPage() {
   const [isAddTaskDialogOpen, setIsAddTaskDialogOpen] = React.useState(false);
-  const taskCount = 0; // Mock data
+  const [tasks, setTasks] = React.useState<TaskItem[]>([]);
+  const { toast } = useToast();
+
+  // State for Add Task Dialog fields
+  const [taskName, setTaskName] = React.useState('');
+  const [taskRepeats, setTaskRepeats] = React.useState(false);
+  const [taskDue, setTaskDue] = React.useState('today');
+  const [taskDueCustomDate, setTaskDueCustomDate] = React.useState('');
+  const [taskDueCustomTime, setTaskDueCustomTime] = React.useState('');
+  const [taskPriority, setTaskPriority] = React.useState('medium');
+  const [taskCategory, setTaskCategory] = React.useState('');
+  const [taskDescription, setTaskDescription] = React.useState('');
+  const [taskRelatedTo, setTaskRelatedTo] = React.useState('');
+  const [isSavingTask, setIsSavingTask] = React.useState(false);
+
+  const resetTaskForm = () => {
+    setTaskName('');
+    setTaskRepeats(false);
+    setTaskDue('today');
+    setTaskDueCustomDate('');
+    setTaskDueCustomTime('');
+    setTaskPriority('medium');
+    setTaskCategory('');
+    setTaskDescription('');
+    setTaskRelatedTo('');
+  };
+
+  const handleAddTask = async () => {
+    if (!taskName.trim()) {
+      toast({
+        title: "Validation Error",
+        description: "Task Name is required.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSavingTask(true);
+    // Simulate API call
+    await new Promise(resolve => setTimeout(resolve, 700));
+
+    const newTask: TaskItem = {
+      id: Date.now().toString(),
+      name: taskName,
+      repeats: taskRepeats,
+      dueDate: taskDue === 'custom' && taskDueCustomDate ? taskDueCustomDate : taskDue,
+      dueTime: taskDue === 'custom' ? taskDueCustomTime : undefined,
+      priority: taskPriority,
+      category: taskCategory || 'Uncategorized',
+      description: taskDescription,
+      relatedTo: taskRelatedTo,
+      createdAt: new Date(),
+    };
+
+    setTasks(prevTasks => [newTask, ...prevTasks]);
+    toast({
+      title: "Task Created",
+      description: `"${newTask.name}" has been successfully added.`,
+    });
+    resetTaskForm();
+    setIsAddTaskDialogOpen(false);
+    setIsSavingTask(false);
+  };
+  
+  const formatDueDateDisplay = (task: TaskItem) => {
+    if (task.dueDate === 'today') return 'Today';
+    if (task.dueDate === 'tomorrow') return 'Tomorrow';
+    if (task.dueDate === 'next_week') return 'Next Week';
+    if (task.dueDate) {
+      try {
+        let dateStr = format(new Date(task.dueDate), 'MMM dd, yyyy');
+        if (task.dueTime) dateStr += ` at ${task.dueTime}`;
+        return dateStr;
+      } catch (e) {
+        return task.dueDate; // fallback if date is not parsable
+      }
+    }
+    return 'No Due Date';
+  };
+
 
   return (
     <>
@@ -24,7 +150,7 @@ export default function ClientPortalTasksPage() {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
           <div className="flex items-center gap-3">
             <h1 className="text-3xl font-bold tracking-tight text-foreground">Tasks</h1>
-            <span className="text-muted-foreground">({taskCount} tasks)</span>
+            <span className="text-muted-foreground">({tasks.length} tasks)</span>
           </div>
           <div className="flex items-center gap-2">
             <DropdownMenu>
@@ -107,31 +233,68 @@ export default function ClientPortalTasksPage() {
 
         {/* Main Card - Task List Area */}
         <PlaceholderCard title="" className="flex-grow p-0">
-          <div className="flex flex-col items-center justify-center h-[40vh] text-center p-6">
-            <ListChecks className="w-20 h-20 text-muted-foreground/50 mb-6" strokeWidth={1.5} />
-            <h3 className="text-xl font-semibold text-foreground mb-2">No tasks match the selected criteria.</h3>
-            <p className="text-muted-foreground">Try adjusting your filters or adding a new task.</p>
-          </div>
+          {tasks.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-[40vh] text-center p-6">
+              <ListChecks className="w-20 h-20 text-muted-foreground/50 mb-6" strokeWidth={1.5} />
+              <h3 className="text-xl font-semibold text-foreground mb-2">No tasks match the selected criteria.</h3>
+              <p className="text-muted-foreground">Try adjusting your filters or adding a new task.</p>
+            </div>
+          ) : (
+            <div className="p-4 space-y-3">
+              {tasks.map(task => (
+                <div key={task.id} className="p-3 rounded-md border border-border/20 hover:bg-muted/10 transition-colors">
+                  <div className="flex justify-between items-start">
+                    <h4 className="text-md font-semibold text-foreground">{task.name}</h4>
+                    <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive">
+                        <Trash2 className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Due: {formatDueDateDisplay(task)} | Category: <span className="font-medium">{task.category}</span>
+                  </p>
+                  {task.description && <p className="text-sm text-foreground/80 mt-1 truncate">{task.description}</p>}
+                  {task.relatedTo && <p className="text-xs text-muted-foreground mt-0.5">Related to: {task.relatedTo}</p>}
+                   <div className="flex items-center justify-between mt-2">
+                     <span className={cn("px-2 py-0.5 text-xs font-semibold rounded-full border", getPriorityBadgeClass(task.priority))}>
+                        {task.priority.charAt(0).toUpperCase() + task.priority.slice(1)}
+                    </span>
+                    <p className="text-xs text-muted-foreground/70">
+                        Created {formatDistanceToNowStrict(task.createdAt, { addSuffix: true })}
+                    </p>
+                   </div>
+                </div>
+              ))}
+            </div>
+          )}
         </PlaceholderCard>
       </main>
 
       <Dialog open={isAddTaskDialogOpen} onOpenChange={setIsAddTaskDialogOpen}>
-        <DialogContent className="sm:max-w-xl md:max-w-2xl lg:max-w-3xl max-h-[90vh] flex flex-col">
+        <DialogContent className="sm:max-w-xl md:max-w-2xl lg:max-w-3xl max-h-[90vh] flex flex-col bg-card/95 backdrop-blur-md border-border/50">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold text-foreground">New Task</DialogTitle>
           </DialogHeader>
           <div className="flex-grow overflow-y-auto pr-2 py-4 space-y-6">
-            {/* Task Form Fields (copied from client-portal/home/page.tsx's Task tab) */}
             <div>
               <Label htmlFor="taskName-dialog">Task Name</Label>
               <div className="relative">
-                <Input id="taskName-dialog" placeholder="Enter task name..." className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary pr-10" />
+                <Input 
+                  id="taskName-dialog" 
+                  placeholder="Enter task name..." 
+                  value={taskName}
+                  onChange={(e) => setTaskName(e.target.value)}
+                  className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary pr-10" 
+                />
                 <FilePenLine className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               </div>
             </div>
 
             <div className="flex items-center space-x-2">
-              <Checkbox id="repeatsTask-dialog" />
+              <Checkbox 
+                id="repeatsTask-dialog" 
+                checked={taskRepeats}
+                onCheckedChange={(checked) => setTaskRepeats(!!checked)}
+              />
               <Label htmlFor="repeatsTask-dialog" className="font-normal text-muted-foreground">Repeats?</Label>
             </div>
 
@@ -139,7 +302,7 @@ export default function ClientPortalTasksPage() {
               <div>
                 <Label htmlFor="taskDue-dialog">Due</Label>
                 <div className="flex items-center gap-2">
-                  <Select defaultValue="today">
+                  <Select value={taskDue} onValueChange={setTaskDue}>
                     <SelectTrigger id="taskDue-dialog" className="bg-input border-border/50 text-foreground focus:ring-primary flex-grow">
                       <SelectValue />
                     </SelectTrigger>
@@ -152,10 +315,16 @@ export default function ClientPortalTasksPage() {
                   </Select>
                   <Button variant="link" className="p-0 h-auto text-primary hover:text-primary/80 whitespace-nowrap">Set Date/Time</Button>
                 </div>
+                 {taskDue === 'custom' && (
+                    <div className="grid grid-cols-2 gap-2 mt-2">
+                        <Input type="date" value={taskDueCustomDate} onChange={(e) => setTaskDueCustomDate(e.target.value)} className="bg-input border-border/50"/>
+                        <Input type="time" value={taskDueCustomTime} onChange={(e) => setTaskDueCustomTime(e.target.value)} className="bg-input border-border/50"/>
+                    </div>
+                 )}
               </div>
               <div>
                 <Label htmlFor="taskPriority-dialog">Priority</Label>
-                <Select defaultValue="medium">
+                <Select value={taskPriority} onValueChange={setTaskPriority}>
                   <SelectTrigger id="taskPriority-dialog" className="bg-input border-border/50 text-foreground focus:ring-primary">
                     <SelectValue />
                   </SelectTrigger>
@@ -171,7 +340,7 @@ export default function ClientPortalTasksPage() {
             <div>
               <Label htmlFor="taskCategory-dialog">Category</Label>
               <div className="flex items-center gap-2">
-                <Select>
+                <Select value={taskCategory} onValueChange={setTaskCategory}>
                   <SelectTrigger id="taskCategory-dialog" className="bg-input border-border/50 text-foreground focus:ring-primary flex-grow">
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
@@ -179,6 +348,10 @@ export default function ClientPortalTasksPage() {
                     <SelectItem value="meeting_prep">Meeting Prep</SelectItem>
                     <SelectItem value="follow_up">Follow Up</SelectItem>
                     <SelectItem value="paperwork">Paperwork</SelectItem>
+                    <SelectItem value="documentation">Documentation</SelectItem>
+                    <SelectItem value="client_communication">Client Communication</SelectItem>
+                    <SelectItem value="internal_review">Internal Review</SelectItem>
+                    <SelectItem value="uncategorized">Uncategorized</SelectItem>
                   </SelectContent>
                 </Select>
                 <Button variant="link" className="p-0 h-auto text-primary hover:text-primary/80 whitespace-nowrap">Edit Categories</Button>
@@ -187,7 +360,14 @@ export default function ClientPortalTasksPage() {
 
             <div>
               <Label htmlFor="taskDescription-dialog">Description</Label>
-              <Textarea id="taskDescription-dialog" rows={5} placeholder="Add more details..." className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary resize-none" />
+              <Textarea 
+                id="taskDescription-dialog" 
+                rows={5} 
+                placeholder="Add more details..." 
+                value={taskDescription}
+                onChange={(e) => setTaskDescription(e.target.value)}
+                className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary resize-none" 
+              />
               <div className="flex items-center space-x-1 text-muted-foreground mt-2">
                 <Button variant="ghost" size="icon" className="hover:bg-muted/50 h-8 w-8" aria-label="Bold"><Bold className="h-4 w-4" /></Button>
                 <Button variant="ghost" size="icon" className="hover:bg-muted/50 h-8 w-8" aria-label="Italic"><Italic className="h-4 w-4" /></Button>
@@ -216,17 +396,32 @@ export default function ClientPortalTasksPage() {
 
             <div>
               <Label htmlFor="taskRelatedTo-dialog">Related To</Label>
-              <Input id="taskRelatedTo-dialog" placeholder="Contact, project, or opportunity..." className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary" />
+              <Input 
+                id="taskRelatedTo-dialog" 
+                placeholder="Contact, project, or opportunity..." 
+                value={taskRelatedTo}
+                onChange={(e) => setTaskRelatedTo(e.target.value)}
+                className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary" 
+              />
             </div>
           </div>
           <DialogFooter className="pt-4 border-t border-border/30">
             <DialogClose asChild>
-              <Button variant="outline">Cancel</Button>
+              <Button variant="outline" onClick={resetTaskForm}>Cancel</Button>
             </DialogClose>
-            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">Add Task</Button>
+            <Button 
+              className="bg-primary hover:bg-primary/90 text-primary-foreground" 
+              onClick={handleAddTask}
+              disabled={isSavingTask}
+            >
+              {isSavingTask && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Add Task
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </>
   );
 }
+
+    
