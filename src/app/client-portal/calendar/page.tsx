@@ -123,10 +123,16 @@ export default function ClientPortalCalendarPage() {
           setCurrentTimePosition(null);
           return;
         }
-        if (activeView === 'week' && !isSameDay(startOfWeek(now, { weekStartsOn: 0 }), startOfWeek(currentDateForCalendar, { weekStartsOn: 0 }))) {
+         // Check for week view: line only if current week matches displayed week
+        if (activeView === 'week') {
+          const currentWeekStart = startOfWeek(now, { weekStartsOn: 0 });
+          const displayedWeekStart = startOfWeek(currentDateForCalendar, { weekStartsOn: 0 });
+          if (!isSameDay(currentWeekStart, displayedWeekStart)) {
             setCurrentTimePosition(null);
             return;
+          }
         }
+
 
         const currentHour = getHours(now);
         const currentMinute = getMinutes(now);
@@ -211,7 +217,11 @@ export default function ClientPortalCalendarPage() {
                   <MoreHorizontal className="h-4 w-4" /> <span className="sr-only">Options</span>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end"><DropdownMenuItem>Import Calendar</DropdownMenuItem><DropdownMenuItem>Export Calendar</DropdownMenuItem><DropdownMenuItem>Calendar Settings</DropdownMenuItem></DropdownMenuContent>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem>Import Calendar</DropdownMenuItem>
+                <DropdownMenuItem>Export Calendar</DropdownMenuItem>
+                <DropdownMenuItem>Calendar Settings</DropdownMenuItem>
+              </DropdownMenuContent>
             </DropdownMenu>
             <Button className="bg-primary hover:bg-primary/90 text-primary-foreground" onClick={() => setIsAddEventDialogOpen(true)}>
               <PlusCircle className="mr-2 h-4 w-4" /> Add Event
@@ -286,7 +296,7 @@ export default function ClientPortalCalendarPage() {
                                 {Array.from({ length: 7 }).map((_, i) => ( <td key={`all-day-${i}`} className="h-10 border-r border-b border-border/30 hover:bg-muted/20"></td> ))}
                             </tr>
                         </thead>
-                        <tbody className="relative"> {/* Ensure tbody is relative for absolute positioning of line */}
+                        <tbody className="relative">{/* Ensure tbody is relative for absolute positioning of line */}
                             {hoursToDisplay.map((hourLabel, hourIndex) => (
                                 <tr key={hourLabel}>
                                     <td className="w-16 p-2 border-r border-b border-border/30 text-xs text-muted-foreground align-top text-right sticky left-0 bg-card z-10">
