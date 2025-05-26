@@ -28,7 +28,8 @@ import {
   CalendarDays,
   Briefcase,
   ChevronDown,
-  Workflow, // Added Workflow icon
+  Workflow,
+  KanbanSquare, // Added KanbanSquare for Projects
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -58,9 +59,10 @@ const navSectionsData: NavSection[] = [
       { name: 'Email', icon: Mail, href: '/client-portal/email' },
       { name: 'Contacts', icon: ContactIcon, href: '/client-portal/contacts' },
       { name: 'Tasks', icon: ListChecks, href: '/client-portal/tasks' },
-      { name: 'Workflows', icon: Workflow, href: '/client-portal/workflows' }, // New Workflow tab
+      { name: 'Workflows', icon: Workflow, href: '/client-portal/workflows' },
       { name: 'Calendar', icon: CalendarDays, href: '/client-portal/calendar' },
       { name: 'Opportunities', icon: Briefcase, href: '/client-portal/opportunities' },
+      { name: 'Projects', icon: KanbanSquare, href: '/client-portal/projects' }, // New Projects tab
     ],
   },
   {
@@ -68,7 +70,6 @@ const navSectionsData: NavSection[] = [
     title: 'ANALYTICS CENTER',
     icon: BarChart3,
     items: [
-      { name: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
       { name: 'Asset Analytics', icon: BarChart3, href: '/asset-analytics' },
       { name: 'Client Analytics', icon: Users, href: '/client-analytics' },
       { name: 'Financial Analytics', icon: TrendingUp, href: '/financial-analytics' },
@@ -87,7 +88,7 @@ const alertsNavItem: NavItem = {
   name: 'Alerts',
   icon: BellRing,
   href: '/alerts',
-  hasNewAlerts: true, // Example, can be dynamic
+  hasNewAlerts: true,
 };
 
 export default function Sidebar() {
@@ -106,7 +107,7 @@ export default function Sidebar() {
     const storedSectionsState = localStorage.getItem("matrix-sidebar-sections-open");
     const initialOpenSections: Record<string, boolean> = {};
     navSectionsData.forEach(section => {
-      initialOpenSections[section.id] = true; // Default all sections to open
+      initialOpenSections[section.id] = true; 
     });
 
     if (storedSectionsState) {
@@ -145,8 +146,9 @@ export default function Sidebar() {
     });
   };
 
-  const renderNavItem = (item: NavItem) => {
-    const isActive = currentPathname === item.href || (currentPathname.startsWith(item.href) && item.href !== '/dashboard' && item.href !== '/');
+  const renderNavItem = (item: NavItem, isIconOnlyContext: boolean = false) => {
+    const isActive = currentPathname === item.href || (currentPathname.startsWith(item.href) && item.href !== '/');
+    
     const linkContent = (
       <>
         <item.icon className={cn(
@@ -154,19 +156,20 @@ export default function Sidebar() {
           item.hasNewAlerts && isActive && "text-sidebar-primary-foreground",
           item.hasNewAlerts && !isActive && "animate-red-pulse text-red-500"
         )} />
-        {!collapsed && <span className="truncate">{item.name}</span>}
+        {(!collapsed || !isIconOnlyContext) && <span className="truncate">{item.name}</span>}
       </>
     );
 
     const linkClasses = cn(
-      "flex items-center gap-3 px-4 py-[10px] text-base font-medium rounded-[8px] transition-all duration-300 ease-out transform-gpu",
+      "flex items-center gap-4 px-4 py-2 text-base font-medium rounded-[8px] transition-all duration-300 ease-out transform-gpu",
+      "bg-white/[.02] text-sidebar-foreground",
       isActive
         ? "bg-primary/30 shadow-card-hover-glow -translate-y-0.5 text-sidebar-primary-foreground"
-        : "bg-black/40 text-sidebar-foreground hover:bg-black/50 hover:shadow-[0_2px_8px_rgba(80,0,160,0.4)] hover:-translate-y-0.5",
-      collapsed && "justify-center p-2.5"
+        : "hover:bg-white/[.05] hover:shadow-[0_2px_8px_rgba(80,0,160,0.4)] hover:-translate-y-0.5",
+      collapsed && isIconOnlyContext && "justify-center p-2.5"
     );
 
-    if (collapsed) {
+    if (collapsed && isIconOnlyContext) {
       return (
         <Tooltip key={item.name}>
           <TooltipTrigger asChild>
@@ -192,12 +195,12 @@ export default function Sidebar() {
     <aside
       className={cn(
         "h-full bg-black/90 border-r border-gray-800 text-white transition-all duration-300 flex flex-col",
-        collapsed ? "w-20" : "w-64" // w-16 (4rem) is too small, using w-20 (5rem)
+        collapsed ? "w-20" : "w-64"
       )}
     >
       <div className="flex items-center justify-between px-4 py-4 border-b border-sidebar-border/30">
-        <div className={cn("flex items-center justify-center w-full space-x-3")}>
-          <Brain className={cn("text-purple-500 animate-pulse-neon shrink-0", collapsed ? "w-8 h-8" : "w-10 h-10" )} />
+        <div className={cn("flex items-center w-full space-x-3", collapsed ? "justify-center" : "")}>
+          <Brain className={cn("text-purple-500 animate-pulse-neon shrink-0", collapsed ? "w-8 h-8" : "w-10 h-10")} />
           {!collapsed && (
             <span className="text-4xl font-bold text-metallic-gradient">
               Matrix
@@ -217,20 +220,20 @@ export default function Sidebar() {
         <nav className="flex-1 space-y-1 px-2 py-4 overflow-y-auto">
           {collapsed ? (
             navSectionsData.flatMap(section => section.items).map((item) =>
-              renderNavItem(item)
+              renderNavItem(item, true)
             )
           ) : (
             navSectionsData.map((section) => (
-              <div key={section.id} className="mb-2">
+              <div key={section.id} className="mb-1">
                 <button
                   onClick={() => toggleSection(section.id)}
                   className={cn(
-                    "flex items-center w-full text-left px-4 py-3 rounded-md hover:bg-black/50 transition-colors duration-150 ease-out"
+                    "flex items-center w-full text-left px-4 py-3 rounded-md hover:bg-black/50 transition-colors duration-150 ease-out",
                   )}
                   aria-expanded={openSections[section.id]}
                 >
                   <section.icon className="w-5 h-5 shrink-0 text-gray-400" />
-                  <span className="ml-3 text-base font-bold text-gray-300 uppercase tracking-wider truncate flex-1">
+                  <span className="ml-3 text-lg font-bold text-gray-300 uppercase tracking-wider truncate flex-1">
                     {section.title}
                   </span>
                   <ChevronDown
@@ -250,7 +253,7 @@ export default function Sidebar() {
           )}
         </nav>
         <div className="mt-auto p-2 border-t border-sidebar-border/30">
-          {renderNavItem(alertsNavItem)}
+          {renderNavItem(alertsNavItem, collapsed)}
         </div>
       </TooltipProvider>
     </aside>
