@@ -17,7 +17,6 @@ import {
   Shapes,
   FlaskConical,
   BellRing,
-  AppWindow,
   Home as HomeIcon,
   Mail,
   Contact as ContactIcon,
@@ -28,11 +27,11 @@ import {
   KanbanSquare,
   FileText,
   BarChart2,
+  AppWindow, // Added for Client Portal section
   ChevronDown,
   ChevronLeft,
   ChevronRight,
   Brain,
-  // PiggyBank // Was potentially used for Contribution Matrix, but TrendingUp is used now
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -54,8 +53,8 @@ interface NavSection {
 const navSectionsData: NavSection[] = [
   {
     id: 'clientPortal',
-    title: 'CLIENT PORTAL',
-    icon: AppWindow,
+    title: 'CRM', // Updated title
+    icon: AppWindow, // Icon for the CRM section
     items: [
       { name: 'Home', icon: HomeIcon, href: '/client-portal/home' },
       { name: 'Email', icon: Mail, href: '/client-portal/email' },
@@ -71,8 +70,8 @@ const navSectionsData: NavSection[] = [
   },
   {
     id: 'analytics',
-    title: 'ANALYTICS CENTER',
-    icon: BarChart3,
+    title: 'Analytics', // Updated title
+    icon: BarChart3, // Icon for the Analytics section
     items: [
       { name: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
       { name: 'Asset Analytics', icon: BarChart3, href: '/asset-analytics' },
@@ -82,7 +81,7 @@ const navSectionsData: NavSection[] = [
       { name: 'Compliance Matrix', icon: ShieldAlert, href: '/compliance-matrix'},
       { name: 'Portfolio Matrix', icon: PieChart, href: '/portfolio-matrix' },
       { name: 'Model Matrix', icon: Shapes, href: '/model-matrix' },
-      { name: 'Contribution Matrix', icon: TrendingUp, href: '/contribution-matrix' },
+      { name: 'Contribution Matrix', icon: TrendingUp, href: '/contribution-matrix' }, // Kept TrendingUp as previously chosen
       { name: 'Project X', icon: FlaskConical, href: '/project-x' },
       { name: 'Resource Matrix', icon: LayoutGrid, href: '/resource-matrix' },
     ],
@@ -93,13 +92,13 @@ const alertsNavItem: NavItem = {
   name: 'Alerts',
   icon: BellRing,
   href: '/alerts',
-  hasNewAlerts: true, 
+  hasNewAlerts: true, // Mock data, set to true to see the effect
 };
 
 export default function Sidebar() {
+  const [isClient, setIsClient] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
-  const [isClient, setIsClient] = useState(false);
   const currentPathname = usePathname();
 
   useEffect(() => {
@@ -136,25 +135,24 @@ export default function Sidebar() {
     }
   }, [isClient]);
 
+  const currentDisplayCollapsed = isClient ? collapsed : false;
+
   useEffect(() => {
     if (isClient) {
-      localStorage.setItem("matrix-sidebar-collapsed", String(collapsed));
-      if (!collapsed) {
+      localStorage.setItem("matrix-sidebar-collapsed", String(currentDisplayCollapsed));
+      if (!currentDisplayCollapsed) {
         localStorage.setItem("matrix-sidebar-sections-open", JSON.stringify(openSections));
       }
     }
-  }, [collapsed, openSections, isClient]);
+  }, [currentDisplayCollapsed, openSections, isClient]);
   
-  const currentDisplayCollapsed = isClient ? collapsed : false;
 
   const toggleSidebar = useCallback(() => {
     const newCollapsedState = !currentDisplayCollapsed;
     setCollapsed(newCollapsedState);
     if (newCollapsedState) {
-        // If collapsing, save current openSections before potentially hiding them
         localStorage.setItem("matrix-sidebar-sections-open", JSON.stringify(openSections));
     } else {
-        // If expanding, try to restore or default to all open
         const storedSectionsState = localStorage.getItem("matrix-sidebar-sections-open");
         const initialOpenState: Record<string, boolean> = {};
         if (storedSectionsState) {
@@ -182,20 +180,20 @@ export default function Sidebar() {
     }
   }, [currentDisplayCollapsed, isClient]);
 
-  const renderNavItem = (item: NavItem, isIconOnlyView: boolean) => {
-    const isActive = currentPathname === item.href || (currentPathname.startsWith(item.href) && item.href !== '/dashboard' && item.href !== '/');
+  const renderNavItem = useCallback((item: NavItem, isIconOnlyView: boolean) => {
+    const isActive = currentPathname === item.href || (currentPathname.startsWith(item.href) && item.href !== '/' && item.href !== '/dashboard');
     
     const iconClasses = cn(
       "w-5 h-5 shrink-0 transition-colors duration-200",
       isActive 
         ? "text-primary" 
-        : item.hasNewAlerts && isClient // Only flash if client-side rendering and new alerts
+        : item.hasNewAlerts && isClient 
           ? "animate-red-pulse text-red-500" 
           : "text-sidebar-foreground/70 group-hover/navitem:text-sidebar-foreground"
     );
 
     const linkClasses = cn(
-      "flex items-center gap-4 px-4 py-2 text-base font-medium rounded-[8px] transition-all duration-200 ease-out group/navitem",
+      "flex items-center gap-4 px-4 py-2.5 text-base rounded-[8px] transition-all duration-200 ease-out group/navitem",
       "bg-white/[.02] text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-white/[.05] hover:-translate-y-px",
       isIconOnlyView && "justify-center p-2.5"
     );
@@ -203,13 +201,13 @@ export default function Sidebar() {
     const linkContent = (
       <>
         <item.icon className={iconClasses} />
-        {!isIconOnlyView && <span className="truncate">{item.name}</span>}
+        {!isIconOnlyView && <span className="truncate text-base font-medium">{item.name}</span>}
       </>
     );
 
     if (isIconOnlyView) {
       return (
-        <Tooltip key={item.name}>
+        <Tooltip key={item.href}>
           <TooltipTrigger asChild>
             <Link 
               href={item.href} 
@@ -227,7 +225,7 @@ export default function Sidebar() {
     } else {
       return (
         <Link 
-          key={item.name} 
+          key={item.href} 
           href={item.href} 
           className={linkClasses}
         >
@@ -235,22 +233,19 @@ export default function Sidebar() {
         </Link>
       );
     }
-  };
+  }, [currentPathname, isClient]);
   
   if (!isClient && typeof window === 'undefined') {
-    // Simplified SSR rendering or placeholder to avoid localStorage issues
     return (
-      <aside className="h-full bg-black/90 border-r border-gray-800/50 text-white transition-all duration-300 w-64 flex flex-col">
-         <div className="flex items-center p-4 px-5 justify-between">
-          <div className="flex items-center justify-center space-x-3">
-            <Brain className="text-purple-500 animate-pulse-neon w-10 h-10" />
+      <aside className={cn("h-full bg-black/90 border-r border-gray-800/50 text-white transition-all duration-300 flex flex-col w-64")}>
+         <div className="flex items-center justify-center p-4 px-5 space-x-3">
+            <Brain className={cn("text-purple-500 animate-pulse-neon w-10 h-10")} />
             <span className="text-4xl font-bold text-metallic-gradient leading-tight">
               Matrix
             </span>
-          </div>
         </div>
         <nav className="flex-1 space-y-1 px-2 py-4 overflow-y-auto">
-          {/* Placeholder or minimal nav for SSR */}
+          {/* Placeholder for SSR - actual items will render client-side */}
         </nav>
       </aside>
     );
@@ -313,7 +308,7 @@ export default function Sidebar() {
                   aria-expanded={openSections[section.id]}
                 >
                   <section.icon className="w-5 h-5 shrink-0 text-gray-400 group-hover/section:text-gray-200" />
-                  <span className="ml-3 text-lg font-bold text-gray-300 uppercase tracking-wider truncate flex-1 group-hover/section:text-gray-100">
+                  <span className="ml-3 text-lg font-bold text-gray-300 tracking-wider truncate flex-1 group-hover/section:text-gray-100">
                       {section.title}
                   </span>
                   <ChevronDown
@@ -339,4 +334,5 @@ export default function Sidebar() {
     </aside>
   );
 }
+
 
