@@ -3,7 +3,7 @@
 
 import * as React from "react";
 import Image from "next/image";
-import { UserCircle2, Send, Download, Loader2, Brain, RotateCcw, Edit3, FileText, Shield, Laptop } from 'lucide-react';
+import { UserCircle2, Send, Download, Loader2, Brain, RotateCcw, Edit3, FileText, Shield, Laptop } from 'lucide-react'; // Added Brain
 import { PlaceholderCard } from '@/components/dashboard/placeholder-card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -116,7 +116,7 @@ For more information, refer to document REF123.pdf or contact support. You can a
         text: aiResponseText,
         sender: 'ai',
         timestamp: new Date(),
-        contextTag: userContextTag, // AI can inherit or determine its own context
+        contextTag: userContextTag, 
         sourceNote: "Based on 'internal_knowledge_base_v2.3.pdf'",
         followUpActions: true,
       };
@@ -131,7 +131,6 @@ For more information, refer to document REF123.pdf or contact support. You can a
       title: `Action: ${actionType}`,
       description: `Triggered for question: "${originalQuestion.substring(0,50)}..."`,
     });
-    // Placeholder for actual follow-up logic
   };
 
   const handleGeneratePdf = () => {
@@ -147,22 +146,16 @@ For more information, refer to document REF123.pdf or contact support. You can a
       title: "PDF Generation Started",
       description: `Sanctuary_Procedure_Instructions.pdf is being generated with the latest AI response.`,
     });
-    // Actual PDF generation logic would go here
   };
 
   return (
     <main className="min-h-screen bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#5b21b6]/10 to-[#000104] flex-1 p-6 md:p-8 flex flex-col">
-      <h1 className="text-3xl font-bold tracking-tight text-foreground mb-6 flex items-center justify-center">
-        <div className="w-9 h-9 mr-3 relative animate-pulse-neon">
-          <Image 
-            src="/icons/brain-logo.png" 
-            alt="Maven AI Logo" 
-            fill 
-            style={{ objectFit: 'contain' }}
-          />
-        </div>
-        Maven
-      </h1>
+      <div className="flex items-center justify-center space-x-3 mb-6">
+        <Brain className="w-10 h-10 text-purple-500 animate-pulse-neon" />
+        <span className="text-4xl font-bold text-metallic-gradient">
+          Maven
+        </span>
+      </div>
       <div className="flex-grow flex flex-col items-center justify-center">
         <PlaceholderCard
           title=""
@@ -181,7 +174,7 @@ For more information, refer to document REF123.pdf or contact support. You can a
                 >
                   {msg.sender === 'ai' && (
                     <div className="w-8 h-8 shrink-0 rounded-full overflow-hidden self-start bg-black/50 flex items-center justify-center border border-primary/30">
-                      <Image src="/icons/brain-logo.png" alt="AI Avatar" width={24} height={24} className="opacity-80" />
+                      <Image src="/icons/brain-logo.png" alt="AI Avatar" width={24} height={24} className="opacity-80" data-ai-hint="AI avatar" />
                     </div>
                   )}
                   {msg.sender === 'user' && (
@@ -226,7 +219,7 @@ For more information, refer to document REF123.pdf or contact support. You can a
               {isLoadingAiResponse && (
                 <div className="flex items-start gap-3 mr-auto max-w-[85%] md:max-w-[75%] message-bubble-ai">
                    <div className="w-8 h-8 shrink-0 rounded-full overflow-hidden self-start bg-black/50 flex items-center justify-center border border-primary/30">
-                      <Image src="/icons/brain-logo.png" alt="AI Avatar" width={24} height={24} className="opacity-80" />
+                      <Image src="/icons/brain-logo.png" alt="AI Avatar" width={24} height={24} className="opacity-80" data-ai-hint="AI avatar thinking" />
                     </div>
                   <div className="p-3 text-sm shadow-md bg-muted/60 text-foreground rounded-lg rounded-bl-none border border-border/30">
                     <div className="flex space-x-1 items-center h-5">
