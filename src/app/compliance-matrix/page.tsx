@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 interface FlaggedActivity {
   id: string;
-  accountNumber: string; // Changed from accountName
+  accountNumber: string;
   accountType: "Managed" | "Non-Managed";
   tradesLast30Days: number;
   daysSinceLastTrade: number | null;
@@ -26,32 +26,6 @@ const summaryCardsData = [
   { title: "Inactive Managed Accounts", value: "6", icon: UserX, iconClassName: "text-gray-400" },
   { title: "Trade Frequency Anomalies", value: "3", icon: Activity, iconClassName: "text-yellow-400" },
   { title: "Unsuitable Products", value: "3", icon: Ban, iconClassName: "text-purple-400" },
-];
-
-// Helper to generate unique 6-digit numbers
-const generatedNumbers = new Set<string>();
-const generateUniqueSuffix = (): string => {
-  let suffix;
-  do {
-    suffix = Math.floor(100000 + Math.random() * 900000).toString();
-  } while (generatedNumbers.has(suffix));
-  generatedNumbers.add(suffix);
-  return suffix;
-};
-
-const flaggedActivityData: FlaggedActivity[] = [
-  { id: "fa1", accountNumber: `ABC${generateUniqueSuffix()}`, accountType: "Non-Managed", tradesLast30Days: 152, daysSinceLastTrade: 1, complianceFlag: "Excessive Trading", aiSuggestion: "Review trading activity against client's risk profile and IPS." },
-  { id: "fa2", accountNumber: `XYZ${generateUniqueSuffix()}`, accountType: "Managed", tradesLast30Days: 0, daysSinceLastTrade: 45, complianceFlag: "No Activity", aiSuggestion: "Contact client to discuss portfolio and reconfirm investment objectives." },
-  { id: "fa3", accountNumber: `ABC${generateUniqueSuffix()}`, accountType: "Non-Managed", tradesLast30Days: 5, daysSinceLastTrade: 3, complianceFlag: "Trade Frequency Anomaly", aiSuggestion: "Verify trades align with recent market news or client instructions." },
-  { id: "fa4", accountNumber: `XYZ${generateUniqueSuffix()}`, accountType: "Managed", tradesLast30Days: 0, daysSinceLastTrade: 62, complianceFlag: "No Activity", aiSuggestion: "Schedule portfolio review; ensure strategy alignment." },
-  { id: "fa5", accountNumber: `ABC${generateUniqueSuffix()}`, accountType: "Non-Managed", tradesLast30Days: 98, daysSinceLastTrade: 2, complianceFlag: "Excessive Trading", aiSuggestion: "Assess if self-directed trading aligns with stated goals." },
-  { id: "fa6", accountNumber: `XYZ${generateUniqueSuffix()}`, accountType: "Managed", tradesLast30Days: 10, daysSinceLastTrade: 5, complianceFlag: "Unsuitable Product", aiSuggestion: "Review account holdings (e.g., Leveraged ETFs) against the client's stated conservative risk tolerance. Document suitability or reposition." },
-  { id: "fa7", accountNumber: `XYZ${generateUniqueSuffix()}`, accountType: "Managed", tradesLast30Days: 2, daysSinceLastTrade: 80, complianceFlag: "No Activity", aiSuggestion: "Client nearing RMD age. Verify account activity expectations and confirm objectives." },
-  { id: "fa8", accountNumber: `ABC${generateUniqueSuffix()}`, accountType: "Non-Managed", tradesLast30Days: 200, daysSinceLastTrade: 1, complianceFlag: "Excessive Trading", aiSuggestion: "High trading volume. Cross-reference with documented strategy and risk profile." },
-  { id: "fa9", accountNumber: `XYZ${generateUniqueSuffix()}`, accountType: "Managed", tradesLast30Days: 1, daysSinceLastTrade: 15, complianceFlag: "Unsuitable Product", aiSuggestion: "Account holds highly speculative assets inconsistent with 'Education Fund' goal. Review IPS and realign strategy." },
-  { id: "fa10", accountNumber: `XYZ${generateUniqueSuffix()}`, accountType: "Managed", tradesLast30Days: 15, daysSinceLastTrade: 2, complianceFlag: "Trade Frequency Anomaly", aiSuggestion: "Recent shift to high-frequency, small-cap trades. Verify if this aligns with a recent change in client strategy or IPS." },
-  { id: "fa11", accountNumber: `XYZ${generateUniqueSuffix()}`, accountType: "Managed", tradesLast30Days: 0, daysSinceLastTrade: 95, complianceFlag: "No Activity", aiSuggestion: "Extended period of no activity in a balanced portfolio. Initiate client contact for review." },
-  { id: "fa12", accountNumber: `XYZ${generateUniqueSuffix()}`, accountType: "Managed", tradesLast30Days: 7, daysSinceLastTrade: 8, complianceFlag: "Unsuitable Product", aiSuggestion: "Portfolio includes non-income generating, high-volatility crypto assets. Re-evaluate suitability for income objective." }
 ];
 
 const getFlagBadgeVariant = (flag: FlaggedActivity["complianceFlag"]): "destructive" | "default" => {
@@ -85,6 +59,43 @@ const getFlagBadgeClassName = (flag: FlaggedActivity["complianceFlag"]): string 
 
 export default function ComplianceMatrixPage() {
   const [mavenQuery, setMavenQuery] = React.useState("");
+  const [flaggedActivityData, setFlaggedActivityData] = React.useState<FlaggedActivity[]>([]);
+
+  React.useEffect(() => {
+    // Helper to generate unique 6-digit numbers, specific to this effect
+    const generatedNumbers = new Set<string>();
+    const generateUniqueSuffix = (): string => {
+      let suffix;
+      do {
+        suffix = Math.floor(100000 + Math.random() * 900000).toString();
+      } while (generatedNumbers.has(suffix));
+      generatedNumbers.add(suffix);
+      return suffix;
+    };
+
+    const initialData: Omit<FlaggedActivity, 'accountNumber'>[] = [
+      { id: "fa1", accountType: "Non-Managed", tradesLast30Days: 152, daysSinceLastTrade: 1, complianceFlag: "Excessive Trading", aiSuggestion: "Review trading activity against client's risk profile and IPS." },
+      { id: "fa2", accountType: "Managed", tradesLast30Days: 0, daysSinceLastTrade: 45, complianceFlag: "No Activity", aiSuggestion: "Contact client to discuss portfolio and reconfirm investment objectives." },
+      { id: "fa3", accountType: "Non-Managed", tradesLast30Days: 5, daysSinceLastTrade: 3, complianceFlag: "Trade Frequency Anomaly", aiSuggestion: "Verify trades align with recent market news or client instructions." },
+      { id: "fa4", accountType: "Managed", tradesLast30Days: 0, daysSinceLastTrade: 62, complianceFlag: "No Activity", aiSuggestion: "Schedule portfolio review; ensure strategy alignment." },
+      { id: "fa5", accountType: "Non-Managed", tradesLast30Days: 98, daysSinceLastTrade: 2, complianceFlag: "Excessive Trading", aiSuggestion: "Assess if self-directed trading aligns with stated goals." },
+      { id: "fa6", accountType: "Managed", tradesLast30Days: 10, daysSinceLastTrade: 5, complianceFlag: "Unsuitable Product", aiSuggestion: "Review account holdings (e.g., Leveraged ETFs) against the client's stated conservative risk tolerance. Document suitability or reposition." },
+      { id: "fa7", accountType: "Managed", tradesLast30Days: 2, daysSinceLastTrade: 80, complianceFlag: "No Activity", aiSuggestion: "Client nearing RMD age. Verify account activity expectations and confirm objectives." },
+      { id: "fa8", accountType: "Non-Managed", tradesLast30Days: 200, daysSinceLastTrade: 1, complianceFlag: "Excessive Trading", aiSuggestion: "High trading volume. Cross-reference with documented strategy and risk profile." },
+      { id: "fa9", accountType: "Managed", tradesLast30Days: 1, daysSinceLastTrade: 15, complianceFlag: "Unsuitable Product", aiSuggestion: "Account holds highly speculative assets inconsistent with 'Education Fund' goal. Review IPS and realign strategy." },
+      { id: "fa10", accountType: "Managed", tradesLast30Days: 15, daysSinceLastTrade: 2, complianceFlag: "Trade Frequency Anomaly", aiSuggestion: "Recent shift to high-frequency, small-cap trades. Verify if this aligns with a recent change in client strategy or IPS." },
+      { id: "fa11", accountType: "Managed", tradesLast30Days: 0, daysSinceLastTrade: 95, complianceFlag: "No Activity", aiSuggestion: "Extended period of no activity in a balanced portfolio. Initiate client contact for review." },
+      { id: "fa12", accountType: "Managed", tradesLast30Days: 7, daysSinceLastTrade: 8, complianceFlag: "Unsuitable Product", aiSuggestion: "Portfolio includes non-income generating, high-volatility crypto assets. Re-evaluate suitability for income objective." }
+    ];
+    
+    const dataWithAccountNumbers = initialData.map(item => ({
+        ...item,
+        accountNumber: item.accountType === "Managed" ? `XYZ${generateUniqueSuffix()}` : `ABC${generateUniqueSuffix()}`
+    }));
+
+    setFlaggedActivityData(dataWithAccountNumbers);
+  }, []);
+
 
   const displayedActivities = flaggedActivityData.slice(0, 10);
 
@@ -189,4 +200,3 @@ export default function ComplianceMatrixPage() {
     </main>
   );
 }
-
