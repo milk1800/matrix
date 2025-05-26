@@ -5,19 +5,19 @@ import { Inter, Roboto_Mono } from 'next/font/google';
 import * as React from 'react';
 import Image from "next/image";
 import './globals.css';
-import Sidebar from '@/components/Sidebar';
+import Sidebar from '@/components/Sidebar'; // Updated path
 import { Toaster } from "@/components/ui/toaster";
-import { TooltipProvider } from "@/components/ui/tooltip";
+import { TooltipProvider } from "@/components/ui/tooltip"; // Ensure TooltipProvider is here
 import { AuthProvider } from "@/contexts/auth-context";
-import { TickerProvider, useTicker } from "@/contexts/ticker-context"; // Import TickerProvider
+import { TickerProvider, useTicker } from "@/contexts/ticker-context";
 
 const inter = Inter({
-  variable: '--font-inter',
+  variable: '--font-inter', // Matching variable name in globals.css body
   subsets: ['latin'],
 });
 
 const robotoMono = Roboto_Mono({
-  variable: '--font-roboto-mono',
+  variable: '--font-roboto-mono', // Matching variable name in globals.css body
   subsets: ['latin'],
 });
 
@@ -26,11 +26,13 @@ function TickerContent() {
   const { tickerMessage } = useTicker();
 
   if (tickerMessage) {
-    // Repeat the message a few times to ensure scrolling for shorter messages
-    const repeatedMessage = Array(5).fill(tickerMessage).join(" ••• ");
+    // Repeat the message many times to ensure scrolling for shorter messages and a seamless loop
+    const repeatedMessage = Array(15).fill(tickerMessage).join("  •••  "); // Increased spacing for readability
     return (
-      <div className="animate-ticker whitespace-nowrap flex space-x-6 text-sm font-mono">
-        <span className="text-white">{repeatedMessage}</span>
+      <div className="animate-ticker whitespace-nowrap flex items-center text-sm font-mono">
+        {/* Render two instances of the repeated message for seamless looping with the CSS animation */}
+        <span className="text-white px-3">{repeatedMessage}</span>
+        <span className="text-white px-3">{repeatedMessage}</span>
       </div>
     );
   }
@@ -53,12 +55,12 @@ function TickerContent() {
     { symbol: 'BABA', price: '$85.10', change: '▼0.9%', color: 'text-red-400' },
     { symbol: 'ROKU', price: '$62.22', change: '▲2.0%', color: 'text-green-400' },
   ];
-  const duplicatedStockItems = [...stockItems, ...stockItems]; // Duplicate for seamless scroll
+  const duplicatedStockItems = [...stockItems, ...stockItems, ...stockItems]; // Duplicate more for very wide screens
 
   return (
-    <div className="animate-ticker whitespace-nowrap flex space-x-6 text-sm font-mono">
+    <div className="animate-ticker whitespace-nowrap flex items-center text-sm font-mono">
       {duplicatedStockItems.map((stock, index) => (
-        <span key={index} className="text-white">
+        <span key={index} className="text-white px-3"> {/* Added px-3 for consistent spacing */}
           {stock.symbol}: <span className={stock.color}>{stock.price} {stock.change}</span>
         </span>
       ))}
@@ -77,14 +79,14 @@ export default function RootLayout({
     <html lang="en" className="dark">
       <body className={`${inter.variable} ${robotoMono.variable} antialiased flex flex-col h-screen`}>
         <AuthProvider>
-          <TickerProvider> {/* Wrap with TickerProvider */}
+          <TickerProvider>
             <div className="w-full overflow-hidden bg-black/90 border-b border-gray-700 py-2 fixed top-0 z-50">
               <TickerContent />
             </div>
-            <div className="flex flex-1 pt-10"> {/* pt-10 to account for fixed ticker height */}
+            <div className="flex flex-1 h-screen pt-10"> {/* Ensures this container takes full height and has top padding */}
               <TooltipProvider delayDuration={0}>
                 <Sidebar />
-                <main className="flex-1 overflow-y-auto bg-transparent">
+                <main className="flex-1 overflow-y-auto bg-transparent"> {/* Removed pt-10 from here */}
                   {children}
                 </main>
               </TooltipProvider>
