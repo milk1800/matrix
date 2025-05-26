@@ -283,7 +283,8 @@ export default function ClientPortalCalendarPage() {
                  <div className="overflow-x-auto relative"> {/* Added relative for current time line */}
                     <table className="w-full border-collapse bg-card">
                         <thead>
-                            <tr><th className="w-16 p-2 border-r border-b border-border/30 text-xs text-muted-foreground font-normal sticky left-0 bg-card z-10"></th>{/* Time labels corner */}
+                            <tr>
+                                <th className="w-16 p-2 border-r border-b border-border/30 text-xs text-muted-foreground font-normal sticky left-0 bg-card z-10"></th>{/* Time labels corner */}
                                 {weekDates.map(day => (
                                     <th key={day.dateNumber} className="p-2 border-r border-b border-border/30 text-center">
                                         <div className={cn("text-xs font-medium", isToday(day.fullDate) ? "text-primary" : "text-muted-foreground")}>{day.dayName}</div>
@@ -296,7 +297,7 @@ export default function ClientPortalCalendarPage() {
                                 {Array.from({ length: 7 }).map((_, i) => ( <td key={`all-day-${i}`} className="h-10 border-r border-b border-border/30 hover:bg-muted/20"></td> ))}
                             </tr>
                         </thead>
-                        <tbody className="relative">{/* Ensure tbody is relative for absolute positioning of line */}
+                        <tbody className="relative">
                             {hoursToDisplay.map((hourLabel, hourIndex) => (
                                 <tr key={hourLabel}>
                                     <td className="w-16 p-2 border-r border-b border-border/30 text-xs text-muted-foreground align-top text-right sticky left-0 bg-card z-10">
@@ -307,14 +308,14 @@ export default function ClientPortalCalendarPage() {
                                     ))}
                                 </tr>
                             ))}
-                             {/* Current Time Indicator for Week View - Placed within tbody or after it if more appropriate */}
-                            {currentTimePosition !== null && isSameDay(startOfWeek(currentDateForCalendar, { weekStartsOn: 0 }), startOfWeek(new Date(), { weekStartsOn: 0 })) && (
-                              <div className="absolute w-[calc(100%-4rem)] h-0.5 bg-red-500 z-10 right-0" style={{ top: `${currentTimePosition}%` }}>
-                                <div className="absolute -left-1.5 -top-1.5 w-3.5 h-3.5 bg-red-500 rounded-full"></div>
-                              </div>
-                            )}
                         </tbody>
                     </table>
+                    {/* Current Time Indicator for Week View - Now a sibling to the table, within the relative container */}
+                    {currentTimePosition !== null && isSameDay(startOfWeek(currentDateForCalendar, { weekStartsOn: 0 }), startOfWeek(new Date(), { weekStartsOn: 0 })) && (
+                      <div className="absolute w-[calc(100%-4rem)] h-0.5 bg-red-500 z-10 right-0" style={{ top: `${currentTimePosition}%` }}>
+                        <div className="absolute -left-1.5 -top-1.5 w-3.5 h-3.5 bg-red-500 rounded-full"></div>
+                      </div>
+                    )}
                 </div>
               )}
               {activeView === 'day' && (
@@ -488,3 +489,4 @@ export default function ClientPortalCalendarPage() {
 }
 
     
+
