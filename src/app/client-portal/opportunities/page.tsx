@@ -59,31 +59,41 @@ const initialPipelineData: PipelineColumn[] = [
     id: 'decision_makers',
     title: 'Identify Decision Makers',
     opportunities: [
-      { id: 'opp3', title: 'Follow-up - ACME Corp', contactName: 'John Smith', amountDisplay: '$1,500 (Project)', amountValue: 1500, amountType: 'one_time', probability: 30, targetCloseDate: '2024-08-20', stage: 'decision_makers' },
+      { id: 'opp3', title: 'Follow-up - ACME Corp', contactName: 'John Smith', amountDisplay: '$1,500 (Project)', amountValue: 1500, amountType: 'one_time', probability: 45, targetCloseDate: '2024-08-20', stage: 'decision_makers' },
     ],
   },
   {
     id: 'qualification',
     title: 'Qualification',
     opportunities: [
-      { id: 'opp4', title: 'Needs Assessment - Beta LLC', contactName: 'Jane Roe', amountDisplay: '$750 (Retainer)', amountValue: 750, amountType: 'recurring_fee', probability: 50, targetCloseDate: '2024-08-28', stage: 'qualification' },
+      { id: 'opp4', title: 'Needs Assessment - Beta LLC', contactName: 'Jane Roe', amountDisplay: '$750 (Retainer)', amountValue: 750, amountType: 'recurring_fee', probability: 75, targetCloseDate: '2024-08-28', stage: 'qualification' },
     ],
   },
   {
     id: 'needs_analysis',
     title: 'Needs Analysis',
     opportunities: [
-      { id: 'opp5', title: 'Proposal Sent - Beta LLC', contactName: 'Jane Roe', amountDisplay: '$750 (Retainer)', amountValue: 750, amountType: 'recurring_fee', probability: 70, targetCloseDate: '2024-09-10', stage: 'needs_analysis' },
+      { id: 'opp5', title: 'Proposal Sent - Beta LLC', contactName: 'Jane Roe', amountDisplay: '$750 (Retainer)', amountValue: 750, amountType: 'recurring_fee', probability: 90, targetCloseDate: '2024-09-10', stage: 'needs_analysis' },
     ],
   },
   {
     id: 'review',
     title: 'Review',
     opportunities: [
-       { id: 'opp6', title: 'Negotiation - Gamma Inc.', contactName: 'Peter Quill', amountDisplay: '$5,000 (Consulting)', amountValue: 5000, amountType: 'one_time', probability: 85, targetCloseDate: '2024-07-30', stage: 'review' },
+       { id: 'opp6', title: 'Negotiation - Gamma Inc.', contactName: 'Peter Quill', amountDisplay: '$5,000 (Consulting)', amountValue: 5000, amountType: 'one_time', probability: 65, targetCloseDate: '2024-07-30', stage: 'review' },
     ],
   },
 ];
+
+const getProbabilityBadgeClass = (probability: number): string => {
+  if (probability < 40) {
+    return "bg-red-500/20 border-red-500/50 text-red-400"; // Low
+  } else if (probability < 70) {
+    return "bg-yellow-500/20 border-yellow-500/50 text-yellow-400"; // Medium
+  } else {
+    return "bg-green-500/20 border-green-500/50 text-green-400"; // High
+  }
+};
 
 
 export default function ClientPortalOpportunitiesPage() {
@@ -127,7 +137,7 @@ export default function ClientPortalOpportunitiesPage() {
     setIsLoading(true);
     
     const requiredFields = [opportunityName, opportunityContact, opportunityPipeline, opportunityStage, opportunityAmount, opportunityTargetClose];
-    if (requiredFields.some(field => !field.trim())) {
+    if (requiredFields.some(field => !field || (typeof field === 'string' && !field.trim())) ) {
       toast({
         title: "Validation Error",
         description: "Please fill out all required fields: Name, Contact, Pipeline, Stage, Amount, and Target Close Date.",
@@ -214,7 +224,7 @@ export default function ClientPortalOpportunitiesPage() {
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>, targetColumnId: string) => {
     e.preventDefault();
-    e.currentTarget.classList.remove('opacity-50'); // Should be on the dragged item, handled by onDragEnd
+    e.currentTarget.classList.remove('opacity-50');
     
     const opportunityId = e.dataTransfer.getData("opportunityId");
     const sourceColumnId = e.dataTransfer.getData("sourceColumnId");
@@ -223,9 +233,12 @@ export default function ClientPortalOpportunitiesPage() {
 
     let draggedOpportunity: OpportunityItem | undefined;
 
-    const newPipelineData = pipelineData.map(column => {
+    // Create a new pipelineData array to trigger re-render
+    const updatedPipelineData = pipelineData.map(column => {
       if (column.id === sourceColumnId) {
+        // Find and store the dragged opportunity
         draggedOpportunity = column.opportunities.find(opp => opp.id === opportunityId);
+        // Return the source column without the dragged opportunity
         return {
           ...column,
           opportunities: column.opportunities.filter(opp => opp.id !== opportunityId),
@@ -234,6 +247,8 @@ export default function ClientPortalOpportunitiesPage() {
       return column;
     }).map(column => {
       if (column.id === targetColumnId && draggedOpportunity) {
+        // Add the dragged opportunity (with updated stage) to the target column
+        // It's important to create a new object for the opportunity
         return {
           ...column,
           opportunities: [{ ...draggedOpportunity, stage: targetColumnId }, ...column.opportunities],
@@ -242,7 +257,7 @@ export default function ClientPortalOpportunitiesPage() {
       return column;
     });
 
-    setPipelineData(newPipelineData);
+    setPipelineData(updatedPipelineData);
 
     const targetColumnTitle = pipelineData.find(col => col.id === targetColumnId)?.title || targetColumnId;
     toast({
@@ -328,7 +343,7 @@ export default function ClientPortalOpportunitiesPage() {
                         <div className="flex-grow">
                           <div className="flex justify-between items-start mb-1">
                             <h3 className="text-sm font-medium text-foreground">{opp.title}</h3>
-                            <Badge variant="outline" className="text-xs bg-primary/20 border-primary/50 text-primary">
+                            <Badge variant="outline" className={cn("text-xs", getProbabilityBadgeClass(opp.probability))}>
                               {opp.probability}%
                             </Badge>
                           </div>
@@ -403,7 +418,18 @@ export default function ClientPortalOpportunitiesPage() {
             </div>
             <div>
               <Label htmlFor="opportunityProbability-dialog">Probability (%)</Label>
-              <Input type="number" id="opportunityProbability-dialog" placeholder="e.g., 75" value={opportunityProbability} onChange={(e) => setOpportunityProbability(e.target.value)} className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary" min="0" max="100"/>
+              <Select value={opportunityProbability} onValueChange={setOpportunityProbability}>
+                  <SelectTrigger id="opportunityProbability-dialog" className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary"><SelectValue placeholder="Select probability" /></SelectTrigger>
+                  <SelectContent>
+                      <SelectItem value="0">0%</SelectItem>
+                      <SelectItem value="10">10%</SelectItem>
+                      <SelectItem value="25">25%</SelectItem>
+                      <SelectItem value="50">50%</SelectItem>
+                      <SelectItem value="75">75%</SelectItem>
+                      <SelectItem value="90">90%</SelectItem>
+                      <SelectItem value="100">100%</SelectItem>
+                  </SelectContent>
+              </Select>
             </div>
             <div>
               <Label>Amount</Label>
@@ -442,3 +468,4 @@ export default function ClientPortalOpportunitiesPage() {
     </>
   );
 }
+
