@@ -10,15 +10,14 @@ import {
   BarChart3,
   Users,
   TrendingUp,
-  Repeat, // For Conversion Analytics
-  ShieldAlert, // For Compliance Matrix
-  LayoutGrid, // For Resource Matrix (and as a general "tools" icon if needed)
-  PieChart,   // For Portfolio Matrix
-  Shapes,     // For Model Matrix
-  FlaskConical, // For Project X
+  Repeat,
+  ShieldAlert,
+  LayoutGrid,
+  PieChart,
+  Shapes,
+  FlaskConical,
   BellRing,
-  // Sidebar specific icons
-  AppWindow,    // For Client Portal Section
+  AppWindow,
   Home as HomeIcon,
   Mail,
   Contact as ContactIcon,
@@ -26,13 +25,14 @@ import {
   CalendarDays,
   Briefcase,
   Workflow,
-  KanbanSquare, // For Projects Tab
-  FileText,     // For Files Tab
-  BarChart2,    // For Reports Tab (Client Portal)
+  KanbanSquare,
+  FileText,
+  BarChart2,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
-  Brain
+  Brain,
+  // PiggyBank // Was potentially used for Contribution Matrix, but TrendingUp is used now
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -84,13 +84,6 @@ const navSectionsData: NavSection[] = [
       { name: 'Model Matrix', icon: Shapes, href: '/model-matrix' },
       { name: 'Contribution Matrix', icon: TrendingUp, href: '/contribution-matrix' },
       { name: 'Project X', icon: FlaskConical, href: '/project-x' },
-    ],
-  },
-   {
-    id: 'tools',
-    title: 'MATRIX TOOLS',
-    icon: LayoutGrid,
-    items: [
       { name: 'Resource Matrix', icon: LayoutGrid, href: '/resource-matrix' },
     ],
   },
@@ -100,11 +93,11 @@ const alertsNavItem: NavItem = {
   name: 'Alerts',
   icon: BellRing,
   href: '/alerts',
-  hasNewAlerts: true, // Mock new alerts
+  hasNewAlerts: true, 
 };
 
 export default function Sidebar() {
-  const [collapsed, setCollapsed] = useState(false); // Default to expanded for SSR consistency
+  const [collapsed, setCollapsed] = useState(false);
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
   const [isClient, setIsClient] = useState(false);
   const currentPathname = usePathname();
@@ -151,25 +144,43 @@ export default function Sidebar() {
       }
     }
   }, [collapsed, openSections, isClient]);
+  
+  const currentDisplayCollapsed = isClient ? collapsed : false;
 
   const toggleSidebar = useCallback(() => {
-    const newCollapsedState = !collapsed;
+    const newCollapsedState = !currentDisplayCollapsed;
     setCollapsed(newCollapsedState);
-    // Logic to handle section states when toggling sidebar can be added here if needed
-    // For example, if collapsing, you might want to save current openSections
-    // If expanding, you might want to restore them or default to all open.
-    // The current effect for saving openSections already handles saving only when !collapsed.
-  }, [collapsed, isClient]);
+    if (newCollapsedState) {
+        // If collapsing, save current openSections before potentially hiding them
+        localStorage.setItem("matrix-sidebar-sections-open", JSON.stringify(openSections));
+    } else {
+        // If expanding, try to restore or default to all open
+        const storedSectionsState = localStorage.getItem("matrix-sidebar-sections-open");
+        const initialOpenState: Record<string, boolean> = {};
+        if (storedSectionsState) {
+            try {
+                const parsedStored = JSON.parse(storedSectionsState);
+                navSectionsData.forEach(section => {
+                    initialOpenState[section.id] = parsedStored.hasOwnProperty(section.id) ? parsedStored[section.id] : true;
+                });
+            } catch (e) {
+                navSectionsData.forEach(section => { initialOpenState[section.id] = true; });
+            }
+        } else {
+            navSectionsData.forEach(section => { initialOpenState[section.id] = true; });
+        }
+        setOpenSections(initialOpenState);
+    }
+  }, [currentDisplayCollapsed, openSections, isClient]);
 
   const toggleSection = useCallback((sectionId: string) => {
-    if (!collapsed && isClient) {
+    if (!currentDisplayCollapsed && isClient) {
       setOpenSections(prev => {
         const newState = { ...prev, [sectionId]: !prev[sectionId] };
-        // This localStorage update will be picked up by the effect that depends on openSections
         return newState;
       });
     }
-  }, [collapsed, isClient]);
+  }, [currentDisplayCollapsed, isClient]);
 
   const renderNavItem = (item: NavItem, isIconOnlyView: boolean) => {
     const isActive = currentPathname === item.href || (currentPathname.startsWith(item.href) && item.href !== '/dashboard' && item.href !== '/');
@@ -178,7 +189,7 @@ export default function Sidebar() {
       "w-5 h-5 shrink-0 transition-colors duration-200",
       isActive 
         ? "text-primary" 
-        : item.hasNewAlerts && isClient 
+        : item.hasNewAlerts && isClient // Only flash if client-side rendering and new alerts
           ? "animate-red-pulse text-red-500" 
           : "text-sidebar-foreground/70 group-hover/navitem:text-sidebar-foreground"
     );
@@ -226,7 +237,25 @@ export default function Sidebar() {
     }
   };
   
-  const currentDisplayCollapsed = isClient ? collapsed : false; // Server always renders expanded
+  if (!isClient && typeof window === 'undefined') {
+    // Simplified SSR rendering or placeholder to avoid localStorage issues
+    return (
+      <aside className="h-full bg-black/90 border-r border-gray-800/50 text-white transition-all duration-300 w-64 flex flex-col">
+         <div className="flex items-center p-4 px-5 justify-between">
+          <div className="flex items-center justify-center space-x-3">
+            <Brain className="text-purple-500 animate-pulse-neon w-10 h-10" />
+            <span className="text-4xl font-bold text-metallic-gradient leading-tight">
+              Matrix
+            </span>
+          </div>
+        </div>
+        <nav className="flex-1 space-y-1 px-2 py-4 overflow-y-auto">
+          {/* Placeholder or minimal nav for SSR */}
+        </nav>
+      </aside>
+    );
+  }
+
 
   return (
     <aside
@@ -248,7 +277,7 @@ export default function Sidebar() {
           <button
             onClick={toggleSidebar}
             className="p-1 text-gray-400 hover:text-white hover:bg-white/10 rounded-md"
-            aria-label={"Collapse sidebar"}
+            aria-label={currentDisplayCollapsed ? "Expand sidebar" : "Collapse sidebar"}
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
@@ -304,11 +333,10 @@ export default function Sidebar() {
           )}
         </nav>
         <div className="mt-auto p-2 border-t border-sidebar-border/30">
-          {renderNavItem(alertsNavItem, true)} 
+          {renderNavItem(alertsNavItem, currentDisplayCollapsed)} 
         </div>
       </TooltipProvider>
     </aside>
   );
 }
 
-    
