@@ -5,14 +5,6 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 import {
-  ChevronDown,
-  AppWindow, // For Client Portal section
-  Home as HomeIcon,
-  Mail,
-  Contact as ContactIcon,
-  ListChecks,
-  CalendarDays,
-  Briefcase,
   LayoutDashboard,
   BarChart3,
   Users,
@@ -22,14 +14,22 @@ import {
   LayoutGrid,
   PieChart,
   Shapes,
-  BellRing,
   FlaskConical,
+  BellRing,
   Brain,
   ChevronLeft,
   ChevronRight,
+  AppWindow,
+  Home as HomeIcon,
+  Mail,
+  Contact as ContactIcon,
+  ListChecks,
+  CalendarDays,
+  Briefcase,
+  ChevronDown,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import type { LucideIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface NavItem {
   name: string;
@@ -62,7 +62,7 @@ const navSectionsData: NavSection[] = [
   {
     id: 'analytics',
     title: 'Analytics',
-    icon: BarChart3,
+    icon: BarChart3, // Main icon for the Analytics section itself
     items: [
       { name: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
       { name: 'Asset Analytics', icon: BarChart3, href: '/asset-analytics' },
@@ -107,7 +107,6 @@ export default function Sidebar() {
     if (storedSectionsState) {
       try {
         const parsedStoredSections = JSON.parse(storedSectionsState);
-        // Merge with defaults to ensure all sections have an entry
         Object.keys(initialOpenSections).forEach(key => {
           if (parsedStoredSections.hasOwnProperty(key)) {
             initialOpenSections[key] = parsedStoredSections[key];
@@ -116,10 +115,10 @@ export default function Sidebar() {
         setOpenSections(initialOpenSections);
       } catch (e) {
         console.error("Failed to parse sidebar sections state from localStorage", e);
-        setOpenSections(initialOpenSections); // Fallback to defaults
+        setOpenSections(initialOpenSections);
       }
     } else {
-      setOpenSections(initialOpenSections); // Set defaults if nothing in localStorage
+      setOpenSections(initialOpenSections);
     }
   }, []);
 
@@ -141,6 +140,11 @@ export default function Sidebar() {
     });
   };
 
+  let currentPathname = "";
+  if (isClient) {
+    currentPathname = window.location.pathname;
+  }
+
   const renderNavItem = (item: NavItem, currentPathname: string) => {
     const isActive = currentPathname === item.href || (currentPathname.startsWith(item.href) && item.href !== '/dashboard' && item.href !== '/');
     const linkContent = (
@@ -159,7 +163,7 @@ export default function Sidebar() {
       isActive
         ? "bg-primary/30 shadow-card-hover-glow -translate-y-px text-sidebar-primary-foreground"
         : "bg-black/40 text-sidebar-foreground hover:bg-black/50 hover:shadow-[0_0_10px_rgba(124,58,237,0.2)] hover:-translate-y-px",
-      collapsed && "justify-center p-2.5" // Adjust padding for icon-only
+      collapsed && "justify-center p-2.5"
     );
 
     if (collapsed) {
@@ -184,12 +188,6 @@ export default function Sidebar() {
     }
   };
 
-  let currentPathname = "";
-  if (isClient) {
-    currentPathname = window.location.pathname;
-  }
-
-
   return (
     <aside
       className={cn(
@@ -198,8 +196,11 @@ export default function Sidebar() {
       )}
     >
       <div className="flex items-center justify-between px-4 py-4 border-b border-sidebar-border/30">
-        <div className={cn("flex items-center justify-center w-full", collapsed ? "" : "space-x-3")}>
-          <Brain className="w-10 h-10 text-purple-500 animate-pulse-neon shrink-0" />
+        <div className={cn("flex items-center w-full", collapsed ? "justify-center" : "space-x-3")}>
+          <Brain className={cn(
+            "text-purple-500 animate-pulse-neon shrink-0",
+            collapsed ? "w-8 h-8" : "w-10 h-10" 
+          )} />
           {!collapsed && (
             <span className="text-4xl font-bold text-metallic-gradient">
               Matrix
@@ -217,43 +218,41 @@ export default function Sidebar() {
       
       <TooltipProvider delayDuration={0}>
         <nav className="flex-1 space-y-1 px-2 py-4 overflow-y-auto">
-          {navSectionsData.map((section) => (
-            <div key={section.id} className="mb-2">
-              <button
-                onClick={() => toggleSection(section.id)}
-                className={cn(
-                  "flex items-center w-full text-left px-3 py-2.5 rounded-md hover:bg-black/50 transition-colors duration-150 ease-out",
-                  collapsed && "justify-center p-2.5"
-                )}
-                aria-expanded={openSections[section.id]}
-              >
-                <section.icon className={cn("w-5 h-5 shrink-0", collapsed ? "text-gray-300" : "text-gray-400")} />
-                {!collapsed && (
+          {collapsed ? (
+            // Collapsed view: Flattened list of all items
+            navSectionsData.flatMap(section => section.items).map((item) =>
+              renderNavItem(item, currentPathname)
+            )
+          ) : (
+            // Expanded view: Iterate through sections
+            navSectionsData.map((section) => (
+              <div key={section.id} className="mb-2">
+                <button
+                  onClick={() => toggleSection(section.id)}
+                  className={cn(
+                    "flex items-center w-full text-left px-3 py-2.5 rounded-md hover:bg-black/50 transition-colors duration-150 ease-out"
+                  )}
+                  aria-expanded={openSections[section.id]}
+                >
+                  <section.icon className="w-5 h-5 shrink-0 text-gray-400" />
                   <span className="ml-3 text-sm font-semibold text-gray-300 uppercase tracking-wider truncate flex-1">
                     {section.title}
                   </span>
-                )}
-                {!collapsed && (
                   <ChevronDown
                     className={cn(
                       "w-4 h-4 text-gray-400 shrink-0 transition-transform duration-200",
                       openSections[section.id] && "rotate-180"
                     )}
                   />
+                </button>
+                {openSections[section.id] && (
+                  <div className="mt-1 space-y-1 pl-4">
+                    {section.items.map((item) => renderNavItem(item, currentPathname))}
+                  </div>
                 )}
-              </button>
-              {openSections[section.id] && (
-                <div className={cn("mt-1 space-y-1", !collapsed && "pl-4")}>
-                  {section.items.map((item) => renderNavItem(item, currentPathname))}
-                </div>
-              )}
-              {collapsed && openSections[section.id] && (
-                 <div className="mt-1 space-y-1">
-                  {section.items.map((item) => renderNavItem(item, currentPathname))}
-                </div>
-              )}
-            </div>
-          ))}
+              </div>
+            ))
+          )}
         </nav>
         <div className="mt-auto p-2 border-t border-sidebar-border/30">
           {renderNavItem(alertsNavItem, currentPathname)}
@@ -262,3 +261,5 @@ export default function Sidebar() {
     </aside>
   );
 }
+
+    
