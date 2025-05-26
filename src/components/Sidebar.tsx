@@ -27,14 +27,15 @@ import {
   CalendarDays,
   Briefcase,
   ChevronDown,
+  AppWindow,
   Workflow,
   KanbanSquare,
   FileText,
-  AppWindow, // Added AppWindow import
+  BarChart2, // Added for Reports
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import Image from "next/image"; // Keep Image for brain logo if it's a PNG
+import Image from "next/image";
 import { Button } from "@/components/ui/button";
 
 interface NavItem {
@@ -55,7 +56,7 @@ const navSectionsData: NavSection[] = [
   {
     id: 'clientPortal',
     title: 'CLIENT PORTAL',
-    icon: AppWindow, // Use the imported AppWindow icon
+    icon: AppWindow,
     items: [
       { name: 'Home', icon: HomeIcon, href: '/client-portal/home' },
       { name: 'Email', icon: Mail, href: '/client-portal/email' },
@@ -66,6 +67,7 @@ const navSectionsData: NavSection[] = [
       { name: 'Opportunities', icon: Briefcase, href: '/client-portal/opportunities' },
       { name: 'Projects', icon: KanbanSquare, href: '/client-portal/projects' },
       { name: 'Files', icon: FileText, href: '/client-portal/files' },
+      { name: 'Reports', icon: BarChart2, href: '/client-portal/reports' }, // New Reports tab
     ],
   },
   {
@@ -79,11 +81,18 @@ const navSectionsData: NavSection[] = [
       { name: 'Financial Analytics', icon: TrendingUp, href: '/financial-analytics' },
       { name: 'Conversion Analytics', icon: Repeat, href: '/conversion-analytics' },
       { name: 'Compliance Matrix', icon: ShieldAlert, href: '/compliance-matrix' },
-      { name: 'Resource Matrix', icon: LayoutGrid, href: '/resource-matrix' },
       { name: 'Portfolio Matrix', icon: PieChart, href: '/portfolio-matrix' },
       { name: 'Model Matrix', icon: Shapes, href: '/model-matrix' },
       { name: 'Contribution Matrix', icon: TrendingUp, href: '/contribution-matrix' },
       { name: 'Project X', icon: FlaskConical, href: '/project-x' },
+    ],
+  },
+   {
+    id: 'tools',
+    title: 'MATRIX TOOLS',
+    icon: LayoutGrid, // Using LayoutGrid as a general "tools" icon
+    items: [
+      { name: 'Resource Matrix', icon: LayoutGrid, href: '/resource-matrix' },
     ],
   },
 ];
@@ -92,14 +101,13 @@ const alertsNavItem: NavItem = {
   name: 'Alerts',
   icon: BellRing,
   href: '/alerts',
-  hasNewAlerts: true, // Mock new alerts
+  hasNewAlerts: true,
 };
 
 export default function Sidebar() {
   const [isClient, setIsClient] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
-  const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const currentPathname = usePathname();
 
   useEffect(() => {
@@ -127,19 +135,18 @@ export default function Sidebar() {
         } catch (e) {
             console.error("Failed to parse sidebar sections state from localStorage", e);
         }
-    } else if (isClient) { // Only set default if nothing in localStorage AND we are on client
+    } else if (typeof window !== 'undefined') { 
         navSectionsData.forEach(section => {
-             initialOpenState[section.id] = !collapsed; // Default open when expanded
+             initialOpenState[section.id] = !collapsed; 
         });
     }
     setOpenSections(initialOpenState);
 
-  }, [currentPathname, isClient]); // Add isClient to dependencies
+  }, [currentPathname, collapsed]); 
 
   useEffect(() => {
-    if (isClient) { //Only update localStorage if we are on the client
+    if (typeof window !== 'undefined') {
       localStorage.setItem("matrix-sidebar-collapsed", String(collapsed));
-       // When collapsing, ensure all sections are marked as 'open' in localStorage for consistent icon display
       if (collapsed) {
         const allOpenState: Record<string, boolean> = {};
         navSectionsData.forEach(section => {
@@ -147,11 +154,10 @@ export default function Sidebar() {
         });
         localStorage.setItem("matrix-sidebar-sections-open", JSON.stringify(allOpenState));
       } else {
-        // When expanding, restore their actual individual state
         localStorage.setItem("matrix-sidebar-sections-open", JSON.stringify(openSections));
       }
     }
-  }, [collapsed, isClient, openSections]);
+  }, [collapsed, openSections]);
 
 
   const toggleSidebar = () => {
@@ -161,7 +167,7 @@ export default function Sidebar() {
   const toggleSection = (sectionId: string) => {
     setOpenSections(prev => {
       const newOpenState = { ...prev, [sectionId]: !prev[sectionId] };
-      if (isClient) {
+      if (typeof window !== 'undefined') {
         localStorage.setItem("matrix-sidebar-sections-open", JSON.stringify(newOpenState));
       }
       return newOpenState;
@@ -177,7 +183,13 @@ export default function Sidebar() {
         ? "text-primary" 
         : item.hasNewAlerts 
           ? "animate-red-pulse text-red-500" 
-          : "text-sidebar-foreground/70 group-hover/navitem:text-sidebar-foreground" // Updated for better hover
+          : "text-sidebar-foreground/70 group-hover/navitem:text-sidebar-foreground"
+    );
+
+    const linkClasses = cn(
+      "flex items-center gap-4 px-4 py-2 text-base font-medium rounded-[8px] transition-all duration-200 ease-out group/navitem",
+      "bg-white/[.02] text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-white/[.05] hover:-translate-y-px",
+      collapsed && isIconOnlyContext && "justify-center p-2.5"
     );
 
     const linkContent = (
@@ -185,13 +197,6 @@ export default function Sidebar() {
         <item.icon className={iconClasses} />
         {(!collapsed || !isIconOnlyContext) && <span className="truncate">{item.name}</span>}
       </>
-    );
-
-    const linkClasses = cn(
-      "flex items-center gap-4 px-4 py-2 text-base font-medium rounded-[8px] transition-all duration-200 ease-out group/navitem",
-      "text-sidebar-foreground/80 hover:text-sidebar-foreground", 
-      isActive ? "bg-primary/10 text-primary" : "hover:bg-white/[.05] hover:-translate-y-px",
-      collapsed && isIconOnlyContext && "justify-center p-2.5"
     );
 
     if (collapsed && isIconOnlyContext) {
@@ -224,9 +229,16 @@ export default function Sidebar() {
     }
   };
   
-  if (!isClient) { 
+  if (!isClient && typeof window === 'undefined') { 
       return (
-         <aside className={cn("h-full bg-black/90 border-r border-gray-800 text-white transition-all duration-300 flex flex-col", "w-64")}>
+         <aside className={cn("h-full bg-black/90 border-r border-gray-800/50 text-white transition-all duration-300 flex flex-col", "w-64")}>
+            {/* Basic structure for SSR to avoid layout shifts or empty sidebar */}
+            <div className="flex items-center justify-center p-4 px-5">
+                <div className="w-10 h-10 bg-purple-500/30 rounded-full animate-pulse"></div>
+            </div>
+            <nav className="flex-1 p-2 space-y-1">
+                {/* Could render skeleton loaders here if desired */}
+            </nav>
          </aside>
       );
   }
@@ -239,25 +251,25 @@ export default function Sidebar() {
       )}
     >
       <div className={cn("flex items-center p-4 px-5 justify-between", collapsed && "justify-center")}>
-        <div className={cn("flex items-center", collapsed ? "justify-center w-full" : "space-x-3")}>
-          <div className={cn("animate-pulse-neon relative", collapsed ? "w-8 h-8" : "w-10 h-10")}>
-            <Image src="/icons/brain-logo.png" alt="Matrix Logo" fill objectFit="contain" />
-          </div>
+        <div className={cn("flex items-center justify-center space-x-3", collapsed && "w-full")}>
+          <Brain className={cn("text-purple-500 animate-pulse-neon", collapsed ? "w-8 h-8" : "w-10 h-10")} />
           {!collapsed && (
             <span className="text-4xl font-bold text-metallic-gradient leading-tight">
               Matrix
             </span>
           )}
         </div>
-        <Button
-            onClick={toggleSidebar}
-            variant="ghost"
-            size="icon"
-            className={cn("p-1 text-gray-400 hover:text-white hover:bg-white/10", collapsed && "absolute top-4 right-1/2 translate-x-1/2 hidden")} // Initially hidden when collapsed, logic in nav section will show expand
-            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          >
-          <ChevronLeft className="w-5 h-5" />
-        </Button>
+         {!collapsed && (
+             <Button
+                onClick={toggleSidebar}
+                variant="ghost"
+                size="icon"
+                className="p-1 text-gray-400 hover:text-white hover:bg-white/10"
+                aria-label="Collapse sidebar"
+            >
+            <ChevronLeft className="w-5 h-5" />
+            </Button>
+         )}
       </div>
       {collapsed && (
         <div className="flex justify-center items-center py-2 border-t border-b border-sidebar-border/30">
@@ -285,23 +297,27 @@ export default function Sidebar() {
                 <button
                   onClick={() => toggleSection(section.id)}
                   className={cn(
-                    "flex items-center w-full text-left px-4 py-3 rounded-md hover:bg-black/30 transition-colors duration-150 ease-out",
+                    "flex items-center w-full text-left px-4 py-3 rounded-md hover:bg-black/30 transition-colors duration-150 ease-out group/section",
                     "border-b border-sidebar-border/20" 
                   )}
                   aria-expanded={openSections[section.id]}
                 >
                   <section.icon className="w-5 h-5 shrink-0 text-gray-400 group-hover/section:text-gray-200" />
-                  <span className="ml-3 text-lg font-bold text-gray-300 uppercase tracking-wider truncate flex-1 group-hover/section:text-gray-100">
-                    {section.title}
-                  </span>
-                  <ChevronDown
-                    className={cn(
-                      "w-4 h-4 text-gray-400 shrink-0 transition-transform duration-200 group-hover/section:text-gray-200",
-                      openSections[section.id] && "rotate-180"
-                    )}
-                  />
+                  {!collapsed && (
+                    <>
+                    <span className="ml-3 text-lg font-bold text-gray-300 uppercase tracking-wider truncate flex-1 group-hover/section:text-gray-100">
+                        {section.title}
+                    </span>
+                    <ChevronDown
+                        className={cn(
+                        "w-4 h-4 text-gray-400 shrink-0 transition-transform duration-200 group-hover/section:text-gray-200",
+                        openSections[section.id] && "rotate-180"
+                        )}
+                    />
+                    </>
+                  )}
                 </button>
-                {openSections[section.id] && (
+                {(!collapsed && openSections[section.id]) && (
                   <div className="mt-1 space-y-1 py-2 pl-4 border-l border-sidebar-border/20">
                     {section.items.map((item) => renderNavItem(item))}
                   </div>
