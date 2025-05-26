@@ -12,7 +12,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Textarea } from '@/components/ui/textarea';
-import { Badge } from '@/components/ui/badge'; // Added Badge import
+import { Badge } from '@/components/ui/badge';
 import { Filter, UserPlus, MoreHorizontal, Tags as TagsIcon, UploadCloud, Trash2 } from 'lucide-react';
 
 interface Contact {
@@ -26,14 +26,14 @@ interface Contact {
 const mockContacts: Contact[] = [
   { id: '1', name: 'John Smith', phone: '555-123-4567', email: 'john.smith@email.com', tags: ['Client'] },
   { id: '2', name: 'Jane Doe', phone: '555-234-5678', email: 'jane.doe@email.com', tags: ['Prospect'] },
-  { id: '3', name: 'Alex Johnson', phone: '555-345-6789', email: 'alexj@email.com', tags: ['Lead'] },
+  { id: '3', name: 'Alex Johnson', phone: '555-345-6789', email: 'alexj@email.com', tags: ['Lead', 'VIP'] },
   { id: '4', name: 'Emily Brown', phone: '555-456-7890', email: 'emilyb@email.com', tags: ['Client'] },
   { id: '5', name: 'Michael Davis', phone: '555-567-8901', email: 'mike.davis@email.com', tags: ['Prospect'] },
-  { id: '6', name: 'Sarah Miller', phone: '555-678-9012', email: 'sarahm@email.com', tags: ['Client'] },
+  { id: '6', name: 'Sarah Miller', phone: '555-678-9012', email: 'sarahm@email.com', tags: ['Client', 'Referred'] },
   { id: '7', name: 'Chris Wilson', phone: '555-789-0123', email: 'chrisw@email.com', tags: [] },
   { id: '8', name: 'Lisa Anderson', phone: '555-890-1234', email: 'lisa.a@email.com', tags: ['Lead'] },
   { id: '9', name: 'David Lee', phone: '555-901-2345', email: 'david.lee@email.com', tags: ['Client'] },
-  { id: '10', name: 'Anna Kim', phone: '555-012-3456', email: 'annak@email.com', tags: ['Prospect'] },
+  { id: '10', name: 'Anna Kim', phone: '555-012-3456', email: 'annak@email.com', tags: ['Prospect', 'New'] },
   { id: '11', name: 'Mark Taylor', phone: '555-135-2468', email: 'markt@email.com', tags: ['Client'] },
   { id: '12', name: 'Rachel Harris', phone: '555-246-3579', email: 'rachelh@email.com', tags: ['Lead'] },
   { id: '13', name: 'Steve Young', phone: '555-357-4680', email: 'stevey@email.com', tags: [] },
@@ -110,7 +110,7 @@ export default function ClientPortalContactsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
           {/* Contacts Table Card (Left) */}
           <div className="lg:col-span-2">
-            <PlaceholderCard title="" className="p-0 overflow-x-hidden"> {/* Added overflow-x-hidden */}
+            <PlaceholderCard title="" className="p-0 overflow-x-hidden">
               <div className="p-4 border-b border-border/30">
                 <div className="flex items-center justify-between">
                    <div className="flex items-center space-x-2">
@@ -123,31 +123,31 @@ export default function ClientPortalContactsPage() {
               <div className="overflow-x-auto">
                 <Table>
                   <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-10"></TableHead> {/* For Checkbox */}
-                      <TableHead>Name</TableHead>
-                      <TableHead>Phone</TableHead>
-                      <TableHead>Email</TableHead>
-                      <TableHead>Tags</TableHead>
+                    <TableRow className="border-b-border/20">
+                      <TableHead className="w-10 px-6 py-4 whitespace-nowrap"></TableHead> {/* For Checkbox */}
+                      <TableHead className="px-6 py-4 whitespace-nowrap">Name</TableHead>
+                      <TableHead className="px-6 py-4 whitespace-nowrap">Phone</TableHead>
+                      <TableHead className="px-6 py-4 whitespace-nowrap">Email</TableHead>
+                      <TableHead className="px-6 py-4 whitespace-nowrap">Tags</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {contactCount === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
+                      <TableRow className="border-b-border/20">
+                        <TableCell colSpan={5} className="h-24 text-center text-muted-foreground px-6 py-4">
                           <span>{'No contacts found. Add a new contact to get started.'}</span>
                         </TableCell>
                       </TableRow>
                     ) : (
                       contacts.map(contact => (
-                        <TableRow key={contact.id} className="hover:bg-muted/10">
-                          <TableCell>
+                        <TableRow key={contact.id} className="hover:bg-muted/10 border-b-border/20">
+                          <TableCell className="px-6 py-4">
                             <Checkbox id={`contact-${contact.id}`} aria-label={`Select contact ${contact.name}`} />
                           </TableCell>
-                          <TableCell className="font-medium text-foreground">{contact.name}</TableCell>
-                          <TableCell className="text-muted-foreground">{contact.phone}</TableCell>
-                          <TableCell className="text-muted-foreground">{contact.email}</TableCell>
-                          <TableCell>
+                          <TableCell className="font-medium text-foreground px-6 py-4 whitespace-nowrap truncate">{contact.name}</TableCell>
+                          <TableCell className="text-muted-foreground px-6 py-4 whitespace-nowrap truncate">{contact.phone}</TableCell>
+                          <TableCell className="text-muted-foreground px-6 py-4 whitespace-nowrap truncate">{contact.email}</TableCell>
+                          <TableCell className="px-6 py-4 whitespace-nowrap">
                             <div className="flex flex-wrap gap-1">
                               {contact.tags.map(tag => (
                                 <Badge key={tag} variant="outline" className="text-xs">
@@ -206,7 +206,7 @@ export default function ClientPortalContactsPage() {
       </main>
 
       <Dialog open={isAddContactDialogOpen} onOpenChange={setIsAddContactDialogOpen}>
-        <DialogContent className="sm:max-w-xl md:max-w-2xl lg:max-w-3xl max-h-[90vh] flex flex-col">
+        <DialogContent className="sm:max-w-xl md:max-w-2xl lg:max-w-3xl max-h-[90vh] flex flex-col bg-card/95 backdrop-blur-md border-border/50">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold text-foreground">Add a new Person</DialogTitle>
             <div className="text-sm text-muted-foreground">
@@ -353,3 +353,4 @@ export default function ClientPortalContactsPage() {
   );
 }
 
+    
