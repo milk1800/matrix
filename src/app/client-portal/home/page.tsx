@@ -30,9 +30,9 @@ import {
   UploadCloud,
   CalendarDays,
   Clock,
-  PlayCircle, // New
-  Star,       // New
-  CircleDollarSign // New
+  PlayCircle,
+  Star,
+  CircleDollarSign
 } from "lucide-react";
 
 export default function ClientPortalHomePage() {
@@ -40,7 +40,7 @@ export default function ClientPortalHomePage() {
     <main className="min-h-screen bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#5b21b6]/10 to-[#000104] flex-1 p-6 space-y-8 md:p-8">
       <h1 className="text-3xl font-bold tracking-tight text-foreground">Client Portal - Home</h1>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
         <PlaceholderCard title="Create New" className="lg:col-span-2 w-full">
           <Tabs defaultValue="update" className="w-full">
             <TabsList className="grid w-full grid-cols-5 bg-muted/30">
@@ -587,15 +587,6 @@ export default function ClientPortalHomePage() {
               <p className="text-muted-foreground">You have no events for today or tomorrow.</p>
             </div>
           </PlaceholderCard>
-          <PlaceholderCard title="Tasks" icon={ListChecks}>
-            <div className="flex flex-col items-center justify-center h-full text-center p-6">
-              <ListChecks className="w-16 h-16 text-muted-foreground mb-4" />
-              <p className="text-muted-foreground">You have no tasks for this week.</p>
-            </div>
-          </PlaceholderCard>
-        </div>
-
-        <div className="lg:col-span-1 space-y-6 lg:space-y-8">
           <PlaceholderCard
             title="Workflows"
             icon={PlayCircle}
@@ -608,6 +599,12 @@ export default function ClientPortalHomePage() {
             <div className="flex flex-col items-center justify-center h-full text-center p-6">
               <PlayCircle className="w-16 h-16 text-muted-foreground mb-4" />
               <p className="text-muted-foreground">You have no workflows in progress.</p>
+            </div>
+          </PlaceholderCard>
+          <PlaceholderCard title="Tasks" icon={ListChecks}>
+            <div className="flex flex-col items-center justify-center h-full text-center p-6">
+              <ListChecks className="w-16 h-16 text-muted-foreground mb-4" />
+              <p className="text-muted-foreground">You have no tasks for this week.</p>
             </div>
           </PlaceholderCard>
           <PlaceholderCard title="Special Dates (next 7 days)" icon={Star}>
@@ -629,3 +626,5 @@ export default function ClientPortalHomePage() {
     </main>
   );
 }
+
+    
