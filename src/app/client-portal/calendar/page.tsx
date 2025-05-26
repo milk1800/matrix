@@ -123,9 +123,7 @@ export default function ClientPortalCalendarPage() {
           setCurrentTimePosition(null);
           return;
         }
-        if (activeView === 'week' && !isSameMonth(now, currentDateForCalendar) && !isSameDay(startOfWeek(now), startOfWeek(currentDateForCalendar))) {
-             // A bit simplified: if not the current week (based on start of week), hide.
-             // More precise would be to check if 'now' is within the displayed week's interval.
+        if (activeView === 'week' && !isSameDay(startOfWeek(now, { weekStartsOn: 0 }), startOfWeek(currentDateForCalendar, { weekStartsOn: 0 }))) {
             setCurrentTimePosition(null);
             return;
         }
@@ -301,7 +299,7 @@ export default function ClientPortalCalendarPage() {
                                 </tr>
                             ))}
                              {/* Current Time Indicator for Week View - Placed within tbody or after it if more appropriate */}
-                            {currentTimePosition !== null && isSameDay(currentDateForCalendar, new Date()) && (
+                            {currentTimePosition !== null && isSameDay(startOfWeek(currentDateForCalendar, { weekStartsOn: 0 }), startOfWeek(new Date(), { weekStartsOn: 0 })) && (
                               <div className="absolute w-[calc(100%-4rem)] h-0.5 bg-red-500 z-10 right-0" style={{ top: `${currentTimePosition}%` }}>
                                 <div className="absolute -left-1.5 -top-1.5 w-3.5 h-3.5 bg-red-500 rounded-full"></div>
                               </div>
@@ -451,7 +449,7 @@ export default function ClientPortalCalendarPage() {
           <div className="flex-grow overflow-y-auto pr-2 py-4 space-y-6"> {/* Added pr-2 for scrollbar spacing */}
             <div><Label htmlFor="eventName-dialog">Event Name</Label><Input id="eventName-dialog" value={fullEventTitle} onChange={(e) => setFullEventTitle(e.target.value)} placeholder="Enter event name..." className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary" /></div>
             <div><Label htmlFor="eventCategory-dialog">Category</Label><div className="flex items-center gap-2"><Select><SelectTrigger id="eventCategory-dialog" className="bg-input border-border/50 text-foreground focus:ring-primary flex-grow"><SelectValue placeholder="Uncategorized" /></SelectTrigger><SelectContent><SelectItem value="uncategorized">Uncategorized</SelectItem><SelectItem value="meeting">Meeting</SelectItem><SelectItem value="client_review">Client Review</SelectItem><SelectItem value="prospect_introduction">Prospect Introduction</SelectItem><SelectItem value="social_event">Social Event</SelectItem><SelectItem value="conference">Conference</SelectItem></SelectContent></Select><Button variant="link" className="p-0 h-auto text-primary hover:text-primary/80 whitespace-nowrap">Edit Categories</Button></div></div>
-            <div className="space-y-3"><Label>Date & Time</Label><div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-x-3 gap-y-2 items-center">
+            <div className="space-y-3"><Label>Date &amp; Time</Label><div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-x-3 gap-y-2 items-center">
               <div className="md:col-span-2"><Input type="text" placeholder="Start Date" value={fullEventStartDate} onChange={(e) => setFullEventStartDate(e.target.value)} aria-label="Start Date" className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary" /></div>
               <div className="sm:col-span-1"><Input type="text" placeholder="Start Time" value={fullEventStartTime} onChange={(e) => setFullEventStartTime(e.target.value)} aria-label="Start Time" className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary" /></div>
               <div className="text-center text-muted-foreground hidden md:block">to</div>
@@ -481,3 +479,5 @@ export default function ClientPortalCalendarPage() {
 }
 
 
+
+    
