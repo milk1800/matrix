@@ -20,7 +20,7 @@ import {
   DollarSign,
   Trash2,
   Loader2,
-  GripVertical // Added for drag handle
+  GripVertical
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useToast } from "@/hooks/use-toast";
@@ -33,8 +33,8 @@ interface OpportunityItem {
   amountValue: number;
   amountType: string;
   probability: number;
-  targetCloseDate: string; // YYYY-MM-DD
-  stage: string;
+  targetCloseDate: string; 
+  stage: string; // This should match a column id
   description?: string;
   nextStep?: string;
   pipeline?: string;
@@ -91,11 +91,10 @@ export default function ClientPortalOpportunitiesPage() {
   const [activeView, setActiveView] = React.useState<'board' | 'list'>('board');
   const [pipelineData, setPipelineData] = React.useState<PipelineColumn[]>(initialPipelineData);
 
-  // State for Add Opportunity Dialog form fields
   const [opportunityName, setOpportunityName] = React.useState('');
   const [opportunityContact, setOpportunityContact] = React.useState('');
-  const [opportunityPipeline, setOpportunityPipeline] = React.useState('default_pipeline');
-  const [opportunityStage, setOpportunityStage] = React.useState('evaluation');
+  const [opportunityPipeline, setOpportunityPipeline] = React.useState('default_pipeline'); // Corresponds to a SelectItem value
+  const [opportunityStage, setOpportunityStage] = React.useState('evaluation'); // Corresponds to a PipelineColumn id
   const [opportunityNextStep, setOpportunityNextStep] = React.useState('');
   const [opportunityProbability, setOpportunityProbability] = React.useState('');
   const [opportunityAmount, setOpportunityAmount] = React.useState('');
@@ -127,10 +126,11 @@ export default function ClientPortalOpportunitiesPage() {
   const handleAddOpportunity = async () => {
     setIsLoading(true);
     
-    if (!opportunityName || !opportunityContact || !opportunityPipeline || !opportunityStage || !opportunityAmount || !opportunityTargetClose) {
+    const requiredFields = [opportunityName, opportunityContact, opportunityPipeline, opportunityStage, opportunityAmount, opportunityTargetClose];
+    if (requiredFields.some(field => !field.trim())) {
       toast({
         title: "Validation Error",
-        description: "Please fill out all required fields: Name, Contact, Pipeline, Stage, Amount, and Target Close.",
+        description: "Please fill out all required fields: Name, Contact, Pipeline, Stage, Amount, and Target Close Date.",
         variant: "destructive",
       });
       setIsLoading(false);
@@ -138,7 +138,7 @@ export default function ClientPortalOpportunitiesPage() {
     }
 
     const prob = parseInt(opportunityProbability, 10);
-    if (isNaN(prob) || prob < 0 || prob > 100) {
+    if (opportunityProbability && (isNaN(prob) || prob < 0 || prob > 100)) {
       toast({
         title: "Validation Error",
         description: "Probability must be a number between 0 and 100.",
@@ -159,7 +159,6 @@ export default function ClientPortalOpportunitiesPage() {
       return;
     }
     
-    // Simulate API call / DB save
     await new Promise(resolve => setTimeout(resolve, 1000));
 
     const newOpportunity: OpportunityItem = {
@@ -169,7 +168,7 @@ export default function ClientPortalOpportunitiesPage() {
       amountDisplay: `$${amountValue.toLocaleString()} (${opportunityAmountType.replace('_', ' ')})`,
       amountValue: amountValue,
       amountType: opportunityAmountType,
-      probability: prob,
+      probability: isNaN(prob) ? 0 : prob,
       targetCloseDate: opportunityTargetClose, 
       stage: opportunityStage,
       description: opportunityDescription,
@@ -199,40 +198,56 @@ export default function ClientPortalOpportunitiesPage() {
     setIsLoading(false);
   };
 
-  // Placeholder for drag start
   const handleDragStart = (e: React.DragEvent<HTMLDivElement>, opportunityId: string, sourceColumnId: string) => {
     e.dataTransfer.setData("opportunityId", opportunityId);
     e.dataTransfer.setData("sourceColumnId", sourceColumnId);
-    // console.log("Dragging:", opportunityId, "from", sourceColumnId);
-    // Add dragging class to element if needed
+    e.currentTarget.classList.add('opacity-50');
   };
 
-  // Placeholder for drag over
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
-    e.preventDefault(); // Necessary to allow dropping
-    // Add visual feedback to drop target
+    e.preventDefault(); 
   };
 
-  // Placeholder for drop
+  const handleDragEnd = (e: React.DragEvent<HTMLDivElement>) => {
+    e.currentTarget.classList.remove('opacity-50');
+  };
+
   const handleDrop = (e: React.DragEvent<HTMLDivElement>, targetColumnId: string) => {
     e.preventDefault();
+    e.currentTarget.classList.remove('opacity-50'); // Should be on the dragged item, handled by onDragEnd
+    
     const opportunityId = e.dataTransfer.getData("opportunityId");
     const sourceColumnId = e.dataTransfer.getData("sourceColumnId");
-    // console.log("Dropped:", opportunityId, "from", sourceColumnId, "to", targetColumnId);
 
-    if (sourceColumnId === targetColumnId) return; // No change
+    if (!opportunityId || !sourceColumnId || sourceColumnId === targetColumnId) return;
 
-    // TODO: Implement actual state update logic here
-    // 1. Find the opportunity
-    // 2. Remove it from the sourceColumn's opportunities list
-    // 3. Add it to the targetColumn's opportunities list
-    // 4. Update its 'stage' property
-    // 5. Persist change to backend
-    // 6. Update pipelineData state
-    
+    let draggedOpportunity: OpportunityItem | undefined;
+
+    const newPipelineData = pipelineData.map(column => {
+      if (column.id === sourceColumnId) {
+        draggedOpportunity = column.opportunities.find(opp => opp.id === opportunityId);
+        return {
+          ...column,
+          opportunities: column.opportunities.filter(opp => opp.id !== opportunityId),
+        };
+      }
+      return column;
+    }).map(column => {
+      if (column.id === targetColumnId && draggedOpportunity) {
+        return {
+          ...column,
+          opportunities: [{ ...draggedOpportunity, stage: targetColumnId }, ...column.opportunities],
+        };
+      }
+      return column;
+    });
+
+    setPipelineData(newPipelineData);
+
+    const targetColumnTitle = pipelineData.find(col => col.id === targetColumnId)?.title || targetColumnId;
     toast({
-      title: "Opportunity Moved (Simulated)",
-      description: `Opportunity ${opportunityId} moved from ${sourceColumnId} to ${targetColumnId}. Implement actual logic.`,
+      title: "Opportunity Moved",
+      description: `Opportunity "${draggedOpportunity?.title || opportunityId}" moved to ${targetColumnTitle}.`,
     });
   };
 
@@ -240,7 +255,6 @@ export default function ClientPortalOpportunitiesPage() {
   return (
     <>
       <main className="min-h-screen bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#5b21b6]/10 to-[#000104] flex-1 p-6 space-y-6 md:p-8">
-        {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
           <div className="flex items-center gap-3">
             <h1 className="text-3xl font-bold tracking-tight text-foreground">Opportunities</h1>
@@ -287,11 +301,9 @@ export default function ClientPortalOpportunitiesPage() {
           </div>
         </div>
 
-        {/* Pipeline Board Area */}
         {activeView === 'board' && (
           <div className="flex space-x-4 overflow-x-auto pb-4 -mb-4 scrollbar-thin scrollbar-thumb-muted/50 scrollbar-track-transparent">
             {pipelineData.map((column) => (
-              // Placeholder for column drop target
               <div 
                 key={column.id} 
                 className="bg-card/60 backdrop-blur-md rounded-lg p-4 w-80 md:w-96 shrink-0 shadow-lg border border-white/10"
@@ -305,11 +317,11 @@ export default function ClientPortalOpportunitiesPage() {
                 <div className="space-y-3 h-[calc(100vh-20rem)] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-muted/30 scrollbar-track-transparent">
                   {column.opportunities.length > 0 ? (
                     column.opportunities.map((opp) => (
-                      // Placeholder for draggable card
                       <div 
                         key={opp.id} 
                         draggable="true"
                         onDragStart={(e) => handleDragStart(e, opp.id, column.id)}
+                        onDragEnd={handleDragEnd}
                         className="bg-black/50 p-3 rounded-md shadow-md border border-border/30 cursor-grab active:cursor-grabbing flex items-start gap-1.5"
                       >
                         <GripVertical className="h-5 w-5 text-muted-foreground/50 mt-0.5 shrink-0 cursor-grab" />
@@ -345,7 +357,6 @@ export default function ClientPortalOpportunitiesPage() {
 
       </main>
 
-      {/* Add Opportunity Dialog */}
       <Dialog open={isAddOpportunityDialogOpen} onOpenChange={setIsAddOpportunityDialogOpen}>
         <DialogContent className="sm:max-w-xl md:max-w-2xl lg:max-w-3xl max-h-[90vh] flex flex-col bg-card/95 backdrop-blur-md border-border/50">
           <DialogHeader>
@@ -431,4 +442,3 @@ export default function ClientPortalOpportunitiesPage() {
     </>
   );
 }
-
