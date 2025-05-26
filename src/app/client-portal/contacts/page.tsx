@@ -107,11 +107,11 @@ export default function ClientPortalContactsPage() {
                   {contactCount === 0 ? (
                     <TableRow>
                       <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
-                        No contacts found. Add a new contact to get started.
+                        <span>{'No contacts found. Add a new contact to get started.'}</span>
                       </TableCell>
                     </TableRow>
                   ) : (
-                    <></>
+                    <></> // Render nothing if there are contacts (actual data would be mapped here)
                   )}
                 </TableBody>
               </Table>
