@@ -19,19 +19,25 @@ import {
   PlusCircle,
   DollarSign,
   Trash2,
-  Loader2
+  Loader2,
+  GripVertical // Added for drag handle
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { useToast } from "@/hooks/use-toast"; // Import useToast
+import { useToast } from "@/hooks/use-toast";
 
 interface OpportunityItem {
   id: string;
   title: string;
   contactName: string;
-  amountDisplay: string; // e.g., "$500 (Fee)"
-  probability: number; // e.g., 75 for 75%
-  targetCloseDate: string; // e.g., "Jul 24, 2025"
-  stage: string; // To match column id
+  amountDisplay: string;
+  amountValue: number;
+  amountType: string;
+  probability: number;
+  targetCloseDate: string; // YYYY-MM-DD
+  stage: string;
+  description?: string;
+  nextStep?: string;
+  pipeline?: string;
 }
 
 interface PipelineColumn {
@@ -45,36 +51,36 @@ const initialPipelineData: PipelineColumn[] = [
     id: 'evaluation',
     title: 'Evaluation',
     opportunities: [
-      { id: 'opp1', title: 'Initial Consult - ACME Corp', contactName: 'John Smith', amountDisplay: '$1,500 (Project)', probability: 20, targetCloseDate: 'Aug 15, 2024', stage: 'evaluation' },
-      { id: 'opp2', title: 'Wealth Management Review - Sarah Davis', contactName: 'Sarah Davis', amountDisplay: '$2M (AUM)', probability: 10, targetCloseDate: 'Sep 01, 2024', stage: 'evaluation' },
+      { id: 'opp1', title: 'Initial Consult - ACME Corp', contactName: 'John Smith', amountDisplay: '$1,500 (Project)', amountValue: 1500, amountType: 'one_time', probability: 20, targetCloseDate: '2024-08-15', stage: 'evaluation' },
+      { id: 'opp2', title: 'Wealth Management Review - Sarah Davis', contactName: 'Sarah Davis', amountDisplay: '$2M (AUM)', amountValue: 2000000, amountType: 'aum_based', probability: 10, targetCloseDate: '2024-09-01', stage: 'evaluation' },
     ],
   },
   {
     id: 'decision_makers',
     title: 'Identify Decision Makers',
     opportunities: [
-      { id: 'opp3', title: 'Follow-up - ACME Corp', contactName: 'John Smith', amountDisplay: '$1,500 (Project)', probability: 30, targetCloseDate: 'Aug 20, 2024', stage: 'decision_makers' },
+      { id: 'opp3', title: 'Follow-up - ACME Corp', contactName: 'John Smith', amountDisplay: '$1,500 (Project)', amountValue: 1500, amountType: 'one_time', probability: 30, targetCloseDate: '2024-08-20', stage: 'decision_makers' },
     ],
   },
   {
     id: 'qualification',
     title: 'Qualification',
     opportunities: [
-      { id: 'opp4', title: 'Needs Assessment - Beta LLC', contactName: 'Jane Roe', amountDisplay: '$750 (Retainer)', probability: 50, targetCloseDate: 'Aug 28, 2024', stage: 'qualification' },
+      { id: 'opp4', title: 'Needs Assessment - Beta LLC', contactName: 'Jane Roe', amountDisplay: '$750 (Retainer)', amountValue: 750, amountType: 'recurring_fee', probability: 50, targetCloseDate: '2024-08-28', stage: 'qualification' },
     ],
   },
   {
     id: 'needs_analysis',
     title: 'Needs Analysis',
     opportunities: [
-      { id: 'opp5', title: 'Proposal Sent - Beta LLC', contactName: 'Jane Roe', amountDisplay: '$750 (Retainer)', probability: 70, targetCloseDate: 'Sep 10, 2024', stage: 'needs_analysis' },
+      { id: 'opp5', title: 'Proposal Sent - Beta LLC', contactName: 'Jane Roe', amountDisplay: '$750 (Retainer)', amountValue: 750, amountType: 'recurring_fee', probability: 70, targetCloseDate: '2024-09-10', stage: 'needs_analysis' },
     ],
   },
   {
     id: 'review',
     title: 'Review',
     opportunities: [
-       { id: 'opp6', title: 'Negotiation - Gamma Inc.', contactName: 'Peter Quill', amountDisplay: '$5,000 (Consulting)', probability: 85, targetCloseDate: 'Jul 30, 2024', stage: 'review' },
+       { id: 'opp6', title: 'Negotiation - Gamma Inc.', contactName: 'Peter Quill', amountDisplay: '$5,000 (Consulting)', amountValue: 5000, amountType: 'one_time', probability: 85, targetCloseDate: '2024-07-30', stage: 'review' },
     ],
   },
 ];
@@ -88,10 +94,10 @@ export default function ClientPortalOpportunitiesPage() {
   // State for Add Opportunity Dialog form fields
   const [opportunityName, setOpportunityName] = React.useState('');
   const [opportunityContact, setOpportunityContact] = React.useState('');
-  const [opportunityPipeline, setOpportunityPipeline] = React.useState('default_pipeline'); // Default pipeline
-  const [opportunityStage, setOpportunityStage] = React.useState('evaluation'); // Default stage
+  const [opportunityPipeline, setOpportunityPipeline] = React.useState('default_pipeline');
+  const [opportunityStage, setOpportunityStage] = React.useState('evaluation');
   const [opportunityNextStep, setOpportunityNextStep] = React.useState('');
-  const [opportunityProbability, setOpportunityProbability] = React.useState(''); // Store as string for input
+  const [opportunityProbability, setOpportunityProbability] = React.useState('');
   const [opportunityAmount, setOpportunityAmount] = React.useState('');
   const [opportunityAmountType, setOpportunityAmountType] = React.useState('one_time');
   const [opportunityTargetClose, setOpportunityTargetClose] = React.useState('');
@@ -120,11 +126,11 @@ export default function ClientPortalOpportunitiesPage() {
 
   const handleAddOpportunity = async () => {
     setIsLoading(true);
-    // Basic Validation
+    
     if (!opportunityName || !opportunityContact || !opportunityPipeline || !opportunityStage || !opportunityAmount || !opportunityTargetClose) {
       toast({
         title: "Validation Error",
-        description: "Please fill out all required fields (Name, Contact, Pipeline, Stage, Amount, Target Close).",
+        description: "Please fill out all required fields: Name, Contact, Pipeline, Stage, Amount, and Target Close.",
         variant: "destructive",
       });
       setIsLoading(false);
@@ -142,6 +148,17 @@ export default function ClientPortalOpportunitiesPage() {
       return;
     }
     
+    const amountValue = parseFloat(opportunityAmount);
+    if (isNaN(amountValue)) {
+      toast({
+        title: "Validation Error",
+        description: "Amount must be a valid number.",
+        variant: "destructive",
+      });
+      setIsLoading(false);
+      return;
+    }
+    
     // Simulate API call / DB save
     await new Promise(resolve => setTimeout(resolve, 1000));
 
@@ -149,10 +166,15 @@ export default function ClientPortalOpportunitiesPage() {
       id: `opp${Date.now()}`,
       title: opportunityName,
       contactName: opportunityContact,
-      amountDisplay: `$${parseFloat(opportunityAmount).toLocaleString()} (${opportunityAmountType.replace('_', ' ')})`,
+      amountDisplay: `$${amountValue.toLocaleString()} (${opportunityAmountType.replace('_', ' ')})`,
+      amountValue: amountValue,
+      amountType: opportunityAmountType,
       probability: prob,
-      targetCloseDate: opportunityTargetClose, // Assuming direct input format like "MMM dd, yyyy" or YYYY-MM-DD
+      targetCloseDate: opportunityTargetClose, 
       stage: opportunityStage,
+      description: opportunityDescription,
+      nextStep: opportunityNextStep,
+      pipeline: opportunityPipeline,
     };
 
     setPipelineData(prevData => {
@@ -160,7 +182,7 @@ export default function ClientPortalOpportunitiesPage() {
         if (column.id === newOpportunity.stage) {
           return {
             ...column,
-            opportunities: [newOpportunity, ...column.opportunities], // Add to beginning of list
+            opportunities: [newOpportunity, ...column.opportunities],
           };
         }
         return column;
@@ -169,12 +191,49 @@ export default function ClientPortalOpportunitiesPage() {
 
     toast({
       title: "Opportunity Created",
-      description: `"${newOpportunity.title}" has been added to the ${newOpportunity.stage} stage.`,
+      description: `"${newOpportunity.title}" has been added to the ${pipelineData.find(p => p.id === newOpportunity.stage)?.title || newOpportunity.stage} stage.`,
     });
 
     resetForm();
     setIsAddOpportunityDialogOpen(false);
     setIsLoading(false);
+  };
+
+  // Placeholder for drag start
+  const handleDragStart = (e: React.DragEvent<HTMLDivElement>, opportunityId: string, sourceColumnId: string) => {
+    e.dataTransfer.setData("opportunityId", opportunityId);
+    e.dataTransfer.setData("sourceColumnId", sourceColumnId);
+    // console.log("Dragging:", opportunityId, "from", sourceColumnId);
+    // Add dragging class to element if needed
+  };
+
+  // Placeholder for drag over
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault(); // Necessary to allow dropping
+    // Add visual feedback to drop target
+  };
+
+  // Placeholder for drop
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>, targetColumnId: string) => {
+    e.preventDefault();
+    const opportunityId = e.dataTransfer.getData("opportunityId");
+    const sourceColumnId = e.dataTransfer.getData("sourceColumnId");
+    // console.log("Dropped:", opportunityId, "from", sourceColumnId, "to", targetColumnId);
+
+    if (sourceColumnId === targetColumnId) return; // No change
+
+    // TODO: Implement actual state update logic here
+    // 1. Find the opportunity
+    // 2. Remove it from the sourceColumn's opportunities list
+    // 3. Add it to the targetColumn's opportunities list
+    // 4. Update its 'stage' property
+    // 5. Persist change to backend
+    // 6. Update pipelineData state
+    
+    toast({
+      title: "Opportunity Moved (Simulated)",
+      description: `Opportunity ${opportunityId} moved from ${sourceColumnId} to ${targetColumnId}. Implement actual logic.`,
+    });
   };
 
 
@@ -185,14 +244,15 @@ export default function ClientPortalOpportunitiesPage() {
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
           <div className="flex items-center gap-3">
             <h1 className="text-3xl font-bold tracking-tight text-foreground">Opportunities</h1>
-            <Select defaultValue="default_pipeline" value={opportunityPipeline} onValueChange={setOpportunityPipeline}>
+            <Select value={opportunityPipeline} onValueChange={setOpportunityPipeline}>
               <SelectTrigger className="w-auto bg-card border-none text-foreground shadow-white-glow-soft hover:shadow-white-glow-hover transition-shadow duration-200 ease-out">
                 <ChevronDown className="mr-2 h-4 w-4 text-muted-foreground" />
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="default_pipeline">Default Pipeline</SelectItem>
-                <SelectItem value="pipeline_b">Pipeline B</SelectItem>
+                <SelectItem value="pipeline_b">Sales Pipeline Q3</SelectItem>
+                <SelectItem value="pipeline_c">Strategic Initiatives</SelectItem>
               </SelectContent>
             </Select>
             <span className="text-muted-foreground">({opportunityCount} opportunities)</span>
@@ -231,7 +291,13 @@ export default function ClientPortalOpportunitiesPage() {
         {activeView === 'board' && (
           <div className="flex space-x-4 overflow-x-auto pb-4 -mb-4 scrollbar-thin scrollbar-thumb-muted/50 scrollbar-track-transparent">
             {pipelineData.map((column) => (
-              <div key={column.id} className="bg-card/60 backdrop-blur-md rounded-lg p-4 w-80 md:w-96 shrink-0 shadow-lg border border-white/10">
+              // Placeholder for column drop target
+              <div 
+                key={column.id} 
+                className="bg-card/60 backdrop-blur-md rounded-lg p-4 w-80 md:w-96 shrink-0 shadow-lg border border-white/10"
+                onDragOver={handleDragOver}
+                onDrop={(e) => handleDrop(e, column.id)}
+              >
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-base font-semibold text-foreground">{column.title}</h2>
                   <span className="text-sm text-muted-foreground">{column.opportunities.length}</span>
@@ -239,17 +305,26 @@ export default function ClientPortalOpportunitiesPage() {
                 <div className="space-y-3 h-[calc(100vh-20rem)] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-muted/30 scrollbar-track-transparent">
                   {column.opportunities.length > 0 ? (
                     column.opportunities.map((opp) => (
-                      <div key={opp.id} className="bg-black/50 p-3 rounded-md shadow-md border border-border/30 cursor-grab active:cursor-grabbing">
-                        <div className="flex justify-between items-start mb-1">
-                          <h3 className="text-sm font-medium text-foreground">{opp.title}</h3>
-                          <Badge variant="outline" className="text-xs bg-primary/20 border-primary/50 text-primary">
-                            {opp.probability}%
-                          </Badge>
-                        </div>
-                        <p className="text-xs text-muted-foreground mb-1">Re: {opp.contactName}</p>
-                        <div className="flex justify-between items-end">
-                          <p className="text-sm font-semibold text-foreground">{opp.amountDisplay}</p>
-                          <p className="text-xs text-muted-foreground">{opp.targetCloseDate}</p>
+                      // Placeholder for draggable card
+                      <div 
+                        key={opp.id} 
+                        draggable="true"
+                        onDragStart={(e) => handleDragStart(e, opp.id, column.id)}
+                        className="bg-black/50 p-3 rounded-md shadow-md border border-border/30 cursor-grab active:cursor-grabbing flex items-start gap-1.5"
+                      >
+                        <GripVertical className="h-5 w-5 text-muted-foreground/50 mt-0.5 shrink-0 cursor-grab" />
+                        <div className="flex-grow">
+                          <div className="flex justify-between items-start mb-1">
+                            <h3 className="text-sm font-medium text-foreground">{opp.title}</h3>
+                            <Badge variant="outline" className="text-xs bg-primary/20 border-primary/50 text-primary">
+                              {opp.probability}%
+                            </Badge>
+                          </div>
+                          <p className="text-xs text-muted-foreground mb-1">Re: {opp.contactName}</p>
+                          <div className="flex justify-between items-end">
+                            <p className="text-sm font-semibold text-foreground">{opp.amountDisplay}</p>
+                            <p className="text-xs text-muted-foreground">{new Date(opp.targetCloseDate).toLocaleDateString(undefined, { month: 'short', day: '2-digit', year: 'numeric'})}</p>
+                          </div>
                         </div>
                       </div>
                     ))
@@ -272,7 +347,7 @@ export default function ClientPortalOpportunitiesPage() {
 
       {/* Add Opportunity Dialog */}
       <Dialog open={isAddOpportunityDialogOpen} onOpenChange={setIsAddOpportunityDialogOpen}>
-        <DialogContent className="sm:max-w-xl md:max-w-2xl lg:max-w-3xl max-h-[90vh] flex flex-col">
+        <DialogContent className="sm:max-w-xl md:max-w-2xl lg:max-w-3xl max-h-[90vh] flex flex-col bg-card/95 backdrop-blur-md border-border/50">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold text-foreground">New Opportunity</DialogTitle>
           </DialogHeader>
@@ -292,7 +367,8 @@ export default function ClientPortalOpportunitiesPage() {
                   <SelectTrigger id="opportunityPipeline-dialog" className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="default_pipeline">Default Pipeline</SelectItem>
-                    <SelectItem value="pipeline_b">Pipeline B</SelectItem>
+                    <SelectItem value="pipeline_b">Sales Pipeline Q3</SelectItem>
+                    <SelectItem value="pipeline_c">Strategic Initiatives</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -325,8 +401,8 @@ export default function ClientPortalOpportunitiesPage() {
                 <Select value={opportunityAmountType} onValueChange={setOpportunityAmountType}>
                   <SelectTrigger className="w-[150px] bg-input border-border/50 text-foreground focus:ring-primary"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="recurring_fee">Recurring Fee</SelectItem>
                     <SelectItem value="one_time">One-Time Project</SelectItem>
+                    <SelectItem value="recurring_fee">Recurring Fee</SelectItem>
                     <SelectItem value="aum_based">AUM Based</SelectItem>
                   </SelectContent>
                 </Select>
