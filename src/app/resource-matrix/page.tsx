@@ -152,13 +152,21 @@ For more information, refer to document REF123.pdf or contact support. You can a
 
   return (
     <main className="min-h-screen bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#5b21b6]/10 to-[#000104] flex-1 p-6 md:p-8 flex flex-col">
-      <h1 className="text-3xl font-bold tracking-tight text-foreground mb-6 text-center">
-        AI Resource Assistant
+      <h1 className="text-3xl font-bold tracking-tight text-foreground mb-6 flex items-center justify-center">
+        <div className="w-9 h-9 mr-3 relative animate-pulse-neon">
+          <Image 
+            src="/icons/brain-logo.png" 
+            alt="Maven AI Logo" 
+            fill 
+            style={{ objectFit: 'contain' }}
+          />
+        </div>
+        Maven
       </h1>
       <div className="flex-grow flex flex-col items-center justify-center">
         <PlaceholderCard
           title=""
-          className="w-full max-w-3xl h-[75vh] md:h-[80vh] flex flex-col bg-black/60 backdrop-blur-sm shadow-xl rounded-xl border border-white/10 p-0"
+          className="w-full max-w-3xl h-[75vh] md:h-[80vh] flex flex-col bg-black/60 backdrop-blur-md shadow-xl rounded-xl border border-white/10 p-0"
         >
           <ScrollArea className="flex-grow rounded-t-xl" viewportRef={scrollViewportRef}>
             <div className="p-4 md:p-6 space-y-4">
