@@ -21,10 +21,14 @@ import {
   Italic,
   Underline,
   Link2,
-  Table as TableIcon, // Renamed to avoid conflict with Table component
+  Table as TableIcon,
   Smile,
   Mic,
-  Trash2
+  Trash2,
+  FilePenLine,
+  CalendarDays,
+  ListOrdered,
+  UploadCloud,
 } from "lucide-react";
 
 export default function ClientPortalHomePage() {
@@ -32,8 +36,8 @@ export default function ClientPortalHomePage() {
     <main className="min-h-screen bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#5b21b6]/10 to-[#000104] flex-1 p-6 space-y-8 md:p-8">
       <h1 className="text-3xl font-bold tracking-tight text-foreground">Client Portal - Home</h1>
       
-      <PlaceholderCard title="Create New" className="w-full max-w-4xl mx-auto"> {/* Increased max-width for contact form */}
-        <Tabs defaultValue="contact" className="w-full">
+      <PlaceholderCard title="Create New" className="w-full max-w-4xl mx-auto">
+        <Tabs defaultValue="task" className="w-full">
           <TabsList className="grid w-full grid-cols-5 bg-muted/30">
             <TabsTrigger value="update" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
               <MessageSquare className="mr-2 h-4 w-4" /> Update
@@ -162,7 +166,6 @@ export default function ClientPortalHomePage() {
                 </div>
               </div>
               
-              {/* Company Row */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="jobTitle">Job Title</Label>
@@ -174,7 +177,6 @@ export default function ClientPortalHomePage() {
                 </div>
               </div>
 
-              {/* Household Row */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="householdSelect">Household</Label>
@@ -191,7 +193,6 @@ export default function ClientPortalHomePage() {
                 </div>
               </div>
 
-              {/* Email Address Row */}
               <div className="space-y-2">
                 <Label>Email Address</Label>
                 <div className="flex items-center space-x-2">
@@ -210,7 +211,6 @@ export default function ClientPortalHomePage() {
                 </div>
               </div>
 
-              {/* Phone Number Row */}
               <div className="space-y-2">
                 <Label>Phone Number</Label>
                 <div className="flex items-center space-x-2">
@@ -248,8 +248,110 @@ export default function ClientPortalHomePage() {
           </TabsContent>
 
           <TabsContent value="task" className="mt-6">
-            <p className="text-muted-foreground p-4 text-center">Task creation form will go here.</p>
+            <div className="space-y-6">
+              <div>
+                <Label htmlFor="taskName">Task Name</Label>
+                <div className="relative">
+                  <Input id="taskName" placeholder="Enter task name..." className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary pr-10" />
+                  <FilePenLine className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Checkbox id="repeatsTask" />
+                <Label htmlFor="repeatsTask" className="font-normal text-muted-foreground">Repeats?</Label>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-end">
+                <div>
+                  <Label htmlFor="taskDue">Due</Label>
+                  <div className="flex items-center gap-2">
+                    <Select defaultValue="today">
+                      <SelectTrigger id="taskDue" className="bg-input border-border/50 text-foreground focus:ring-primary flex-grow">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="today">Today</SelectItem>
+                        <SelectItem value="tomorrow">Tomorrow</SelectItem>
+                        <SelectItem value="next_week">Next Week</SelectItem>
+                        <SelectItem value="custom">Custom</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button variant="link" className="p-0 h-auto text-primary hover:text-primary/80 whitespace-nowrap">Set Date/Time</Button>
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="taskPriority">Priority</Label>
+                  <Select defaultValue="medium">
+                    <SelectTrigger id="taskPriority" className="bg-input border-border/50 text-foreground focus:ring-primary">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="low">Low</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="high">High</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              
+              <div>
+                <Label htmlFor="taskCategory">Category</Label>
+                 <div className="flex items-center gap-2">
+                    <Select>
+                      <SelectTrigger id="taskCategory" className="bg-input border-border/50 text-foreground focus:ring-primary flex-grow">
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="meeting_prep">Meeting Prep</SelectItem>
+                        <SelectItem value="follow_up">Follow Up</SelectItem>
+                        <SelectItem value="paperwork">Paperwork</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <Button variant="link" className="p-0 h-auto text-primary hover:text-primary/80 whitespace-nowrap">Edit Categories</Button>
+                  </div>
+              </div>
+
+              <div>
+                <Label htmlFor="taskDescription">Description</Label>
+                <Textarea id="taskDescription" rows={5} placeholder="Add more details..." className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary resize-none" />
+                <div className="flex items-center space-x-1 text-muted-foreground mt-2">
+                  <Button variant="ghost" size="icon" className="hover:bg-muted/50 h-8 w-8" aria-label="Bold"><Bold className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" className="hover:bg-muted/50 h-8 w-8" aria-label="Italic"><Italic className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" className="hover:bg-muted/50 h-8 w-8" aria-label="Underline"><Underline className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" className="hover:bg-muted/50 h-8 w-8" aria-label="Bulleted List"><ListChecks className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" className="hover:bg-muted/50 h-8 w-8" aria-label="Numbered List"><ListOrdered className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" className="hover:bg-muted/50 h-8 w-8" aria-label="Insert Table"><TableIcon className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" className="hover:bg-muted/50 h-8 w-8" aria-label="Insert Link"><Link2 className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" className="hover:bg-muted/50 h-8 w-8" aria-label="Insert Emoji"><Smile className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" className="hover:bg-muted/50 h-8 w-8" aria-label="Voice Note"><Mic className="h-4 w-4" /></Button>
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="taskAttachments">Attachments</Label>
+                <div className="mt-1 flex justify-center items-center px-6 pt-5 pb-6 border-2 border-border/50 border-dashed rounded-md bg-input/50 cursor-pointer hover:border-primary/70 transition-colors">
+                  <div className="space-y-1 text-center">
+                    <UploadCloud className="mx-auto h-10 w-10 text-muted-foreground" />
+                    <p className="text-sm text-muted-foreground">
+                      <span className="font-medium text-primary">Drag files here</span> or click to upload
+                    </p>
+                    <p className="text-xs text-muted-foreground/70">PNG, JPG, PDF up to 10MB</p>
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="taskRelatedTo">Related To</Label>
+                <Input id="taskRelatedTo" placeholder="Contact, project, or opportunity..." className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary" />
+              </div>
+
+              <div className="flex justify-end pt-4 border-t border-border/20 mt-8">
+                <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">Add Task</Button>
+              </div>
+            </div>
           </TabsContent>
+
           <TabsContent value="event" className="mt-6">
             <p className="text-muted-foreground p-4 text-center">Event creation form will go here.</p>
           </TabsContent>
@@ -263,4 +365,3 @@ export default function ClientPortalHomePage() {
     </main>
   );
 }
-
