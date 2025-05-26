@@ -1,4 +1,4 @@
-// src/app/layout.tsx
+
 "use client";
 
 import { Inter, Roboto_Mono } from 'next/font/google';
@@ -12,15 +12,16 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, X } from 'lucide-react'; // Brain import removed as it's now in Sidebar.tsx
+import { Send, X, Brain } from 'lucide-react';
+import { AuthProvider } from "@/contexts/auth-context"; // Import AuthProvider
 
 const inter = Inter({
-  variable: '--font-inter', // Updated variable name
+  variable: '--font-inter',
   subsets: ['latin'],
 });
 
 const robotoMono = Roboto_Mono({
-  variable: '--font-roboto-mono', // Updated variable name
+  variable: '--font-roboto-mono',
   subsets: ['latin'],
 });
 
@@ -55,7 +56,6 @@ export default function RootLayout({
       sender: 'user',
     };
 
-    // Placeholder bot response
     const botResponse: ChatMessage = {
       id: (Date.now() + 1).toString(),
       text: `Maven echoes: "${currentMessage}"`,
@@ -68,108 +68,110 @@ export default function RootLayout({
 
   return (
     <html lang="en" className="dark">
-      <body className={`${inter.variable} ${robotoMono.variable} antialiased flex`}>
-        <div className="w-full overflow-hidden bg-black/90 border-b border-gray-700 py-2 fixed top-0 z-50">
-          <div className="animate-ticker whitespace-nowrap flex space-x-6 text-sm font-mono">
-            {/* Stock items - repeated for seamless scroll */}
-            <span className="text-white">AAPL: <span className="text-green-400">$189.45 ▲1.2%</span></span>
-            <span className="text-white">MSFT: <span className="text-red-400">$324.12 ▼0.4%</span></span>
-            <span className="text-white">NVDA: <span className="text-green-400">$1122.33 ▲2.1%</span></span>
-            <span className="text-white">GOOGL: <span className="text-green-400">$132.99 ▲0.6%</span></span>
-            <span className="text-white">TSLA: <span className="text-red-400">$172.43 ▼1.0%</span></span>
-            <span className="text-white">AMZN: <span className="text-green-400">$123.55 ▲0.9%</span></span>
-            <span className="text-white">META: <span className="text-green-400">$309.70 ▲1.7%</span></span>
-            <span className="text-white">NFLX: <span className="text-red-400">$402.20 ▼0.6%</span></span>
-            <span className="text-white">AMD: <span className="text-green-400">$132.44 ▲2.4%</span></span>
-            <span className="text-white">INTC: <span className="text-red-400">$37.15 ▼0.2%</span></span>
-            <span className="text-white">SNOW: <span className="text-red-400">$178.40 ▼1.2%</span></span>
-            <span className="text-white">SHOP: <span className="text-green-400">$68.90 ▲1.5%</span></span>
-            <span className="text-white">COIN: <span className="text-green-400">$142.70 ▲3.6%</span></span>
-            <span className="text-white">BABA: <span className="text-red-400">$85.10 ▼0.9%</span></span>
-            <span className="text-white">ROKU: <span className="text-green-400">$62.22 ▲2.0%</span></span>
-            {/* Duplicate set for seamless scroll */}
-            <span className="text-white">AAPL: <span className="text-green-400">$189.45 ▲1.2%</span></span>
-            <span className="text-white">MSFT: <span className="text-red-400">$324.12 ▼0.4%</span></span>
-            <span className="text-white">NVDA: <span className="text-green-400">$1122.33 ▲2.1%</span></span>
-            <span className="text-white">GOOGL: <span className="text-green-400">$132.99 ▲0.6%</span></span>
-            <span className="text-white">TSLA: <span className="text-red-400">$172.43 ▼1.0%</span></span>
-            <span className="text-white">AMZN: <span className="text-green-400">$123.55 ▲0.9%</span></span>
-            <span className="text-white">META: <span className="text-green-400">$309.70 ▲1.7%</span></span>
-            <span className="text-white">NFLX: <span className="text-red-400">$402.20 ▼0.6%</span></span>
-            <span className="text-white">AMD: <span className="text-green-400">$132.44 ▲2.4%</span></span>
-            <span className="text-white">INTC: <span className="text-red-400">$37.15 ▼0.2%</span></span>
-            <span className="text-white">SNOW: <span className="text-red-400">$178.40 ▼1.2%</span></span>
-            <span className="text-white">SHOP: <span className="text-green-400">$68.90 ▲1.5%</span></span>
-            <span className="text-white">COIN: <span className="text-green-400">$142.70 ▲3.6%</span></span>
-            <span className="text-white">BABA: <span className="text-red-400">$85.10 ▼0.9%</span></span>
-            <span className="text-white">ROKU: <span className="text-green-400">$62.22 ▲2.0%</span></span>
+      <body className={`${inter.variable} ${robotoMono.variable} antialiased`}>
+        <AuthProvider> {/* Wrap with AuthProvider */}
+          <div className="w-full overflow-hidden bg-black/90 border-b border-gray-700 py-2 fixed top-0 z-50">
+            <div className="animate-ticker whitespace-nowrap flex space-x-6 text-sm font-mono">
+              {/* Stock items - repeated for seamless scroll */}
+              <span className="text-white">AAPL: <span className="text-green-400">$189.45 ▲1.2%</span></span>
+              <span className="text-white">MSFT: <span className="text-red-400">$324.12 ▼0.4%</span></span>
+              <span className="text-white">NVDA: <span className="text-green-400">$1122.33 ▲2.1%</span></span>
+              <span className="text-white">GOOGL: <span className="text-green-400">$132.99 ▲0.6%</span></span>
+              <span className="text-white">TSLA: <span className="text-red-400">$172.43 ▼1.0%</span></span>
+              <span className="text-white">AMZN: <span className="text-green-400">$123.55 ▲0.9%</span></span>
+              <span className="text-white">META: <span className="text-green-400">$309.70 ▲1.7%</span></span>
+              <span className="text-white">NFLX: <span className="text-red-400">$402.20 ▼0.6%</span></span>
+              <span className="text-white">AMD: <span className="text-green-400">$132.44 ▲2.4%</span></span>
+              <span className="text-white">INTC: <span className="text-red-400">$37.15 ▼0.2%</span></span>
+              <span className="text-white">SNOW: <span className="text-red-400">$178.40 ▼1.2%</span></span>
+              <span className="text-white">SHOP: <span className="text-green-400">$68.90 ▲1.5%</span></span>
+              <span className="text-white">COIN: <span className="text-green-400">$142.70 ▲3.6%</span></span>
+              <span className="text-white">BABA: <span className="text-red-400">$85.10 ▼0.9%</span></span>
+              <span className="text-white">ROKU: <span className="text-green-400">$62.22 ▲2.0%</span></span>
+              {/* Duplicate set for seamless scroll */}
+              <span className="text-white">AAPL: <span className="text-green-400">$189.45 ▲1.2%</span></span>
+              <span className="text-white">MSFT: <span className="text-red-400">$324.12 ▼0.4%</span></span>
+              <span className="text-white">NVDA: <span className="text-green-400">$1122.33 ▲2.1%</span></span>
+              <span className="text-white">GOOGL: <span className="text-green-400">$132.99 ▲0.6%</span></span>
+              <span className="text-white">TSLA: <span className="text-red-400">$172.43 ▼1.0%</span></span>
+              <span className="text-white">AMZN: <span className="text-green-400">$123.55 ▲0.9%</span></span>
+              <span className="text-white">META: <span className="text-green-400">$309.70 ▲1.7%</span></span>
+              <span className="text-white">NFLX: <span className="text-red-400">$402.20 ▼0.6%</span></span>
+              <span className="text-white">AMD: <span className="text-green-400">$132.44 ▲2.4%</span></span>
+              <span className="text-white">INTC: <span className="text-red-400">$37.15 ▼0.2%</span></span>
+              <span className="text-white">SNOW: <span className="text-red-400">$178.40 ▼1.2%</span></span>
+              <span className="text-white">SHOP: <span className="text-green-400">$68.90 ▲1.5%</span></span>
+              <span className="text-white">COIN: <span className="text-green-400">$142.70 ▲3.6%</span></span>
+              <span className="text-white">BABA: <span className="text-red-400">$85.10 ▼0.9%</span></span>
+              <span className="text-white">ROKU: <span className="text-green-400">$62.22 ▲2.0%</span></span>
+            </div>
           </div>
-        </div>
 
-        <div className="flex flex-1 h-screen pt-10"> {/* Wrapper for sidebar and main content, accounting for ticker */}
-          <TooltipProvider delayDuration={0}>
-            <Sidebar />
-            <main className="flex-1 overflow-y-auto bg-transparent"> {/* bg-transparent to let body gradient show */}
-              {children}
-            </main>
-          </TooltipProvider>
-        </div>
-        
-        {/* Chat Dialog remains, but button to trigger it is removed */}
-        <Dialog open={isChatOpen} onOpenChange={setIsChatOpen}>
-          <DialogContent className="sm:max-w-[425px] md:max-w-[550px] lg:max-w-[40%] h-[70vh] flex flex-col bg-card/60 backdrop-blur-md border-none shadow-xl">
-            <DialogHeader className="p-4 border-b border-border/50">
-              <DialogTitle className="text-lg font-semibold text-foreground">Chat with Maven AI</DialogTitle>
-              <DialogClose asChild>
-                <button className="absolute right-4 top-4 text-muted-foreground hover:text-foreground p-1 rounded-sm focus:outline-none focus:ring-2 focus:ring-ring">
-                  <X className="h-4 w-4" />
-                  <span className="sr-only">Close</span>
-                </button>
-              </DialogClose>
-            </DialogHeader>
-            <ScrollArea className="flex-grow p-4 space-y-3 overflow-y-auto">
-              {chatMessages.map((msg) => (
-                <div
-                  key={msg.id}
-                  className={`flex mb-3 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-                >
+          <div className="flex flex-1 h-screen pt-10"> {/* Wrapper for sidebar and main content, accounting for ticker */}
+            <TooltipProvider delayDuration={0}>
+              <Sidebar />
+              <main className="flex-1 overflow-y-auto bg-transparent"> {/* bg-transparent to let body gradient show */}
+                {children}
+              </main>
+            </TooltipProvider>
+          </div>
+          
+          {/* Chat Dialog remains, but button to trigger it is removed */}
+          <Dialog open={isChatOpen} onOpenChange={setIsChatOpen}>
+            <DialogContent className="sm:max-w-[425px] md:max-w-[550px] lg:max-w-[40%] h-[70vh] flex flex-col bg-card/60 backdrop-blur-md border-none shadow-xl">
+              <DialogHeader className="p-4 border-b border-border/50">
+                <DialogTitle className="text-lg font-semibold text-foreground">Chat with Maven AI</DialogTitle>
+                <DialogClose asChild>
+                  <button className="absolute right-4 top-4 text-muted-foreground hover:text-foreground p-1 rounded-sm focus:outline-none focus:ring-2 focus:ring-ring">
+                    <X className="h-4 w-4" />
+                    <span className="sr-only">Close</span>
+                  </button>
+                </DialogClose>
+              </DialogHeader>
+              <ScrollArea className="flex-grow p-4 space-y-3 overflow-y-auto">
+                {chatMessages.map((msg) => (
                   <div
-                    className={`p-3 rounded-lg max-w-[75%] text-sm shadow-md ${
-                      msg.sender === 'user'
-                        ? 'bg-primary text-primary-foreground rounded-br-none'
-                        : 'bg-muted text-foreground rounded-bl-none'
-                    }`}
+                    key={msg.id}
+                    className={`flex mb-3 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
                   >
-                    {msg.text}
+                    <div
+                      className={`p-3 rounded-lg max-w-[75%] text-sm shadow-md ${
+                        msg.sender === 'user'
+                          ? 'bg-primary text-primary-foreground rounded-br-none'
+                          : 'bg-muted text-foreground rounded-bl-none'
+                      }`}
+                    >
+                      {msg.text}
+                    </div>
                   </div>
+                ))}
+                <div ref={messagesEndRef} />
+              </ScrollArea>
+              <DialogFooter className="p-4 border-t border-border/50">
+                <div className="flex w-full items-center space-x-2">
+                  <Input
+                    type="text"
+                    placeholder="Type a message..."
+                    value={currentMessage}
+                    onChange={(e) => setCurrentMessage(e.target.value)}
+                    onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
+                    className="flex-grow bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary"
+                  />
+                  <button
+                    type="submit"
+                    onClick={handleSendMessage}
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground p-2.5 rounded-md flex items-center justify-center"
+                    aria-label="Send Message"
+                    disabled={!currentMessage.trim()}
+                  >
+                    <Send className="h-4 w-4" />
+                  </button>
                 </div>
-              ))}
-              <div ref={messagesEndRef} />
-            </ScrollArea>
-            <DialogFooter className="p-4 border-t border-border/50">
-              <div className="flex w-full items-center space-x-2">
-                <Input
-                  type="text"
-                  placeholder="Type a message..."
-                  value={currentMessage}
-                  onChange={(e) => setCurrentMessage(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                  className="flex-grow bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary"
-                />
-                <button
-                  type="submit"
-                  onClick={handleSendMessage}
-                  className="bg-primary hover:bg-primary/90 text-primary-foreground p-2.5 rounded-md flex items-center justify-center"
-                  aria-label="Send Message"
-                  disabled={!currentMessage.trim()}
-                >
-                  <Send className="h-4 w-4" />
-                </button>
-              </div>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-        <Toaster />
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+          <Toaster />
+        </AuthProvider> {/* Close AuthProvider */}
       </body>
     </html>
   );
