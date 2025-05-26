@@ -30,10 +30,11 @@ import {
   Workflow,
   KanbanSquare,
   FileText,
+  AppWindow, // Added AppWindow import
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
-import Image from "next/image";
+import Image from "next/image"; // Keep Image for brain logo if it's a PNG
 import { Button } from "@/components/ui/button";
 
 interface NavItem {
@@ -54,7 +55,7 @@ const navSectionsData: NavSection[] = [
   {
     id: 'clientPortal',
     title: 'CLIENT PORTAL',
-    icon: AppWindow,
+    icon: AppWindow, // Use the imported AppWindow icon
     items: [
       { name: 'Home', icon: HomeIcon, href: '/client-portal/home' },
       { name: 'Email', icon: Mail, href: '/client-portal/email' },
@@ -91,18 +92,18 @@ const alertsNavItem: NavItem = {
   name: 'Alerts',
   icon: BellRing,
   href: '/alerts',
-  hasNewAlerts: true,
+  hasNewAlerts: true, // Mock new alerts
 };
 
 export default function Sidebar() {
-  const [collapsed, setCollapsed] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
   const [hoveredItem, setHoveredItem] = useState<string | null>(null);
   const currentPathname = usePathname();
 
   useEffect(() => {
-    setIsClient(true); // Ensures localStorage is only accessed on the client
+    setIsClient(true);
     const storedCollapsed = localStorage.getItem("matrix-sidebar-collapsed");
     if (storedCollapsed) {
       setCollapsed(storedCollapsed === "true");
@@ -111,7 +112,7 @@ export default function Sidebar() {
     const initialOpenState: Record<string, boolean> = {};
     navSectionsData.forEach(section => {
       const isActiveSection = section.items.some(item => currentPathname.startsWith(item.href));
-      initialOpenState[section.id] = isActiveSection || !collapsed; // Default to open if not collapsed or active
+      initialOpenState[section.id] = isActiveSection || !collapsed; 
     });
     
     const storedSectionsState = localStorage.getItem("matrix-sidebar-sections-open");
@@ -126,30 +127,35 @@ export default function Sidebar() {
         } catch (e) {
             console.error("Failed to parse sidebar sections state from localStorage", e);
         }
+    } else if (isClient) { // Only set default if nothing in localStorage AND we are on client
+        navSectionsData.forEach(section => {
+             initialOpenState[section.id] = !collapsed; // Default open when expanded
+        });
     }
     setOpenSections(initialOpenState);
 
-  }, [currentPathname]); // Re-evaluate on route change, but not on collapsed state change
+  }, [currentPathname, isClient]); // Add isClient to dependencies
+
+  useEffect(() => {
+    if (isClient) { //Only update localStorage if we are on the client
+      localStorage.setItem("matrix-sidebar-collapsed", String(collapsed));
+       // When collapsing, ensure all sections are marked as 'open' in localStorage for consistent icon display
+      if (collapsed) {
+        const allOpenState: Record<string, boolean> = {};
+        navSectionsData.forEach(section => {
+          allOpenState[section.id] = true;
+        });
+        localStorage.setItem("matrix-sidebar-sections-open", JSON.stringify(allOpenState));
+      } else {
+        // When expanding, restore their actual individual state
+        localStorage.setItem("matrix-sidebar-sections-open", JSON.stringify(openSections));
+      }
+    }
+  }, [collapsed, isClient, openSections]);
+
 
   const toggleSidebar = () => {
-    const newCollapsedState = !collapsed;
-    if (isClient) {
-      localStorage.setItem("matrix-sidebar-collapsed", String(newCollapsedState));
-    }
-    setCollapsed(newCollapsedState);
-    // When collapsing, ensure all sections are marked as 'open' for icon-only view logic
-    // When expanding, restore their previous state or default to open.
-    if (newCollapsedState) {
-        // No change to openSections needed for icon-only view
-    } else {
-        const currentOpenSections = {...openSections};
-        navSectionsData.forEach(section => {
-            if (currentOpenSections[section.id] === undefined) { // If a section was never interacted with, default to open
-                currentOpenSections[section.id] = true;
-            }
-        });
-        setOpenSections(currentOpenSections);
-    }
+    setCollapsed(prev => !prev);
   };
 
   const toggleSection = (sectionId: string) => {
@@ -161,7 +167,7 @@ export default function Sidebar() {
       return newOpenState;
     });
   };
-
+  
   const renderNavItem = (item: NavItem, isIconOnlyContext: boolean = false) => {
     const isActive = currentPathname === item.href || (currentPathname.startsWith(item.href) && item.href !== '/dashboard' && item.href !== '/');
     
@@ -171,7 +177,7 @@ export default function Sidebar() {
         ? "text-primary" 
         : item.hasNewAlerts 
           ? "animate-red-pulse text-red-500" 
-          : "text-sidebar-foreground"
+          : "text-sidebar-foreground/70 group-hover/navitem:text-sidebar-foreground" // Updated for better hover
     );
 
     const linkContent = (
@@ -182,22 +188,20 @@ export default function Sidebar() {
     );
 
     const linkClasses = cn(
-      "flex items-center gap-4 px-4 py-2 text-base font-medium rounded-[8px] transition-all duration-200 ease-out",
-      "bg-white/[.02] text-sidebar-foreground", // Consistent background and text for all states
-      "hover:bg-white/[.05] hover:-translate-y-px", // Subtle hover for all items
+      "flex items-center gap-4 px-4 py-2 text-base font-medium rounded-[8px] transition-all duration-200 ease-out group/navitem",
+      "text-sidebar-foreground/80 hover:text-sidebar-foreground", 
+      isActive ? "bg-primary/10 text-primary" : "hover:bg-white/[.05] hover:-translate-y-px",
       collapsed && isIconOnlyContext && "justify-center p-2.5"
     );
 
     if (collapsed && isIconOnlyContext) {
       return (
-        <Tooltip key={item.name} open={isClient && hoveredItem === item.name ? true : undefined}>
+        <Tooltip key={item.name}>
           <TooltipTrigger asChild>
             <Link 
               href={item.href} 
               className={linkClasses} 
               aria-label={item.name}
-              onMouseEnter={() => isClient && setHoveredItem(item.name)}
-              onMouseLeave={() => isClient && setHoveredItem(null)}
             >
               {linkContent}
             </Link>
@@ -213,8 +217,6 @@ export default function Sidebar() {
           key={item.name} 
           href={item.href} 
           className={linkClasses}
-          onMouseEnter={() => isClient && setHoveredItem(item.name)}
-          onMouseLeave={() => isClient && setHoveredItem(null)}
         >
           {linkContent}
         </Link>
@@ -222,51 +224,49 @@ export default function Sidebar() {
     }
   };
   
-  if (!isClient && typeof window === 'undefined') { // Prevents trying to access localStorage on server
+  if (!isClient) { 
       return (
-         <aside className={cn("h-full bg-black/90 border-r border-gray-800 text-white transition-all duration-300", "w-64")}>
-            {/* Basic skeleton or placeholder for SSR to avoid layout shifts / errors */}
+         <aside className={cn("h-full bg-black/90 border-r border-gray-800 text-white transition-all duration-300 flex flex-col", "w-64")}>
          </aside>
       );
   }
 
-
   return (
     <aside
       className={cn(
-        "h-full bg-black/90 border-r border-gray-800 text-white transition-all duration-300 flex flex-col",
+        "h-full bg-black/90 border-r border-gray-800/50 text-white transition-all duration-300 flex flex-col",
         collapsed ? "w-20" : "w-64" 
       )}
     >
-      <div className={cn("flex items-center p-4 px-5", collapsed ? "justify-center" : "justify-between")}>
-        <div className={cn("flex items-center space-x-3", collapsed ? "justify-center w-full" : "")}>
-          <Brain className={cn("text-purple-500 animate-pulse-neon", collapsed ? "w-8 h-8" : "w-10 h-10")} />
+      <div className={cn("flex items-center p-4 px-5 justify-between", collapsed && "justify-center")}>
+        <div className={cn("flex items-center", collapsed ? "justify-center w-full" : "space-x-3")}>
+          <div className={cn("animate-pulse-neon relative", collapsed ? "w-8 h-8" : "w-10 h-10")}>
+            <Image src="/icons/brain-logo.png" alt="Matrix Logo" fill objectFit="contain" />
+          </div>
           {!collapsed && (
-            <span className="text-4xl font-bold text-metallic-gradient">
+            <span className="text-4xl font-bold text-metallic-gradient leading-tight">
               Matrix
             </span>
           )}
         </div>
-        {!collapsed && (
-          <Button
-              onClick={toggleSidebar}
-              variant="ghost"
-              size="icon"
-              className="p-1 text-gray-400 hover:text-white hover:bg-white/10"
-              aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-            >
-            <ChevronLeft className="w-5 h-5" />
-          </Button>
-        )}
+        <Button
+            onClick={toggleSidebar}
+            variant="ghost"
+            size="icon"
+            className={cn("p-1 text-gray-400 hover:text-white hover:bg-white/10", collapsed && "absolute top-4 right-1/2 translate-x-1/2 hidden")} // Initially hidden when collapsed, logic in nav section will show expand
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+          <ChevronLeft className="w-5 h-5" />
+        </Button>
       </div>
       {collapsed && (
-        <div className="flex justify-center items-center py-2 border-t border-sidebar-border/30">
+        <div className="flex justify-center items-center py-2 border-t border-b border-sidebar-border/30">
            <Button
             onClick={toggleSidebar}
             variant="ghost"
             size="icon"
             className="p-1 text-gray-400 hover:text-white hover:bg-white/10"
-            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            aria-label="Expand sidebar"
           >
             <ChevronRight className="w-5 h-5" />
           </Button>
@@ -274,7 +274,7 @@ export default function Sidebar() {
       )}
       
       <TooltipProvider delayDuration={0}>
-        <nav className="flex-1 space-y-1 px-2 py-4 overflow-y-auto">
+        <nav className="flex-1 space-y-1 px-2 py-4 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700/50 scrollbar-track-transparent">
           {collapsed ? (
             navSectionsData.flatMap(section => section.items).map((item) =>
               renderNavItem(item, true)
@@ -285,24 +285,24 @@ export default function Sidebar() {
                 <button
                   onClick={() => toggleSection(section.id)}
                   className={cn(
-                    "flex items-center w-full text-left px-4 py-3 rounded-md hover:bg-black/50 transition-colors duration-150 ease-out",
-                    "border-b border-sidebar-border/30" 
+                    "flex items-center w-full text-left px-4 py-3 rounded-md hover:bg-black/30 transition-colors duration-150 ease-out",
+                    "border-b border-sidebar-border/20" 
                   )}
                   aria-expanded={openSections[section.id]}
                 >
-                  <section.icon className="w-5 h-5 shrink-0 text-gray-400" />
-                  <span className="ml-3 text-lg font-bold text-gray-300 uppercase tracking-wider truncate flex-1">
+                  <section.icon className="w-5 h-5 shrink-0 text-gray-400 group-hover/section:text-gray-200" />
+                  <span className="ml-3 text-lg font-bold text-gray-300 uppercase tracking-wider truncate flex-1 group-hover/section:text-gray-100">
                     {section.title}
                   </span>
                   <ChevronDown
                     className={cn(
-                      "w-4 h-4 text-gray-400 shrink-0 transition-transform duration-200",
+                      "w-4 h-4 text-gray-400 shrink-0 transition-transform duration-200 group-hover/section:text-gray-200",
                       openSections[section.id] && "rotate-180"
                     )}
                   />
                 </button>
                 {openSections[section.id] && (
-                  <div className="mt-1 space-y-1 pl-4">
+                  <div className="mt-1 space-y-1 py-2 pl-4 border-l border-sidebar-border/20">
                     {section.items.map((item) => renderNavItem(item))}
                   </div>
                 )}
