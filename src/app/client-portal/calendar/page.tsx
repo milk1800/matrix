@@ -273,8 +273,7 @@ export default function ClientPortalCalendarPage() {
                  <div className="overflow-x-auto relative"> {/* Added relative for current time line */}
                     <table className="w-full border-collapse bg-card">
                         <thead>
-                            <tr>
-                                <th className="w-16 p-2 border-r border-b border-border/30 text-xs text-muted-foreground font-normal sticky left-0 bg-card z-10"></th> {/* Time labels corner */}
+                            <tr><th className="w-16 p-2 border-r border-b border-border/30 text-xs text-muted-foreground font-normal sticky left-0 bg-card z-10"></th>{/* Time labels corner */}
                                 {weekDates.map(day => (
                                     <th key={day.dateNumber} className="p-2 border-r border-b border-border/30 text-center">
                                         <div className={cn("text-xs font-medium", isToday(day.fullDate) ? "text-primary" : "text-muted-foreground")}>{day.dayName}</div>
@@ -477,7 +476,5 @@ export default function ClientPortalCalendarPage() {
     </>
   );
 }
-
-
 
     
