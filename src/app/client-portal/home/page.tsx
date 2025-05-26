@@ -21,23 +21,26 @@ import {
   Italic,
   Underline,
   Link2,
-  Table as TableIcon, 
+  Table as TableIcon,
   Smile,
   Mic,
   Trash2,
   FilePenLine,
   ListOrdered,
   UploadCloud,
-  CalendarDays, 
-  Clock, 
+  CalendarDays,
+  Clock,
+  PlayCircle, // New
+  Star,       // New
+  CircleDollarSign // New
 } from "lucide-react";
 
 export default function ClientPortalHomePage() {
   return (
     <main className="min-h-screen bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#5b21b6]/10 to-[#000104] flex-1 p-6 space-y-8 md:p-8">
       <h1 className="text-3xl font-bold tracking-tight text-foreground">Client Portal - Home</h1>
-      
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 lg:gap-8">
         <PlaceholderCard title="Create New" className="lg:col-span-2 w-full">
           <Tabs defaultValue="update" className="w-full">
             <TabsList className="grid w-full grid-cols-5 bg-muted/30">
@@ -115,9 +118,9 @@ export default function ClientPortalHomePage() {
             <TabsContent value="contact" className="mt-6">
               <div className="mb-6 text-center">
                 <p className="text-foreground">
-                  Add a new Person – or – add a new 
-                  <Button variant="link" className="p-0 h-auto text-primary hover:text-primary/80 mx-1">Household</Button> | 
-                  <Button variant="link" className="p-0 h-auto text-primary hover:text-primary/80 mx-1">Company</Button> | 
+                  Add a new Person – or – add a new
+                  <Button variant="link" className="p-0 h-auto text-primary hover:text-primary/80 mx-1">Household</Button> |
+                  <Button variant="link" className="p-0 h-auto text-primary hover:text-primary/80 mx-1">Company</Button> |
                   <Button variant="link" className="p-0 h-auto text-primary hover:text-primary/80 ml-1">Trust</Button>
                 </p>
               </div>
@@ -167,7 +170,7 @@ export default function ClientPortalHomePage() {
                     </Select>
                   </div>
                 </div>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <Label htmlFor="jobTitle">Job Title</Label>
@@ -296,7 +299,7 @@ export default function ClientPortalHomePage() {
                     </Select>
                   </div>
                 </div>
-                
+
                 <div>
                   <Label htmlFor="taskCategory">Category</Label>
                    <div className="flex items-center gap-2">
@@ -398,7 +401,7 @@ export default function ClientPortalHomePage() {
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="flex items-center justify-between sm:justify-start space-x-6">
                   <div className="flex items-center space-x-2">
                     <Checkbox id="allDayEvent" />
@@ -450,7 +453,7 @@ export default function ClientPortalHomePage() {
                   <Label htmlFor="eventRelatedTo">Related To</Label>
                   <Input id="eventRelatedTo" placeholder="Contact, project, or opportunity..." className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary" />
                 </div>
-                
+
                 <div>
                   <Label htmlFor="eventAttending">Attending</Label>
                   <Input id="eventAttending" placeholder="Search users or resources..." className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary" />
@@ -557,7 +560,7 @@ export default function ClientPortalHomePage() {
                     <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>
                   </div>
                 </div>
-                
+
                 <div>
                   <Label htmlFor="opportunityTargetClose">Target Close</Label>
                   <Input id="opportunityTargetClose" type="text" placeholder="Select date..." className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary" />
@@ -591,11 +594,38 @@ export default function ClientPortalHomePage() {
             </div>
           </PlaceholderCard>
         </div>
+
+        <div className="lg:col-span-1 space-y-6 lg:space-y-8">
+          <PlaceholderCard
+            title="Workflows"
+            icon={PlayCircle}
+            headerActions={
+              <Button variant="link" size="sm" className="text-primary hover:text-primary/80 p-0 h-auto">
+                View All
+              </Button>
+            }
+          >
+            <div className="flex flex-col items-center justify-center h-full text-center p-6">
+              <PlayCircle className="w-16 h-16 text-muted-foreground mb-4" />
+              <p className="text-muted-foreground">You have no workflows in progress.</p>
+            </div>
+          </PlaceholderCard>
+          <PlaceholderCard title="Special Dates (next 7 days)" icon={Star}>
+            <div className="flex flex-col items-center justify-center h-full text-center p-6">
+              <Star className="w-16 h-16 text-muted-foreground mb-4" />
+              <p className="text-muted-foreground">You have no contacts with special dates in the next week.</p>
+            </div>
+          </PlaceholderCard>
+          <PlaceholderCard title="Opportunities (next 30 days)" icon={CircleDollarSign}>
+            <div className="flex flex-col items-center justify-center h-full text-center p-6">
+              <CircleDollarSign className="w-16 h-16 text-muted-foreground mb-4" />
+              <p className="text-muted-foreground">You have no open opportunities in the next 30 days.</p>
+            </div>
+          </PlaceholderCard>
+        </div>
       </div>
-      
+
       <p className="text-muted-foreground mt-8 text-center">More content for client home page can go here.</p>
     </main>
   );
 }
-
-    

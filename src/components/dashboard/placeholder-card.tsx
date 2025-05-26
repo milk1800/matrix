@@ -12,49 +12,44 @@ interface PlaceholderCardProps {
   iconClassName?: string;
   children?: React.ReactNode;
   className?: string;
+  headerActions?: React.ReactNode; // New prop for actions in header
 }
 
-export function PlaceholderCard({ title, value, description, icon, iconClassName, children, className }: PlaceholderCardProps) {
+export function PlaceholderCard({ title, value, description, icon, iconClassName, children, className, headerActions }: PlaceholderCardProps) {
   const isStringPathIcon = typeof icon === 'string';
   const IconComponent = typeof icon === 'function' ? icon : null;
 
   return (
     <Card className={cn(
-      "bg-black/[.40] backdrop-blur-sm rounded-lg shadow-white-glow-soft",
+      "bg-black/[.60] backdrop-blur-sm rounded-lg shadow-card-float border border-transparent", // Removed default border, relying on shadow
       "transition-all duration-200 ease-out",
-      "hover:-translate-y-1 hover:shadow-white-glow-hover",
-      "overflow-x-hidden", // Keep this to prevent horizontal scroll on card
-      "flex flex-col", // Ensure the card itself can manage height for its children if needed
+      "hover:-translate-y-1 hover:shadow-card-hover-glow",
+      "overflow-x-hidden",
+      "flex flex-col",
       className
     )}>
       <CardHeader className={cn(
-        "flex p-4 pb-2", // Standardized base padding
-        isStringPathIcon ? "flex-col items-start" : "flex-row items-start", // Use items-start for Lucide icons too for better alignment if title wraps
-        // Apply min-height if it's a Lucide icon to ensure consistent header height
-        // for cards in a row, helping align elements in CardContent below.
-        // 72px accommodates ~2 lines of text-base title + icon + padding.
-        (!isStringPathIcon && IconComponent) && "min-h-[72px]"
+        "flex flex-row items-start justify-between p-4 pb-2" // Use justify-between for actions
       )}>
-        {isStringPathIcon && icon && (
-          <div className="mb-3"> {/* Spacing for icon above title */}
-            <Image src={icon} alt={title} width={32} height={32} />
-          </div>
-        )}
-        {/* Container for icon (if Lucide) and title to manage their alignment */}
         <div className={cn(
-          "flex w-full", 
-          isStringPathIcon ? "items-start" : "items-center gap-3" // Use items-center for Lucide + title if title is single line
-                                                                  // If title can wrap, items-start for icon might be better
+          "flex items-center gap-3",
+          isStringPathIcon && "flex-col items-start" // if image icon, stack title below
         )}>
+          {isStringPathIcon && icon && (
+            <div className="mb-2"> {/* Adjusted margin for image icon case */}
+              <Image src={icon} alt={title} width={32} height={32} className="object-contain" />
+            </div>
+          )}
           {!isStringPathIcon && IconComponent && (
-            <IconComponent className={cn("h-5 w-5 shrink-0 mt-0.5", iconClassName || "text-muted-foreground")} /> // Added mt-0.5 for fine-tuning
+             <IconComponent className={cn("h-5 w-5 shrink-0 mt-0.5", iconClassName || "text-muted-foreground")} />
           )}
           <CardTitle className="text-base font-bold text-foreground">{title}</CardTitle>
         </div>
+        {headerActions && <div>{headerActions}</div>}
       </CardHeader>
       <CardContent className={cn(
         "p-4 pt-0",
-        "flex flex-col flex-grow" // Allow content to grow
+        "flex flex-col flex-grow"
       )}>
         {value && <div className="text-3xl font-bold text-foreground">{value}</div>}
         {description && <p className="text-sm text-muted-foreground mt-1">{description}</p>}
@@ -66,4 +61,3 @@ export function PlaceholderCard({ title, value, description, icon, iconClassName
     </Card>
   );
 }
-
