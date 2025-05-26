@@ -21,15 +21,15 @@ import {
   Italic,
   Underline,
   Link2,
-  Table as TableIcon, // Renamed to avoid conflict with Table component
+  Table as TableIcon, 
   Smile,
   Mic,
   Trash2,
   FilePenLine,
   ListOrdered,
   UploadCloud,
-  CalendarDays, // Added for Event Date section (conceptual)
-  Clock, // Added for Event Time section (conceptual)
+  CalendarDays as CalendarIcon, // Renamed to avoid conflict with Calendar component
+  Clock, 
 } from "lucide-react";
 
 export default function ClientPortalHomePage() {
@@ -61,7 +61,7 @@ export default function ClientPortalHomePage() {
             <div className="flex space-x-4">
               <div>
                 <Avatar>
-                  <AvatarImage src="https://placehold.co/40x40.png" alt="User Avatar" data-ai-hint="profile avatar" />
+                  <AvatarImage src="https://placehold.co/40x40.png" alt="User Avatar" data-ai-hint="profile avatar"/>
                   <AvatarFallback>U</AvatarFallback>
                 </Avatar>
               </div>
@@ -355,13 +355,11 @@ export default function ClientPortalHomePage() {
 
           <TabsContent value="event" className="mt-6">
             <div className="space-y-6">
-              {/* Event Name */}
               <div>
                 <Label htmlFor="eventName">Event Name</Label>
                 <Input id="eventName" placeholder="Enter event name..." className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary" />
               </div>
 
-              {/* Category */}
               <div>
                 <Label htmlFor="eventCategory">Category</Label>
                 <div className="flex items-center gap-2">
@@ -381,7 +379,6 @@ export default function ClientPortalHomePage() {
                 </div>
               </div>
 
-              {/* Date & Time Section */}
               <div className="space-y-3">
                 <Label>Date & Time</Label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-x-3 gap-y-2 items-center">
@@ -412,7 +409,6 @@ export default function ClientPortalHomePage() {
                 </div>
               </div>
 
-              {/* Status */}
               <div>
                 <Label htmlFor="eventStatus">Status</Label>
                 <Select>
@@ -428,13 +424,11 @@ export default function ClientPortalHomePage() {
                 </Select>
               </div>
 
-              {/* Location */}
               <div>
                 <Label htmlFor="eventLocation">Location</Label>
                 <Input id="eventLocation" placeholder="Enter location (e.g., Zoom, Office, Conference Room A)" className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary" />
               </div>
 
-              {/* Description with Rich Text Bar */}
               <div>
                 <Label htmlFor="eventDescription">Description</Label>
                 <Textarea id="eventDescription" rows={5} placeholder="Add event details, agenda, notes..." className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary resize-none" />
@@ -451,25 +445,21 @@ export default function ClientPortalHomePage() {
                 </div>
               </div>
 
-              {/* Related To */}
               <div>
                 <Label htmlFor="eventRelatedTo">Related To</Label>
                 <Input id="eventRelatedTo" placeholder="Contact, project, or opportunity..." className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary" />
               </div>
               
-              {/* Attending */}
               <div>
                 <Label htmlFor="eventAttending">Attending</Label>
                 <Input id="eventAttending" placeholder="Search users or resources..." className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary" />
               </div>
 
-              {/* Invite */}
               <div>
                 <Label htmlFor="eventInvite">Invite</Label>
                 <Input id="eventInvite" placeholder="Search contacts to invite..." className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary" />
               </div>
 
-              {/* Send Email Invitations Checkbox */}
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="flex items-center space-x-2">
                   <Checkbox id="sendEventInvitations" />
@@ -480,14 +470,108 @@ export default function ClientPortalHomePage() {
                 <Button variant="link" className="p-0 h-auto text-primary hover:text-primary/80 text-sm whitespace-nowrap">Preview Invite</Button>
               </div>
 
-              {/* Add Event Button */}
               <div className="flex justify-end pt-4 border-t border-border/20 mt-8">
                 <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">Add Event</Button>
               </div>
             </div>
           </TabsContent>
+
           <TabsContent value="opportunity" className="mt-6">
-            <p className="text-muted-foreground p-4 text-center">Opportunity creation form will go here.</p>
+            <div className="space-y-6">
+              <div>
+                <Label htmlFor="opportunityName">Opportunity Name</Label>
+                <Input id="opportunityName" placeholder="Enter opportunity name..." className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary" />
+              </div>
+
+              <div>
+                <Label htmlFor="opportunityContact">Contact</Label>
+                <Input id="opportunityContact" placeholder="Search for a contact..." className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary" />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="opportunityPipeline">Pipeline</Label>
+                  <Select>
+                    <SelectTrigger id="opportunityPipeline" className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary">
+                      <SelectValue placeholder="Select pipeline" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pipelineA">Pipeline A</SelectItem>
+                      <SelectItem value="pipelineB">Pipeline B</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label htmlFor="opportunityStage">Stage</Label>
+                  <Select>
+                    <SelectTrigger id="opportunityStage" className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary">
+                      <SelectValue placeholder="Select stage" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="stage1">Qualification</SelectItem>
+                      <SelectItem value="stage2">Proposal</SelectItem>
+                      <SelectItem value="stage3">Negotiation</SelectItem>
+                      <SelectItem value="stage4">Closed Won</SelectItem>
+                      <SelectItem value="stage5">Closed Lost</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="opportunityNextStep">Next Step</Label>
+                <Input id="opportunityNextStep" placeholder="Describe next action..." className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary" />
+              </div>
+
+              <div>
+                <Label htmlFor="opportunityProbability">Probability</Label>
+                <Select>
+                  <SelectTrigger id="opportunityProbability" className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary">
+                    <SelectValue placeholder="Select probability" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="10">10%</SelectItem>
+                    <SelectItem value="25">25%</SelectItem>
+                    <SelectItem value="50">50%</SelectItem>
+                    <SelectItem value="75">75%</SelectItem>
+                    <SelectItem value="90">90%</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label>Amount</Label>
+                <div className="flex items-center space-x-2">
+                  <Input type="number" placeholder="0.00" className="flex-grow bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary" />
+                  <Select>
+                    <SelectTrigger className="w-[150px] bg-input border-border/50 text-foreground focus:ring-primary">
+                      <SelectValue placeholder="Type/Fee" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="recurring">Recurring Fee</SelectItem>
+                      <SelectItem value="one_time">One-Time Project</SelectItem>
+                      <SelectItem value="aum_based">AUM Based</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>
+                </div>
+              </div>
+              
+              <div>
+                <Label htmlFor="opportunityTargetClose">Target Close</Label>
+                <Input id="opportunityTargetClose" type="text" placeholder="Select date..." className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary" />
+                 {/* In a real app, this would use a DatePicker component */}
+              </div>
+
+              <div>
+                <Label htmlFor="opportunityDescription">Description</Label>
+                <Textarea id="opportunityDescription" rows={4} placeholder="Add details about the opportunity..." className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary resize-none" />
+              </div>
+
+              <div className="flex justify-end pt-4 border-t border-border/20 mt-8">
+                <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">Add Opportunity</Button>
+              </div>
+            </div>
           </TabsContent>
         </Tabs>
       </PlaceholderCard>
