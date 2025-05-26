@@ -10,11 +10,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { AlertTriangle, CalendarDays, Filter, MessageSquare, Send, Server, Landmark, Briefcase, Video, Mail } from "lucide-react";
+import { AlertTriangle, CalendarDays, Filter, MessageSquare, Send, Server, Landmark, Briefcase, Video, Mail, RefreshCcw } from "lucide-react";
 import { format, subDays, addDays, subMinutes } from "date-fns";
 import { cn } from "@/lib/utils";
-import { useTicker } from "@/contexts/ticker-context"; // Import useTicker
-import { useToast } from "@/hooks/use-toast"; // Import useToast
+import { useTicker } from "@/contexts/ticker-context";
+import { useToast } from "@/hooks/use-toast";
 
 interface AlertItem {
   id: string;
@@ -114,9 +114,9 @@ const getSystemStatusBadgeClass = (status: SystemStatus): string => {
 export default function AlertsPage() {
   const [alerts, setAlerts] = React.useState<AlertItem[]>(mockAlerts);
   const [systemStatuses, setSystemStatuses] = React.useState<SystemStatusItem[]>(mockSystemStatuses);
-  const [broadcastMessage, setBroadcastMessage] = React.useState("");
-  const { setTickerMessage } = useTicker(); // Get setTickerMessage from context
-  const { toast } = useToast(); // For success notifications
+  const [broadcastMessageInput, setBroadcastMessageInput] = React.useState("");
+  const { tickerMessage, setTickerMessage } = useTicker();
+  const { toast } = useToast();
 
   const toggleReadStatus = (alertId: string) => {
     setAlerts(prevAlerts =>
@@ -127,14 +127,22 @@ export default function AlertsPage() {
   };
 
   const handleSendBroadcast = () => {
-    if (broadcastMessage.trim()) {
-      setTickerMessage(broadcastMessage.trim()); // Update the global ticker message
+    if (broadcastMessageInput.trim()) {
+      setTickerMessage(broadcastMessageInput.trim());
       toast({
         title: "Broadcast Sent!",
-        description: `Message "${broadcastMessage.trim()}" is now scrolling on the ticker.`,
+        description: `Message "${broadcastMessageInput.trim()}" is now scrolling on the ticker.`,
       });
-      setBroadcastMessage(""); // Clear the input field
+      setBroadcastMessageInput("");
     }
+  };
+
+  const handleClearBroadcast = () => {
+    setTickerMessage("");
+    toast({
+      title: "Broadcast Cleared",
+      description: "The default ticker has been resumed.",
+    });
   };
 
   return (
@@ -142,19 +150,26 @@ export default function AlertsPage() {
       <h1 className="text-3xl font-bold tracking-tight text-foreground mb-8">Alert Center</h1>
 
       <PlaceholderCard title="Broadcast New Alert">
-        <div className="flex items-center space-x-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
           <Input
             type="text"
             placeholder="Enter broadcast message..."
-            value={broadcastMessage}
-            onChange={(e) => setBroadcastMessage(e.target.value)}
+            value={broadcastMessageInput}
+            onChange={(e) => setBroadcastMessageInput(e.target.value)}
             className="flex-grow bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary"
           />
-          <Button onClick={handleSendBroadcast} className="bg-primary hover:bg-primary/90 text-primary-foreground">
-            <Send className="mr-2 h-4 w-4" /> Send Broadcast
-          </Button>
+          <div className="flex gap-2">
+            <Button onClick={handleSendBroadcast} className="bg-primary hover:bg-primary/90 text-primary-foreground flex-1 sm:flex-none">
+              <Send className="mr-2 h-4 w-4" /> Send Broadcast
+            </Button>
+            {tickerMessage && (
+              <Button onClick={handleClearBroadcast} variant="outline" className="flex-1 sm:flex-none">
+                <RefreshCcw className="mr-2 h-4 w-4" /> Clear & Resume Ticker
+              </Button>
+            )}
+          </div>
         </div>
-        <p className="text-xs text-muted-foreground mt-2">High-visibility alerts sent here will scroll across the top of all users' dashboards.</p>
+        <p className="text-xs text-muted-foreground mt-2">High-visibility alerts sent here will scroll across the top of all users' dashboards. Clearing resumes the default stock ticker.</p>
       </PlaceholderCard>
 
       <PlaceholderCard title="System Status Monitor">
@@ -262,3 +277,5 @@ export default function AlertsPage() {
     </main>
   );
 }
+
+    
