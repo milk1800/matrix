@@ -199,7 +199,7 @@ export default function AlertsPage() {
          <p className="text-xs text-muted-foreground mt-3 text-center">Status checks are automated. For issues, contact IT support.</p>
       </PlaceholderCard>
 
-      <PlaceholderCard title="Manage Alerts">
+      <PlaceholderCard title=""> {/* Changed title to empty string */}
         <div className="flex flex-wrap gap-4 mb-6 items-center">
           <Select defaultValue="all_categories">
             <SelectTrigger className="w-full sm:w-auto bg-card border-none text-foreground shadow-white-glow-soft hover:shadow-white-glow-hover transition-shadow duration-200 ease-out">
@@ -277,5 +277,3 @@ export default function AlertsPage() {
     </main>
   );
 }
-
-    
