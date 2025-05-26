@@ -83,6 +83,11 @@ const initialPipelineData: PipelineColumn[] = [
        { id: 'opp6', title: 'Negotiation - Gamma Inc.', contactName: 'Peter Quill', amountDisplay: '$5,000 (Consulting)', amountValue: 5000, amountType: 'one_time', probability: 65, targetCloseDate: '2024-07-30', stage: 'review' },
     ],
   },
+  {
+    id: 'proposal',
+    title: 'Proposal',
+    opportunities: [],
+  },
 ];
 
 const getProbabilityBadgeClass = (probability: number): string => {
@@ -103,8 +108,8 @@ export default function ClientPortalOpportunitiesPage() {
 
   const [opportunityName, setOpportunityName] = React.useState('');
   const [opportunityContact, setOpportunityContact] = React.useState('');
-  const [opportunityPipeline, setOpportunityPipeline] = React.useState('default_pipeline'); // Corresponds to a SelectItem value
-  const [opportunityStage, setOpportunityStage] = React.useState('evaluation'); // Corresponds to a PipelineColumn id
+  const [opportunityPipeline, setOpportunityPipeline] = React.useState('default_pipeline'); 
+  const [opportunityStage, setOpportunityStage] = React.useState('evaluation'); 
   const [opportunityNextStep, setOpportunityNextStep] = React.useState('');
   const [opportunityProbability, setOpportunityProbability] = React.useState('');
   const [opportunityAmount, setOpportunityAmount] = React.useState('');
@@ -224,7 +229,6 @@ export default function ClientPortalOpportunitiesPage() {
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>, targetColumnId: string) => {
     e.preventDefault();
-    e.currentTarget.classList.remove('opacity-50');
     
     const opportunityId = e.dataTransfer.getData("opportunityId");
     const sourceColumnId = e.dataTransfer.getData("sourceColumnId");
@@ -233,12 +237,9 @@ export default function ClientPortalOpportunitiesPage() {
 
     let draggedOpportunity: OpportunityItem | undefined;
 
-    // Create a new pipelineData array to trigger re-render
     const updatedPipelineData = pipelineData.map(column => {
       if (column.id === sourceColumnId) {
-        // Find and store the dragged opportunity
         draggedOpportunity = column.opportunities.find(opp => opp.id === opportunityId);
-        // Return the source column without the dragged opportunity
         return {
           ...column,
           opportunities: column.opportunities.filter(opp => opp.id !== opportunityId),
@@ -247,8 +248,6 @@ export default function ClientPortalOpportunitiesPage() {
       return column;
     }).map(column => {
       if (column.id === targetColumnId && draggedOpportunity) {
-        // Add the dragged opportunity (with updated stage) to the target column
-        // It's important to create a new object for the opportunity
         return {
           ...column,
           opportunities: [{ ...draggedOpportunity, stage: targetColumnId }, ...column.opportunities],
@@ -403,7 +402,7 @@ export default function ClientPortalOpportunitiesPage() {
                 <Select value={opportunityStage} onValueChange={setOpportunityStage}>
                   <SelectTrigger id="opportunityStage-dialog" className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary"><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {pipelineData.map(col => (
+                    {initialPipelineData.map(col => (
                       <SelectItem key={col.id} value={col.id}>{col.title}</SelectItem>
                     ))}
                     <SelectItem value="closed_won">Closed Won</SelectItem>
