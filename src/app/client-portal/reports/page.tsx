@@ -10,18 +10,18 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
-import { 
-  PlusCircle, 
-  FileSearch2, 
-  Users, 
-  StickyNote, 
-  ListChecks, 
-  DollarSign as OpportunityIconLucide, 
-  Workflow, 
-  KanbanSquare, 
-  StepForward, 
-  FileText, 
-  CalendarDays, 
+import {
+  PlusCircle,
+  FileSearch2,
+  Users,
+  StickyNote,
+  ListChecks,
+  DollarSign as OpportunityIconLucide,
+  Workflow,
+  KanbanSquare,
+  StepForward,
+  FileText,
+  CalendarDays,
   Landmark,
   Plus,
   Minus,
@@ -83,37 +83,80 @@ const reportObjectOptions = [
   { value: "Event", label: "Event" },
 ];
 
+const toCamelCase = (str: string) => {
+  return str
+    .replace(/[^a-zA-Z0-9 ]/g, "") // Remove special characters
+    .replace(/(?:^\w|[A-Z]|\b\w)/g, (word, index) =>
+      index === 0 ? word.toLowerCase() : word.toUpperCase()
+    )
+    .replace(/\s+/g, "");
+};
+
+const contactFieldsList = [
+  "Accessible by", "Active", "Adjusted Gross Income", "Age", "Anniversary", "Assets", "Assigned to", "Assistant", "Attorney", "Background Info", "Birth Place", "Birthday", "Business Manager", "City", "Client Since", "Company Name", "Confirmed by Tax Return", "Contact Source", "Contact Type", "Country", "CPA", "Created At", "Creator", "Date of Birth", "Date of Death", "Doctor", "Drivers License Expires Date", "Drivers License Issued Date", "Drivers License Number", "Drivers License State", "Email Address", "Estimated Net Worth", "Estimated Taxes", "Experience Mutual Funds", "Experience Other", "Experience Partnerships", "Experience Stocks Bonds", "External Unique ID", "Family Officer", "First Name", "Gender", "Green Card Number", "Gross Annual Income", "Household", "Household ID", "Household Title", "ID", "Important Information", "Initial CRS Offering Date", "Insurance", "Investment Objective", "Job Title", "Last Activity Date", "Last ADV Offering Date", "Last CRS Offering Date", "Last Dropbox Email Date", "Last Event Date", "Last Mail Merge Date", "Last Name", "Last Note Date", "Last Phone Call", "Last Privacy Offering Date", "Last Task Date", "Liabilities", "LinkedIn URL", "Maiden Name", "Mailing City", "Mailing Country", "Mailing State", "Mailing Street Line 1", "Mailing Street Line 2", "Mailing Zip Code", "Manual Investment Accounts", "Marital Status", "Middle Name", "Name", "Net Worth", "Nickname", "Non Liquid Assets", "Occupation", "Occupation Start Date", "Organization", "Other", "Passport Number", "Personal Interest", "Phone Number", "Prefix", "Primary Email Address", "Primary Phone Number", "Referred By", "Retirement Date", "Risk Tolerance", "Signed Fee Agreement", "Signed FP Agreement Date", "Signed IPS Agreement", "Spouse First Name", "Spouse Full Name", "Spouse Last Name", "Spouse Middle Name", "Spouse Nickname", "Spouse Salutation", "SSN", "State", "Street Line 1", "Street Line 2", "Suffix", "Tags", "Tax Bracket", "Tax Year", "Time Horizon", "Trusted Contact", "Twitter Name", "Type", "Updated At", "Viewed At", "Zip Code"
+];
+
 const fieldOptionsByObject: Record<string, { value: string; label: string }[]> = {
-  Contact: [
-    { value: "firstName", label: "First Name" },
-    { value: "lastName", label: "Last Name" },
-    { value: "email", label: "Email" },
-    { value: "phone", label: "Phone" },
-    { value: "tags", label: "Tags" },
-    { value: "createdAt", label: "Created Date" },
-  ],
+  Contact: contactFieldsList.map(field => ({ value: toCamelCase(field), label: field })),
   Opportunity: [
     { value: "opportunityName", label: "Opportunity Name" },
     { value: "stage", label: "Stage" },
     { value: "amount", label: "Amount" },
     { value: "closeDate", label: "Target Close Date" },
     { value: "probability", label: "Probability" },
+    { value: "contactName", label: "Contact Name" },
+    { value: "pipeline", label: "Pipeline" },
+    { value: "createdAt", label: "Created Date" },
+    { value: "updatedAt", label: "Updated Date" },
   ],
-  // Add more for Project, Task, Event
-  Project: [{value: "projectName", label: "Project Name"}, {value: "status", label: "Status"}],
-  Task: [{value: "taskName", label: "Task Name"}, {value: "dueDate", label: "Due Date"}],
-  Event: [{value: "eventName", label: "Event Name"}, {value: "eventDate", label: "Event Date"}],
+  Project: [
+    { value: "projectName", label: "Project Name" },
+    { value: "status", label: "Status" },
+    { value: "dueDate", label: "Due Date" },
+    { value: "assignedTo", label: "Assigned To" },
+    { value: "relatedContact", label: "Related Contact" },
+    { value: "createdAt", label: "Created Date" },
+  ],
+  Task: [
+    { value: "taskName", label: "Task Name" },
+    { value: "dueDate", label: "Due Date" },
+    { value: "status", label: "Status" },
+    { value: "priority", label: "Priority" },
+    { value: "assignedTo", label: "Assigned To" },
+    { value: "relatedTo", label: "Related To" },
+    { value: "createdAt", label: "Created Date" },
+  ],
+  Event: [
+    { value: "eventName", label: "Event Name" },
+    { value: "eventDate", label: "Event Date" },
+    { value: "startTime", label: "Start Time" },
+    { value: "endTime", label: "End Time" },
+    { value: "location", label: "Location" },
+    { value: "relatedTo", label: "Related To" },
+    { value: "attendees", label: "Attendees" },
+    { value: "createdAt", label: "Created Date" },
+  ],
 };
 
 const operatorOptions = [
   { value: "equals", label: "Equals" },
+  { value: "notEquals", label: "Not Equals" },
   { value: "contains", label: "Contains" },
+  { value: "doesNotContain", label: "Does Not Contain" },
   { value: "startsWith", label: "Starts With" },
   { value: "endsWith", label: "Ends With" },
   { value: "greaterThan", label: "Greater Than" },
   { value: "lessThan", label: "Less Than" },
+  { value: "greaterThanOrEqual", label: "Greater Than or Equal To" },
+  { value: "lessThanOrEqual", label: "Less Than or Equal To" },
   { value: "isEmpty", label: "Is Empty" },
   { value: "isNotEmpty", label: "Is Not Empty" },
+  { value: "isTrue", label: "Is True" },
+  { value: "isFalse", label: "Is False" },
+  { value: "on", label: "On" },
+  { value: "before", label: "Before" },
+  { value: "after", label: "After" },
+  { value: "between", label: "Between" },
 ];
 
 
@@ -125,20 +168,22 @@ export default function ClientPortalReportsPage() {
   const [reportObject, setReportObject] = React.useState<string>(reportObjectOptions[0].value);
   const [reportName, setReportName] = React.useState("");
   const [filters, setFilters] = React.useState<ReportFilter[]>([]);
-  
-  const [availableFields, setAvailableFields] = React.useState<{value: string, label: string}[]>(fieldOptionsByObject[reportObjectOptions[0].value] || []);
-  const [selectedFields, setSelectedFields] = React.useState<{value: string, label: string}[]>([]);
+
+  const [availableFields, setAvailableFields] = React.useState<{ value: string, label: string }[]>([]);
+  const [selectedFields, setSelectedFields] = React.useState<{ value: string, label: string }[]>([]);
 
   const [highlightedAvailableField, setHighlightedAvailableField] = React.useState<string | null>(null);
   const [highlightedSelectedField, setHighlightedSelectedField] = React.useState<string | null>(null);
 
   React.useEffect(() => {
-    setAvailableFields(fieldOptionsByObject[reportObject] || []);
-    setSelectedFields([]); // Reset selected fields when object changes
-  }, [reportObject]);
+    const fields = fieldOptionsByObject[reportObject] || [];
+    const currentlySelectedValues = new Set(selectedFields.map(sf => sf.value));
+    setAvailableFields(fields.filter(f => !currentlySelectedValues.has(f.value)));
+  }, [reportObject, selectedFields]);
+
 
   const handleAddFilter = () => {
-    const defaultField = fieldOptionsByObject[reportObject]?.[0]?.value || "";
+    const defaultField = (fieldOptionsByObject[reportObject] || [])[0]?.value || "";
     setFilters([...filters, { id: Date.now().toString(), field: defaultField, operator: operatorOptions[0].value, value: "" }]);
   };
 
@@ -155,7 +200,7 @@ export default function ClientPortalReportsPage() {
       const fieldToAdd = availableFields.find(f => f.value === highlightedAvailableField);
       if (fieldToAdd && !selectedFields.some(sf => sf.value === fieldToAdd.value)) {
         setSelectedFields([...selectedFields, fieldToAdd]);
-        setAvailableFields(availableFields.filter(f => f.value !== highlightedAvailableField));
+        // setAvailableFields(availableFields.filter(f => f.value !== highlightedAvailableField)); // This is now handled by useEffect
         setHighlightedAvailableField(null);
       }
     }
@@ -165,13 +210,13 @@ export default function ClientPortalReportsPage() {
     if (highlightedSelectedField) {
       const fieldToRemove = selectedFields.find(f => f.value === highlightedSelectedField);
       if (fieldToRemove) {
-        setAvailableFields([...availableFields, fieldToRemove].sort((a,b) => a.label.localeCompare(b.label)));
+        // setAvailableFields([...availableFields, fieldToRemove].sort((a, b) => a.label.localeCompare(b.label))); // This is now handled by useEffect
         setSelectedFields(selectedFields.filter(f => f.value !== highlightedSelectedField));
         setHighlightedSelectedField(null);
       }
     }
   };
-  
+
   const handleMoveField = (direction: 'up' | 'down') => {
     if (!highlightedSelectedField) return;
     const index = selectedFields.findIndex(f => f.value === highlightedSelectedField);
@@ -182,10 +227,10 @@ export default function ClientPortalReportsPage() {
 
     if (direction === 'up' && index > 0) {
       newFields.splice(index - 1, 0, item);
-    } else if (direction === 'down' && index < newFields.length) {
+    } else if (direction === 'down' && index < newFields.length -1) { // Check index < newFields.length - 1 for moving down
       newFields.splice(index + 1, 0, item);
     } else {
-      // Can't move further, put it back
+      // Can't move further, put it back (or simply don't change if at boundary)
       newFields.splice(index, 0, item);
     }
     setSelectedFields(newFields);
@@ -208,11 +253,13 @@ export default function ClientPortalReportsPage() {
       description: `"${reportName}" has been saved.`,
     });
     setIsCreateReportModalOpen(false);
-    // Reset form (optional)
+    // Reset form
     setReportObject(reportObjectOptions[0].value);
     setReportName("");
     setFilters([]);
     setSelectedFields([]);
+    setHighlightedAvailableField(null);
+    setHighlightedSelectedField(null);
   };
 
   return (
@@ -220,7 +267,7 @@ export default function ClientPortalReportsPage() {
       <main className="min-h-screen bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#5b21b6]/10 to-[#000104] flex-1 p-6 space-y-8 md:p-8">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
           <h1 className="text-3xl font-bold tracking-tight text-foreground">Reports</h1>
-          <Button 
+          <Button
             className="bg-primary hover:bg-primary/90 text-primary-foreground"
             onClick={() => setIsCreateReportModalOpen(true)}
           >
@@ -229,9 +276,9 @@ export default function ClientPortalReportsPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <PlaceholderCard 
-            title="Sample Reports" 
-            icon={FileSearch2} 
+          <PlaceholderCard
+            title="Sample Reports"
+            icon={FileSearch2}
             iconClassName="text-purple-400"
             className="md:col-span-1 lg:col-span-1"
           >
@@ -251,8 +298,8 @@ export default function ClientPortalReportsPage() {
           {reportCategories.map((category) => {
             const IconComponent = category.icon;
             return (
-              <PlaceholderCard 
-                key={category.id} 
+              <PlaceholderCard
+                key={category.id}
                 title={category.title}
                 icon={() => <IconComponent className={cn("h-5 w-5 shrink-0", category.iconClassName)} />}
               >
@@ -275,7 +322,7 @@ export default function ClientPortalReportsPage() {
               </Button>
             </DialogClose>
           </DialogHeader>
-          
+
           <ScrollArea className="flex-grow pr-2 -mr-2 py-4"> {/* Negative margin for scrollbar spacing */}
             <div className="space-y-6 px-1">
               {/* Report Details */}
@@ -325,8 +372,8 @@ export default function ClientPortalReportsPage() {
                       </Select>
                     </div>
                     <div className="md:col-span-1">
-                       <Label htmlFor={`filter-value-${filter.id}`} className="text-xs">Value</Label>
-                       <Input id={`filter-value-${filter.id}`} value={filter.value} onChange={(e) => handleFilterChange(filter.id, 'value', e.target.value)} className="bg-input border-border/50 h-9 text-xs" />
+                      <Label htmlFor={`filter-value-${filter.id}`} className="text-xs">Value</Label>
+                      <Input id={`filter-value-${filter.id}`} value={filter.value} onChange={(e) => handleFilterChange(filter.id, 'value', e.target.value)} className="bg-input border-border/50 h-9 text-xs" />
                     </div>
                     <Button variant="ghost" size="icon" onClick={() => handleRemoveFilter(filter.id)} className="h-9 w-9 self-end text-muted-foreground hover:text-destructive">
                       <Minus className="h-4 w-4" />
@@ -334,51 +381,52 @@ export default function ClientPortalReportsPage() {
                   </div>
                 ))}
                 {filters.length === 0 && <p className="text-xs text-muted-foreground italic text-center py-2">No filters added.</p>}
-                
+
                 <div className="mt-3 pt-3 border-t border-border/20">
-                    <h4 className="text-sm font-medium text-muted-foreground mb-1">Criteria Summary:</h4>
-                    {filters.length > 0 ? (
-                        <ul className="text-xs text-muted-foreground list-disc list-inside space-y-0.5">
-                        {filters.map(f => <li key={f.id}>{`${fieldOptionsByObject[reportObject]?.find(opt => opt.value === f.field)?.label || f.field} ${operatorOptions.find(op => op.value === f.operator)?.label || f.operator} "${f.value}"`}</li>)}
-                        </ul>
-                    ) : (
-                        <p className="text-xs text-muted-foreground italic">No criteria defined.</p>
-                    )}
+                  <h4 className="text-sm font-medium text-muted-foreground mb-1">Criteria Summary:</h4>
+                  {filters.length > 0 ? (
+                    <ul className="text-xs text-muted-foreground list-disc list-inside space-y-0.5">
+                      {filters.map(f => <li key={f.id}>{`${(fieldOptionsByObject[reportObject] || []).find(opt => opt.value === f.field)?.label || f.field} ${operatorOptions.find(op => op.value === f.operator)?.label || f.operator} "${f.value}"`}</li>)}
+                    </ul>
+                  ) : (
+                    <p className="text-xs text-muted-foreground italic">No criteria defined.</p>
+                  )}
                 </div>
               </section>
 
               {/* Fields to Display */}
               <section className="space-y-4 p-4 border border-border/30 rounded-md bg-black/20">
-                <h3 className="text-lg font-semibold text-foreground mb-3">Fields to Display</h3>
+                <h3 className="text-lg font-semibold text-foreground mb-3">Fields to Display <span className="text-destructive">*</span></h3>
                 <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-4 items-start">
                   <div>
                     <Label className="text-sm mb-1 block text-center">Available Fields</Label>
                     <ScrollArea className="h-48 border border-border/50 rounded-md bg-input p-2">
                       {availableFields.map(field => (
-                        <div key={field.value} onClick={() => setHighlightedAvailableField(field.value)} 
-                             className={cn("p-1.5 text-xs rounded-sm cursor-pointer hover:bg-primary/20", highlightedAvailableField === field.value && "bg-primary/30 text-primary-foreground")}>
+                        <div key={field.value} onClick={() => setHighlightedAvailableField(field.value)}
+                          className={cn("p-1.5 text-xs rounded-sm cursor-pointer hover:bg-primary/20", highlightedAvailableField === field.value && "bg-primary/30 text-primary-foreground")}>
                           {field.label}
                         </div>
                       ))}
                     </ScrollArea>
                   </div>
-                  
+
                   <div className="flex flex-col space-y-2 items-center justify-center h-48 pt-6"> {/* pt-6 to align with lists */}
-                    <Button variant="outline" size="icon" onClick={handleAddField} disabled={!highlightedAvailableField} aria-label="Add field"> <ChevronRight className="h-4 w-4"/> </Button>
-                    <Button variant="outline" size="icon" onClick={handleRemoveField} disabled={!highlightedSelectedField} aria-label="Remove field"> <ChevronLeft className="h-4 w-4"/> </Button>
-                    <Button variant="outline" size="icon" onClick={() => handleMoveField('up')} disabled={!highlightedSelectedField || selectedFields.findIndex(f => f.value === highlightedSelectedField) === 0} aria-label="Move field up"> <ArrowUp className="h-4 w-4"/> </Button>
-                    <Button variant="outline" size="icon" onClick={() => handleMoveField('down')} disabled={!highlightedSelectedField || selectedFields.findIndex(f => f.value === highlightedSelectedField) === selectedFields.length - 1} aria-label="Move field down"> <ArrowDown className="h-4 w-4"/> </Button>
+                    <Button variant="outline" size="icon" onClick={handleAddField} disabled={!highlightedAvailableField} aria-label="Add field"> <ChevronRight className="h-4 w-4" /> </Button>
+                    <Button variant="outline" size="icon" onClick={handleRemoveField} disabled={!highlightedSelectedField} aria-label="Remove field"> <ChevronLeft className="h-4 w-4" /> </Button>
+                    <Button variant="outline" size="icon" onClick={() => handleMoveField('up')} disabled={!highlightedSelectedField || selectedFields.findIndex(f => f.value === highlightedSelectedField) === 0} aria-label="Move field up"> <ArrowUp className="h-4 w-4" /> </Button>
+                    <Button variant="outline" size="icon" onClick={() => handleMoveField('down')} disabled={!highlightedSelectedField || selectedFields.findIndex(f => f.value === highlightedSelectedField) === selectedFields.length - 1} aria-label="Move field down"> <ArrowDown className="h-4 w-4" /> </Button>
                   </div>
 
                   <div>
                     <Label className="text-sm mb-1 block text-center">Selected Fields</Label>
                     <ScrollArea className="h-48 border border-border/50 rounded-md bg-input p-2">
                       {selectedFields.map(field => (
-                         <div key={field.value} onClick={() => setHighlightedSelectedField(field.value)}
-                              className={cn("p-1.5 text-xs rounded-sm cursor-pointer hover:bg-primary/20", highlightedSelectedField === field.value && "bg-primary/30 text-primary-foreground")}>
-                           {field.label}
-                         </div>
+                        <div key={field.value} onClick={() => setHighlightedSelectedField(field.value)}
+                          className={cn("p-1.5 text-xs rounded-sm cursor-pointer hover:bg-primary/20", highlightedSelectedField === field.value && "bg-primary/30 text-primary-foreground")}>
+                          {field.label}
+                        </div>
                       ))}
+                      {selectedFields.length === 0 && <p className="text-xs text-muted-foreground italic text-center py-2">No fields selected.</p>}
                     </ScrollArea>
                   </div>
                 </div>
@@ -387,8 +435,18 @@ export default function ClientPortalReportsPage() {
           </ScrollArea>
 
           <DialogFooter className="pt-4 border-t border-border/30 flex justify-end items-center w-full">
-            <Button variant="outline" onClick={() => setIsCreateReportModalOpen(false)}>Cancel</Button>
-            <Button 
+            <DialogClose asChild>
+                <Button variant="outline" onClick={() => {
+                    setIsCreateReportModalOpen(false);
+                    setReportObject(reportObjectOptions[0].value);
+                    setReportName("");
+                    setFilters([]);
+                    setSelectedFields([]);
+                    setHighlightedAvailableField(null);
+                    setHighlightedSelectedField(null);
+                }}>Cancel</Button>
+            </DialogClose>
+            <Button
               className="bg-primary hover:bg-primary/90 text-primary-foreground"
               onClick={handleSaveTemplate}
               disabled={!reportName.trim() || selectedFields.length === 0}
@@ -402,5 +460,3 @@ export default function ClientPortalReportsPage() {
   );
 }
 
-
-    
