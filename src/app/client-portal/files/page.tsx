@@ -5,7 +5,14 @@ import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PlaceholderCard } from '@/components/dashboard/placeholder-card';
-import { File as FileIcon, Paperclip, ChevronDown } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { File as FileIcon, Paperclip, ChevronDown, Cloud, Archive, Computer } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export default function ClientPortalFilesPage() {
   return (
@@ -13,11 +20,36 @@ export default function ClientPortalFilesPage() {
       {/* Header Section */}
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
         <h1 className="text-3xl font-bold tracking-tight text-foreground">Files</h1>
-        <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
-          <Paperclip className="mr-2 h-4 w-4" />
-          Attach File
-          <ChevronDown className="ml-1 h-4 w-4" />
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
+              <Paperclip className="mr-2 h-4 w-4" />
+              Attach File
+              <ChevronDown className="ml-1 h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent 
+            className="bg-white text-black dark:bg-slate-950 dark:text-slate-50 shadow-lg rounded-md w-56"
+            align="end"
+          >
+            <DropdownMenuItem className="hover:!bg-blue-100 dark:hover:!bg-blue-800/40 cursor-pointer">
+              <Cloud className="mr-2 h-4 w-4 text-blue-600" />
+              Attach from Dropbox
+            </DropdownMenuItem>
+            <DropdownMenuItem className="hover:!bg-blue-100 dark:hover:!bg-blue-800/40 cursor-pointer">
+              <Archive className="mr-2 h-4 w-4 text-muted-foreground" />
+              Attach from Box
+            </DropdownMenuItem>
+            <DropdownMenuItem className="hover:!bg-blue-100 dark:hover:!bg-blue-800/40 cursor-pointer">
+              <Cloud className="mr-2 h-4 w-4 text-muted-foreground" />
+              Attach from Google Drive
+            </DropdownMenuItem>
+            <DropdownMenuItem className="hover:!bg-blue-100 dark:hover:!bg-blue-800/40 cursor-pointer">
+              <Computer className="mr-2 h-4 w-4 text-muted-foreground" />
+              Attach from My Computer
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Tabs and Main Content Area */}
