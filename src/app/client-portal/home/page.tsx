@@ -21,14 +21,15 @@ import {
   Italic,
   Underline,
   Link2,
-  Table as TableIcon,
+  Table as TableIcon, // Renamed to avoid conflict with Table component
   Smile,
   Mic,
   Trash2,
   FilePenLine,
-  CalendarDays,
   ListOrdered,
   UploadCloud,
+  CalendarDays, // Added for Event Date section (conceptual)
+  Clock, // Added for Event Time section (conceptual)
 } from "lucide-react";
 
 export default function ClientPortalHomePage() {
@@ -37,7 +38,7 @@ export default function ClientPortalHomePage() {
       <h1 className="text-3xl font-bold tracking-tight text-foreground">Client Portal - Home</h1>
       
       <PlaceholderCard title="Create New" className="w-full max-w-4xl mx-auto">
-        <Tabs defaultValue="task" className="w-full">
+        <Tabs defaultValue="update" className="w-full">
           <TabsList className="grid w-full grid-cols-5 bg-muted/30">
             <TabsTrigger value="update" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
               <MessageSquare className="mr-2 h-4 w-4" /> Update
@@ -353,7 +354,137 @@ export default function ClientPortalHomePage() {
           </TabsContent>
 
           <TabsContent value="event" className="mt-6">
-            <p className="text-muted-foreground p-4 text-center">Event creation form will go here.</p>
+            <div className="space-y-6">
+              {/* Event Name */}
+              <div>
+                <Label htmlFor="eventName">Event Name</Label>
+                <Input id="eventName" placeholder="Enter event name..." className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary" />
+              </div>
+
+              {/* Category */}
+              <div>
+                <Label htmlFor="eventCategory">Category</Label>
+                <div className="flex items-center gap-2">
+                  <Select>
+                    <SelectTrigger id="eventCategory" className="bg-input border-border/50 text-foreground focus:ring-primary flex-grow">
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="client_meeting">Client Meeting</SelectItem>
+                      <SelectItem value="internal_meeting">Internal Meeting</SelectItem>
+                      <SelectItem value="conference_call">Conference Call</SelectItem>
+                      <SelectItem value="webinar">Webinar</SelectItem>
+                      <SelectItem value="personal">Personal</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button variant="link" className="p-0 h-auto text-primary hover:text-primary/80 whitespace-nowrap">Edit Categories</Button>
+                </div>
+              </div>
+
+              {/* Date & Time Section */}
+              <div className="space-y-3">
+                <Label>Date & Time</Label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-x-3 gap-y-2 items-center">
+                  <div className="md:col-span-2">
+                    <Input type="text" placeholder="Start Date" aria-label="Start Date" className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary" />
+                  </div>
+                  <div className="sm:col-span-1">
+                    <Input type="text" placeholder="Start Time" aria-label="Start Time" className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary" />
+                  </div>
+                  <div className="text-center text-muted-foreground hidden md:block">to</div>
+                  <div className="md:col-span-2">
+                    <Input type="text" placeholder="End Date" aria-label="End Date" className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary" />
+                  </div>
+                  <div className="sm:col-span-1">
+                    <Input type="text" placeholder="End Time" aria-label="End Time" className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary" />
+                  </div>
+                </div>
+              </div>
+              
+              <div className="flex items-center justify-between sm:justify-start space-x-6">
+                <div className="flex items-center space-x-2">
+                  <Checkbox id="allDayEvent" />
+                  <Label htmlFor="allDayEvent" className="font-normal text-muted-foreground">All day?</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox id="repeatsEvent" />
+                  <Label htmlFor="repeatsEvent" className="font-normal text-muted-foreground">Repeats?</Label>
+                </div>
+              </div>
+
+              {/* Status */}
+              <div>
+                <Label htmlFor="eventStatus">Status</Label>
+                <Select>
+                  <SelectTrigger id="eventStatus" className="bg-input border-border/50 text-foreground focus:ring-primary">
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="busy">Busy</SelectItem>
+                    <SelectItem value="free">Free</SelectItem>
+                    <SelectItem value="tentative">Tentative</SelectItem>
+                    <SelectItem value="out_of_office">Out of Office</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Location */}
+              <div>
+                <Label htmlFor="eventLocation">Location</Label>
+                <Input id="eventLocation" placeholder="Enter location (e.g., Zoom, Office, Conference Room A)" className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary" />
+              </div>
+
+              {/* Description with Rich Text Bar */}
+              <div>
+                <Label htmlFor="eventDescription">Description</Label>
+                <Textarea id="eventDescription" rows={5} placeholder="Add event details, agenda, notes..." className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary resize-none" />
+                <div className="flex items-center space-x-1 text-muted-foreground mt-2">
+                  <Button variant="ghost" size="icon" className="hover:bg-muted/50 h-8 w-8" aria-label="Bold"><Bold className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" className="hover:bg-muted/50 h-8 w-8" aria-label="Italic"><Italic className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" className="hover:bg-muted/50 h-8 w-8" aria-label="Underline"><Underline className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" className="hover:bg-muted/50 h-8 w-8" aria-label="Bulleted List"><ListChecks className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" className="hover:bg-muted/50 h-8 w-8" aria-label="Numbered List"><ListOrdered className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" className="hover:bg-muted/50 h-8 w-8" aria-label="Insert Table"><TableIcon className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" className="hover:bg-muted/50 h-8 w-8" aria-label="Insert Link"><Link2 className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" className="hover:bg-muted/50 h-8 w-8" aria-label="Insert Emoji"><Smile className="h-4 w-4" /></Button>
+                  <Button variant="ghost" size="icon" className="hover:bg-muted/50 h-8 w-8" aria-label="Voice Note"><Mic className="h-4 w-4" /></Button>
+                </div>
+              </div>
+
+              {/* Related To */}
+              <div>
+                <Label htmlFor="eventRelatedTo">Related To</Label>
+                <Input id="eventRelatedTo" placeholder="Contact, project, or opportunity..." className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary" />
+              </div>
+              
+              {/* Attending */}
+              <div>
+                <Label htmlFor="eventAttending">Attending</Label>
+                <Input id="eventAttending" placeholder="Search users or resources..." className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary" />
+              </div>
+
+              {/* Invite */}
+              <div>
+                <Label htmlFor="eventInvite">Invite</Label>
+                <Input id="eventInvite" placeholder="Search contacts to invite..." className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary" />
+              </div>
+
+              {/* Send Email Invitations Checkbox */}
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div className="flex items-center space-x-2">
+                  <Checkbox id="sendEventInvitations" />
+                  <Label htmlFor="sendEventInvitations" className="font-normal text-muted-foreground text-sm">
+                    Send email invitations to new invitees and BCC the event creator
+                  </Label>
+                </div>
+                <Button variant="link" className="p-0 h-auto text-primary hover:text-primary/80 text-sm whitespace-nowrap">Preview Invite</Button>
+              </div>
+
+              {/* Add Event Button */}
+              <div className="flex justify-end pt-4 border-t border-border/20 mt-8">
+                <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">Add Event</Button>
+              </div>
+            </div>
           </TabsContent>
           <TabsContent value="opportunity" className="mt-6">
             <p className="text-muted-foreground p-4 text-center">Opportunity creation form will go here.</p>
