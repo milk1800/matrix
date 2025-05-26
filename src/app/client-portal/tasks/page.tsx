@@ -12,7 +12,7 @@ import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from "@/hooks/use-toast";
-import { format, formatDistanceToNowStrict } from 'date-fns';
+import { format, formatDistanceToNowStrict, parseISO, isValid as isValidDate } from 'date-fns';
 import { 
   MoreHorizontal, 
   ListChecks, 
@@ -30,7 +30,8 @@ import {
   UploadCloud, 
   ListOrdered,
   Trash2,
-  CalendarDays
+  CalendarDays,
+  Loader2 // Added Loader2 import
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -103,11 +104,19 @@ export default function ClientPortalTasksPage() {
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 700));
 
+    let finalDueDate = taskDue;
+    if (taskDue === 'custom' && taskDueCustomDate && isValidDate(parseISO(taskDueCustomDate))) {
+      finalDueDate = taskDueCustomDate;
+    } else if (taskDue === 'custom' && !taskDueCustomDate) {
+      finalDueDate = 'No Due Date'; // Handle case where custom is selected but no date is provided
+    }
+
+
     const newTask: TaskItem = {
       id: Date.now().toString(),
       name: taskName,
       repeats: taskRepeats,
-      dueDate: taskDue === 'custom' && taskDueCustomDate ? taskDueCustomDate : taskDue,
+      dueDate: finalDueDate,
       dueTime: taskDue === 'custom' ? taskDueCustomTime : undefined,
       priority: taskPriority,
       category: taskCategory || 'Uncategorized',
@@ -116,7 +125,7 @@ export default function ClientPortalTasksPage() {
       createdAt: new Date(),
     };
 
-    setTasks(prevTasks => [newTask, ...prevTasks]);
+    setTasks(prevTasks => [newTask, ...prevTasks].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime()));
     toast({
       title: "Task Created",
       description: `"${newTask.name}" has been successfully added.`,
@@ -130,16 +139,26 @@ export default function ClientPortalTasksPage() {
     if (task.dueDate === 'today') return 'Today';
     if (task.dueDate === 'tomorrow') return 'Tomorrow';
     if (task.dueDate === 'next_week') return 'Next Week';
-    if (task.dueDate) {
-      try {
-        let dateStr = format(new Date(task.dueDate), 'MMM dd, yyyy');
-        if (task.dueTime) dateStr += ` at ${task.dueTime}`;
+    if (task.dueDate === 'No Due Date') return 'No Due Date';
+    
+    try {
+      if (isValidDate(parseISO(task.dueDate))) {
+        let dateStr = format(parseISO(task.dueDate), 'MMM dd, yyyy');
+        if (task.dueTime) {
+          // Basic time formatting, can be enhanced with date-fns if more complex parsing/formatting is needed
+          const [hour, minute] = task.dueTime.split(':');
+          const hourNum = parseInt(hour, 10);
+          const ampm = hourNum >= 12 ? 'PM' : 'AM';
+          const displayHour = hourNum % 12 || 12;
+          dateStr += ` at ${displayHour}:${minute} ${ampm}`;
+        }
         return dateStr;
-      } catch (e) {
-        return task.dueDate; // fallback if date is not parsable
       }
+    } catch (e) {
+      // Fallback for any unexpected date string format
+      return task.dueDate; 
     }
-    return 'No Due Date';
+    return task.dueDate; // Fallback
   };
 
 
@@ -232,7 +251,7 @@ export default function ClientPortalTasksPage() {
         </div>
 
         {/* Main Card - Task List Area */}
-        <PlaceholderCard title="" className="flex-grow p-0">
+        <PlaceholderCard title="" className="flex-grow p-0 bg-card/90 backdrop-blur-md border border-white/10">
           {tasks.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-[40vh] text-center p-6">
               <ListChecks className="w-20 h-20 text-muted-foreground/50 mb-6" strokeWidth={1.5} />
@@ -242,7 +261,7 @@ export default function ClientPortalTasksPage() {
           ) : (
             <div className="p-4 space-y-3">
               {tasks.map(task => (
-                <div key={task.id} className="p-3 rounded-md border border-border/20 hover:bg-muted/10 transition-colors">
+                <div key={task.id} className="p-3 rounded-md border border-border/20 hover:bg-muted/10 transition-colors bg-black/30">
                   <div className="flex justify-between items-start">
                     <h4 className="text-md font-semibold text-foreground">{task.name}</h4>
                     <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-destructive">
