@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from 'react';
@@ -24,7 +25,7 @@ import {
   ListChecks,
   ListOrdered,
   Link2,
-  Table as TableIcon,
+  Table as TableIcon, // Renamed to avoid conflict with Table component
   Smile,
   Mic,
   Trash2,
@@ -38,10 +39,11 @@ const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const hoursToDisplay = Array.from({ length: 24 }, (_, i) => {
   const hour = i % 12 === 0 ? 12 : i % 12;
   const ampm = i < 12 || i === 24 ? "AM" : "PM";
-  if (i === 0) return "12 AM";
-  if (i === 12) return "12 PM";
+  if (i === 0) return "12 AM"; // Midnight
+  if (i === 12) return "12 PM"; // Noon
   return `${hour} ${ampm}`;
 });
+
 
 const getMonthDays = (year: number, month: number): { day: number | null; isCurrentMonth: boolean; fullDate: Date | null }[] => {
   const firstDayOfMonth = startOfMonth(new Date(year, month));
@@ -49,16 +51,19 @@ const getMonthDays = (year: number, month: number): { day: number | null; isCurr
   const daysInCurrentMonth = getDaysInMonth(new Date(year, month));
   const daysArray = [];
 
-  const firstDayOfWeekOffset = getDay(firstDayOfMonth);
+  // Days from previous month
+  const firstDayOfWeekOffset = getDay(firstDayOfMonth); // 0 for Sunday, 1 for Monday, etc.
   for (let i = 0; i < firstDayOfWeekOffset; i++) {
     const prevMonthDay = subDays(firstDayOfMonth, firstDayOfWeekOffset - i);
     daysArray.push({ day: getDate(prevMonthDay), isCurrentMonth: false, fullDate: prevMonthDay });
   }
 
+  // Days in current month
   for (let i = 1; i <= daysInCurrentMonth; i++) {
     daysArray.push({ day: i, isCurrentMonth: true, fullDate: new Date(year, month, i) });
   }
 
+  // Days from next month to fill the grid (usually up to 6 weeks or 42 cells)
   const totalCells = Math.ceil((firstDayOfWeekOffset + daysInCurrentMonth) / 7) * 7;
   let nextMonthDayCounter = 1;
   while (daysArray.length < totalCells) {
@@ -69,7 +74,7 @@ const getMonthDays = (year: number, month: number): { day: number | null; isCurr
 };
 
 const getWeekDates = (currentDate: Date): { dayName: string; dateNumber: number; fullDate: Date }[] => {
-  const start = startOfWeek(currentDate, { weekStartsOn: 0 });
+  const start = startOfWeek(currentDate, { weekStartsOn: 0 }); // Sunday as start of week
   return Array.from({ length: 7 }).map((_, i) => {
     const day = addDays(start, i);
     return {
@@ -79,6 +84,7 @@ const getWeekDates = (currentDate: Date): { dayName: string; dateNumber: number;
     };
   });
 };
+
 
 export default function ClientPortalCalendarPage() {
   const [isAddEventDialogOpen, setIsAddEventDialogOpen] = React.useState(false);
@@ -98,9 +104,10 @@ export default function ClientPortalCalendarPage() {
   const [fullEventEndTime, setFullEventEndTime] = React.useState('');
 
 
-  const [activeView, setActiveView] = React.useState("month");
+  const [activeView, setActiveView] = React.useState("month"); // "month", "week", "day"
   const [currentDateForCalendar, setCurrentDateForCalendar] = React.useState(new Date());
   const [currentTimePosition, setCurrentTimePosition] = React.useState<number | null>(null);
+
 
   const currentYearForMonthView = currentDateForCalendar.getFullYear();
   const currentMonthIndexForMonthView = currentDateForCalendar.getMonth();
@@ -111,10 +118,18 @@ export default function ClientPortalCalendarPage() {
     if (activeView === 'week' || activeView === 'day') {
       const updateLine = () => {
         const now = new Date();
+        // Only show current time line if the view is for today
         if (activeView === 'day' && !isSameDay(now, currentDateForCalendar)) {
           setCurrentTimePosition(null);
           return;
         }
+        if (activeView === 'week' && !isSameMonth(now, currentDateForCalendar) && !isSameDay(startOfWeek(now), startOfWeek(currentDateForCalendar))) {
+             // A bit simplified: if not the current week (based on start of week), hide.
+             // More precise would be to check if 'now' is within the displayed week's interval.
+            setCurrentTimePosition(null);
+            return;
+        }
+
         const currentHour = getHours(now);
         const currentMinute = getMinutes(now);
         const totalMinutesInDay = 24 * 60;
@@ -122,22 +137,26 @@ export default function ClientPortalCalendarPage() {
         const percentageOfDay = (minutesPastMidnight / totalMinutesInDay) * 100;
         setCurrentTimePosition(percentageOfDay);
       };
-      updateLine();
-      const interval = setInterval(updateLine, 60000);
+      updateLine(); // Initial call
+      const interval = setInterval(updateLine, 60000); // Update every minute
       return () => clearInterval(interval);
     } else {
-      setCurrentTimePosition(null);
+      setCurrentTimePosition(null); // Hide line for month view
     }
   }, [activeView, currentDateForCalendar]);
+
 
   const getFormattedHeaderDate = () => {
     if (activeView === 'month') return format(currentDateForCalendar, "MMMM yyyy");
     if (activeView === 'week') {
       const start = startOfWeek(currentDateForCalendar, { weekStartsOn: 0 });
       const end = endOfWeek(currentDateForCalendar, { weekStartsOn: 0 });
-      if (format(start, 'MMMM') === format(end, 'MMMM')) return `${format(start, 'MMMM d')} – ${format(end, 'd, yyyy')}`;
+      if (format(start, 'MMMM') === format(end, 'MMMM')) {
+        return `${format(start, 'MMMM d')} – ${format(end, 'd, yyyy')}`;
+      }
       return `${format(start, 'MMM d')} – ${format(end, 'MMM d, yyyy')}`;
     }
+    // Day view
     return format(currentDateForCalendar, "MMMM d, yyyy");
   };
   const headerDateDisplay = getFormattedHeaderDate();
@@ -161,10 +180,9 @@ export default function ClientPortalCalendarPage() {
       setQuickAddEventSelectedDate(dayDate);
       setQuickAddEventTitle('');
       setQuickAddEventAllDay(false);
-      // Set default times, e.g., next hour
       const nextHour = setMinutes(setHours(new Date(), getHours(new Date()) + 1), 0);
       setQuickAddEventStartTime(format(nextHour, 'hh:mm a'));
-      setQuickAddEventEndTime(format(addDays(nextHour,1), 'hh:mm a')); // Example: 1 hour duration
+      setQuickAddEventEndTime(format(addDays(nextHour,1), 'hh:mm a'));
       setIsQuickAddEventDialogOpen(true);
     }
   };
@@ -175,9 +193,8 @@ export default function ClientPortalCalendarPage() {
       setFullEventAllDay(quickAddEventAllDay);
       setFullEventStartDate(format(quickAddEventSelectedDate, 'MM/dd/yyyy'));
       setFullEventStartTime(quickAddEventStartTime);
-      setFullEventEndDate(format(quickAddEventSelectedDate, 'MM/dd/yyyy')); // Assuming same day for quick add end date
+      setFullEventEndDate(format(quickAddEventSelectedDate, 'MM/dd/yyyy'));
       setFullEventEndTime(quickAddEventEndTime);
-      // Potentially reset other full form fields or carry them over
     }
     setIsQuickAddEventDialogOpen(false);
     setIsAddEventDialogOpen(true);
@@ -205,7 +222,7 @@ export default function ClientPortalCalendarPage() {
         </div>
 
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
-          <div className="flex-1 space-y-6">
+          <div className="flex-1 space-y-6"> {/* Main calendar area */}
             <PlaceholderCard title="" className="p-0 bg-card/80 backdrop-blur-sm">
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-b border-border/30">
                 <div className="flex items-center gap-2">
@@ -222,12 +239,13 @@ export default function ClientPortalCalendarPage() {
                   ))}
                 </div>
               </div>
-            </PlaceholderCard>
 
-            <PlaceholderCard title="" className="p-0 bg-card/80 backdrop-blur-sm">
+              {/* Calendar Grid Area */}
               {activeView === 'month' && (
                 <div className="grid grid-cols-7 gap-px border-l border-t border-border/30 bg-border/30">
-                  {daysOfWeek.map((day) => ( <div key={day} className="py-2 px-1 text-center text-xs font-medium text-muted-foreground bg-card border-r border-b border-border/30">{day}</div> ))}
+                  {daysOfWeek.map((day) => (
+                    <div key={day} className="py-2 px-1 text-center text-xs font-medium text-muted-foreground bg-card border-r border-b border-border/30">{day}</div>
+                  ))}
                   {monthDays.map((dayObj, index) => (
                     <div key={index}
                       className={cn("h-24 sm:h-28 md:h-32 p-1.5 text-xs bg-card border-r border-b border-border/30 overflow-hidden relative cursor-pointer hover:bg-muted/20",
@@ -236,18 +254,142 @@ export default function ClientPortalCalendarPage() {
                       )}
                       onClick={() => dayObj.fullDate && dayObj.isCurrentMonth && handleDayClick(dayObj.fullDate)}
                     >
-                      {dayObj.day && ( <span className={cn("absolute top-1.5 right-1.5 flex items-center justify-center w-5 h-5 rounded-full", dayObj.fullDate && isToday(dayObj.fullDate) && dayObj.isCurrentMonth ? "bg-primary text-primary-foreground font-semibold" : "")}>{dayObj.day}</span> )}
-                      {dayObj.isCurrentMonth && dayObj.day === 10 && ( <div className="mt-5 text-[10px] bg-purple-500/70 text-white p-1 rounded truncate">Client Meeting</div> )}
-                      {dayObj.isCurrentMonth && dayObj.day === 22 && ( <div className="mt-5 text-[10px] bg-green-500/70 text-white p-1 rounded truncate">Follow Up Call</div> )}
+                      {dayObj.day && (
+                        <span className={cn("absolute top-1.5 right-1.5 flex items-center justify-center w-5 h-5 rounded-full",
+                          dayObj.fullDate && isToday(dayObj.fullDate) && dayObj.isCurrentMonth ? "bg-primary text-primary-foreground font-semibold" : "")}>
+                          {dayObj.day}
+                        </span>
+                      )}
+                      {/* Example event */}
+                      {dayObj.isCurrentMonth && dayObj.day === 10 && (
+                        <div className="mt-5 text-[10px] bg-purple-500/70 text-white p-1 rounded truncate">Client Meeting</div>
+                      )}
+                      {dayObj.isCurrentMonth && dayObj.day === 22 && (
+                         <div className="mt-5 text-[10px] bg-green-500/70 text-white p-1 rounded truncate">Follow Up Call</div>
+                      )}
                     </div>
                   ))}
                 </div>
               )}
-              {activeView === 'week' && ( /* Week View JSX */ )}
-              {activeView === 'day' && ( /* Day View JSX */ )}
+              {activeView === 'week' && (
+                 <div className="overflow-x-auto relative"> {/* Added relative for current time line */}
+                    <table className="w-full border-collapse bg-card">
+                        <thead>
+                            <tr>
+                                <th className="w-16 p-2 border-r border-b border-border/30 text-xs text-muted-foreground font-normal sticky left-0 bg-card z-10"></th> {/* Time labels corner */}
+                                {weekDates.map(day => (
+                                    <th key={day.dateNumber} className="p-2 border-r border-b border-border/30 text-center">
+                                        <div className={cn("text-xs font-medium", isToday(day.fullDate) ? "text-primary" : "text-muted-foreground")}>{day.dayName}</div>
+                                        <div className={cn("text-2xl font-semibold mt-1", isToday(day.fullDate) ? "text-primary bg-primary/10 rounded-full w-8 h-8 flex items-center justify-center mx-auto" : "text-foreground")}>{day.dateNumber}</div>
+                                    </th>
+                                ))}
+                            </tr>
+                            <tr>
+                                <td className="w-16 p-2 border-r border-b border-border/30 text-xs text-muted-foreground sticky left-0 bg-card z-10 text-center">all-day</td>
+                                {Array.from({ length: 7 }).map((_, i) => ( <td key={`all-day-${i}`} className="h-10 border-r border-b border-border/30 hover:bg-muted/20"></td> ))}
+                            </tr>
+                        </thead>
+                        <tbody className="relative"> {/* Ensure tbody is relative for absolute positioning of line */}
+                            {hoursToDisplay.map((hourLabel, hourIndex) => (
+                                <tr key={hourLabel}>
+                                    <td className="w-16 p-2 border-r border-b border-border/30 text-xs text-muted-foreground align-top text-right sticky left-0 bg-card z-10">
+                                        {hourIndex > 0 && hourLabel /* Don't show 12AM for the first hour slot again */}
+                                    </td>
+                                    {Array.from({ length: 7 }).map((_, dayIndex) => (
+                                        <td key={`${hourLabel}-${dayIndex}`} className="h-16 border-r border-b border-border/30 hover:bg-muted/20"></td>
+                                    ))}
+                                </tr>
+                            ))}
+                             {/* Current Time Indicator for Week View - Placed within tbody or after it if more appropriate */}
+                            {currentTimePosition !== null && isSameDay(currentDateForCalendar, new Date()) && (
+                              <div className="absolute w-[calc(100%-4rem)] h-0.5 bg-red-500 z-10 right-0" style={{ top: `${currentTimePosition}%` }}>
+                                <div className="absolute -left-1.5 -top-1.5 w-3.5 h-3.5 bg-red-500 rounded-full"></div>
+                              </div>
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+              )}
+              {activeView === 'day' && (
+                <div className="flex flex-1 h-[calc(24*4rem+2.5rem)] border-t border-border/30 relative"> {/* Approx height for 24 hours * 4rem + all-day row */}
+                    {/* Time Gutter */}
+                    <div className="w-16 border-r border-border/30 shrink-0">
+                        <div className="h-10 flex items-center justify-center text-xs text-muted-foreground border-b border-border/30"> {/* All-day header placeholder */}
+                           {format(currentDateForCalendar, 'EEE')}
+                        </div>
+                        {hoursToDisplay.map((hourLabel, index) => (
+                            <div key={`time-${hourLabel}`} className="h-16 pr-1 text-xs text-muted-foreground text-right border-b border-border/30 flex items-start justify-end pt-1">
+                                {index > 0 && hourLabel}
+                            </div>
+                        ))}
+                    </div>
+                    {/* Day Column */}
+                    <div className="flex-1">
+                        <div className="h-10 flex flex-col items-center justify-center border-b border-border/30">
+                            <div className={cn("text-2xl font-semibold", isToday(currentDateForCalendar) ? "text-primary bg-primary/10 rounded-full w-10 h-10 flex items-center justify-center" : "text-foreground")}>
+                                {format(currentDateForCalendar, 'd')}
+                            </div>
+                        </div>
+                         <div className="h-10 border-b border-border/30 hover:bg-muted/20 text-xs text-muted-foreground flex items-center justify-center">all-day</div> {/* All-day slot */}
+                        {hoursToDisplay.map((_, hourIndex) => (
+                            <div key={`slot-${hourIndex}`} className="h-16 border-b border-border/30 hover:bg-muted/20">
+                                {/* Event content would go here */}
+                            </div>
+                        ))}
+                    </div>
+                     {/* Current Time Indicator for Day View */}
+                     {currentTimePosition !== null && isSameDay(currentDateForCalendar, new Date()) && (
+                        <div className="absolute w-[calc(100%-4rem)] h-0.5 bg-red-500 z-10 right-0" style={{ top: `calc(${currentTimePosition}% + 2.5rem - 1px)`}}> {/* Adjust for all-day row height approx */}
+                           <div className="absolute -left-1.5 -top-1.5 w-3.5 h-3.5 bg-red-500 rounded-full"></div>
+                        </div>
+                      )}
+                </div>
+              )}
             </PlaceholderCard>
           </div>
-          <aside className="lg:w-72 xl:w-80 space-y-6 shrink-0">{/* Sidebar Filters JSX */}</aside>
+
+          {/* Right Sidebar Filters */}
+          <aside className="lg:w-72 xl:w-80 space-y-6 shrink-0">
+            <PlaceholderCard title="" className="p-0"> {/* No header title for card wrapping tabs */}
+                <Tabs defaultValue="calendars" className="w-full">
+                <TabsList className="grid w-full grid-cols-2 bg-muted/50">
+                    <TabsTrigger value="calendars" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary">Calendars</TabsTrigger>
+                    <TabsTrigger value="tasks" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary">Tasks</TabsTrigger>
+                </TabsList>
+                <TabsContent value="calendars" className="p-4 space-y-4">
+                    <div>
+                    <h4 className="font-semibold text-foreground mb-2">USERS</h4>
+                    <div className="space-y-1.5 text-sm">
+                        <div className="flex items-center space-x-2"><Checkbox id="selectAllUsers" /><Label htmlFor="selectAllUsers" className="font-normal text-muted-foreground">Select All</Label></div>
+                        <div className="flex items-center space-x-2"><Checkbox id="userJosh" defaultChecked /><Label htmlFor="userJosh" className="font-normal text-muted-foreground">Josh Bajorek</Label></div>
+                    </div>
+                    </div>
+                    <div>
+                    <h4 className="font-semibold text-foreground mb-2">EVENT CATEGORIES</h4>
+                    <div className="space-y-1.5 text-sm">
+                        <div className="flex items-center space-x-2"><Checkbox id="selectAllCategories" /><Label htmlFor="selectAllCategories" className="font-normal text-muted-foreground">Select All</Label></div>
+                        <div className="flex items-center space-x-2"><Checkbox id="catUncategorized" /><Label htmlFor="catUncategorized" className="font-normal text-muted-foreground">Uncategorized</Label></div>
+                        <div className="flex items-center space-x-2"><Checkbox id="catMeeting" defaultChecked /><Label htmlFor="catMeeting" className="font-normal text-muted-foreground">Meeting</Label></div>
+                        <div className="flex items-center space-x-2"><Checkbox id="catClientReview" /><Label htmlFor="catClientReview" className="font-normal text-muted-foreground">Client Review</Label></div>
+                        <div className="flex items-center space-x-2"><Checkbox id="catProspectIntro" /><Label htmlFor="catProspectIntro" className="font-normal text-muted-foreground">Prospect Introduction</Label></div>
+                        <div className="flex items-center space-x-2"><Checkbox id="catSocialEvent" /><Label htmlFor="catSocialEvent" className="font-normal text-muted-foreground">Social Event</Label></div>
+                        <div className="flex items-center space-x-2"><Checkbox id="catConference" /><Label htmlFor="catConference" className="font-normal text-muted-foreground">Conference</Label></div>
+                    </div>
+                    </div>
+                     <div>
+                    <h4 className="font-semibold text-foreground mb-2">OTHER CALENDARS</h4>
+                    <div className="space-y-1.5 text-sm">
+                        <div className="flex items-center space-x-2"><Checkbox id="calSpecialDates" defaultChecked /><Label htmlFor="calSpecialDates" className="font-normal text-muted-foreground">Special Dates</Label></div>
+                        <div className="flex items-center space-x-2"><Checkbox id="calHolidays" defaultChecked /><Label htmlFor="calHolidays" className="font-normal text-muted-foreground">US Holidays</Label></div>
+                    </div>
+                    </div>
+                </TabsContent>
+                <TabsContent value="tasks" className="p-4">
+                    <p className="text-muted-foreground text-sm">Task filtering options will go here.</p>
+                </TabsContent>
+                </Tabs>
+            </PlaceholderCard>
+          </aside>
         </div>
       </main>
 
@@ -306,7 +448,7 @@ export default function ClientPortalCalendarPage() {
           <DialogHeader>
             <DialogTitle className="text-xl font-bold text-foreground">New Event</DialogTitle>
           </DialogHeader>
-          <div className="flex-grow overflow-y-auto pr-2 py-4 space-y-6">
+          <div className="flex-grow overflow-y-auto pr-2 py-4 space-y-6"> {/* Added pr-2 for scrollbar spacing */}
             <div><Label htmlFor="eventName-dialog">Event Name</Label><Input id="eventName-dialog" value={fullEventTitle} onChange={(e) => setFullEventTitle(e.target.value)} placeholder="Enter event name..." className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary" /></div>
             <div><Label htmlFor="eventCategory-dialog">Category</Label><div className="flex items-center gap-2"><Select><SelectTrigger id="eventCategory-dialog" className="bg-input border-border/50 text-foreground focus:ring-primary flex-grow"><SelectValue placeholder="Select category" /></SelectTrigger><SelectContent><SelectItem value="client_meeting">Client Meeting</SelectItem><SelectItem value="internal_meeting">Internal Meeting</SelectItem><SelectItem value="conference_call">Conference Call</SelectItem><SelectItem value="webinar">Webinar</SelectItem><SelectItem value="personal">Personal</SelectItem></SelectContent></Select><Button variant="link" className="p-0 h-auto text-primary hover:text-primary/80 whitespace-nowrap">Edit Categories</Button></div></div>
             <div className="space-y-3"><Label>Date & Time</Label><div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-x-3 gap-y-2 items-center">
