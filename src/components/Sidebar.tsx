@@ -3,6 +3,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
+import { usePathname } from 'next/navigation';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/components/ui/tooltip";
 import {
   LayoutDashboard,
@@ -27,9 +28,11 @@ import {
   CalendarDays,
   Briefcase,
   ChevronDown,
+  Workflow, // Added Workflow icon
 } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 interface NavItem {
   name: string;
@@ -48,21 +51,22 @@ interface NavSection {
 const navSectionsData: NavSection[] = [
   {
     id: 'clientPortal',
-    title: 'Client Portal',
+    title: 'CLIENT PORTAL',
     icon: AppWindow,
     items: [
       { name: 'Home', icon: HomeIcon, href: '/client-portal/home' },
       { name: 'Email', icon: Mail, href: '/client-portal/email' },
       { name: 'Contacts', icon: ContactIcon, href: '/client-portal/contacts' },
       { name: 'Tasks', icon: ListChecks, href: '/client-portal/tasks' },
+      { name: 'Workflows', icon: Workflow, href: '/client-portal/workflows' }, // New Workflow tab
       { name: 'Calendar', icon: CalendarDays, href: '/client-portal/calendar' },
       { name: 'Opportunities', icon: Briefcase, href: '/client-portal/opportunities' },
     ],
   },
   {
     id: 'analytics',
-    title: 'Analytics',
-    icon: BarChart3, // Main icon for the Analytics section itself
+    title: 'ANALYTICS CENTER',
+    icon: BarChart3,
     items: [
       { name: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
       { name: 'Asset Analytics', icon: BarChart3, href: '/asset-analytics' },
@@ -90,6 +94,7 @@ export default function Sidebar() {
   const [collapsed, setCollapsed] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
+  const currentPathname = usePathname();
 
   useEffect(() => {
     setIsClient(true);
@@ -140,12 +145,7 @@ export default function Sidebar() {
     });
   };
 
-  let currentPathname = "";
-  if (isClient) {
-    currentPathname = window.location.pathname;
-  }
-
-  const renderNavItem = (item: NavItem, currentPathname: string) => {
+  const renderNavItem = (item: NavItem) => {
     const isActive = currentPathname === item.href || (currentPathname.startsWith(item.href) && item.href !== '/dashboard' && item.href !== '/');
     const linkContent = (
       <>
@@ -159,10 +159,10 @@ export default function Sidebar() {
     );
 
     const linkClasses = cn(
-      "flex items-center gap-3 px-3 py-2.5 text-base font-medium rounded-md transition-all duration-200 ease-out transform-gpu",
+      "flex items-center gap-3 px-4 py-[10px] text-base font-medium rounded-[8px] transition-all duration-300 ease-out transform-gpu",
       isActive
-        ? "bg-primary/30 shadow-card-hover-glow -translate-y-px text-sidebar-primary-foreground"
-        : "bg-black/40 text-sidebar-foreground hover:bg-black/50 hover:shadow-[0_0_10px_rgba(124,58,237,0.2)] hover:-translate-y-px",
+        ? "bg-primary/30 shadow-card-hover-glow -translate-y-0.5 text-sidebar-primary-foreground"
+        : "bg-black/40 text-sidebar-foreground hover:bg-black/50 hover:shadow-[0_2px_8px_rgba(80,0,160,0.4)] hover:-translate-y-0.5",
       collapsed && "justify-center p-2.5"
     );
 
@@ -192,15 +192,12 @@ export default function Sidebar() {
     <aside
       className={cn(
         "h-full bg-black/90 border-r border-gray-800 text-white transition-all duration-300 flex flex-col",
-        collapsed ? "w-20" : "w-64"
+        collapsed ? "w-20" : "w-64" // w-16 (4rem) is too small, using w-20 (5rem)
       )}
     >
       <div className="flex items-center justify-between px-4 py-4 border-b border-sidebar-border/30">
-        <div className={cn("flex items-center w-full", collapsed ? "justify-center" : "space-x-3")}>
-          <Brain className={cn(
-            "text-purple-500 animate-pulse-neon shrink-0",
-            collapsed ? "w-8 h-8" : "w-10 h-10" 
-          )} />
+        <div className={cn("flex items-center justify-center w-full space-x-3")}>
+          <Brain className={cn("text-purple-500 animate-pulse-neon shrink-0", collapsed ? "w-8 h-8" : "w-10 h-10" )} />
           {!collapsed && (
             <span className="text-4xl font-bold text-metallic-gradient">
               Matrix
@@ -219,23 +216,21 @@ export default function Sidebar() {
       <TooltipProvider delayDuration={0}>
         <nav className="flex-1 space-y-1 px-2 py-4 overflow-y-auto">
           {collapsed ? (
-            // Collapsed view: Flattened list of all items
             navSectionsData.flatMap(section => section.items).map((item) =>
-              renderNavItem(item, currentPathname)
+              renderNavItem(item)
             )
           ) : (
-            // Expanded view: Iterate through sections
             navSectionsData.map((section) => (
               <div key={section.id} className="mb-2">
                 <button
                   onClick={() => toggleSection(section.id)}
                   className={cn(
-                    "flex items-center w-full text-left px-3 py-2.5 rounded-md hover:bg-black/50 transition-colors duration-150 ease-out"
+                    "flex items-center w-full text-left px-4 py-3 rounded-md hover:bg-black/50 transition-colors duration-150 ease-out"
                   )}
                   aria-expanded={openSections[section.id]}
                 >
                   <section.icon className="w-5 h-5 shrink-0 text-gray-400" />
-                  <span className="ml-3 text-sm font-semibold text-gray-300 uppercase tracking-wider truncate flex-1">
+                  <span className="ml-3 text-base font-bold text-gray-300 uppercase tracking-wider truncate flex-1">
                     {section.title}
                   </span>
                   <ChevronDown
@@ -247,7 +242,7 @@ export default function Sidebar() {
                 </button>
                 {openSections[section.id] && (
                   <div className="mt-1 space-y-1 pl-4">
-                    {section.items.map((item) => renderNavItem(item, currentPathname))}
+                    {section.items.map((item) => renderNavItem(item))}
                   </div>
                 )}
               </div>
@@ -255,11 +250,9 @@ export default function Sidebar() {
           )}
         </nav>
         <div className="mt-auto p-2 border-t border-sidebar-border/30">
-          {renderNavItem(alertsNavItem, currentPathname)}
+          {renderNavItem(alertsNavItem)}
         </div>
       </TooltipProvider>
     </aside>
   );
 }
-
-    
