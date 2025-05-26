@@ -38,90 +38,91 @@ import {
 export default function ClientPortalHomePage() {
   return (
     <main className="min-h-screen bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#5b21b6]/10 to-[#000104] flex-1 p-6 space-y-8 md:p-8">
-      <h1 className="text-3xl font-bold tracking-tight text-foreground">Client Portal - Home</h1>
+      <h1 className="text-3xl font-bold tracking-tight text-foreground">Home</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
-        <PlaceholderCard title="Create New" className="lg:col-span-2 w-full">
-          <Tabs defaultValue="update" className="w-full">
-            <TabsList className="grid w-full grid-cols-5 bg-muted/30">
-              <TabsTrigger value="update" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
-                <MessageSquare className="mr-2 h-4 w-4" /> Update
-              </TabsTrigger>
-              <TabsTrigger value="contact" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
-                <UserPlus className="mr-2 h-4 w-4" /> Contact
-              </TabsTrigger>
-              <TabsTrigger value="task" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
-                <ListChecks className="mr-2 h-4 w-4" /> Task
-              </TabsTrigger>
-              <TabsTrigger value="event" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
-                <CalendarPlus className="mr-2 h-4 w-4" /> Event
-              </TabsTrigger>
-              <TabsTrigger value="opportunity" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
-                <DollarSign className="mr-2 h-4 w-4" /> Opportunity
-              </TabsTrigger>
-            </TabsList>
+        <div className="lg:col-span-2 w-full">
+          <PlaceholderCard title="Create New">
+            <Tabs defaultValue="update" className="w-full">
+              <TabsList className="grid w-full grid-cols-5 bg-muted/30">
+                <TabsTrigger value="update" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
+                  <MessageSquare className="mr-2 h-4 w-4" /> Update
+                </TabsTrigger>
+                <TabsTrigger value="contact" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
+                  <UserPlus className="mr-2 h-4 w-4" /> Contact
+                </TabsTrigger>
+                <TabsTrigger value="task" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
+                  <ListChecks className="mr-2 h-4 w-4" /> Task
+                </TabsTrigger>
+                <TabsTrigger value="event" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
+                  <CalendarPlus className="mr-2 h-4 w-4" /> Event
+                </TabsTrigger>
+                <TabsTrigger value="opportunity" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
+                  <DollarSign className="mr-2 h-4 w-4" /> Opportunity
+                </TabsTrigger>
+              </TabsList>
 
-            <TabsContent value="update" className="mt-6">
-              <div className="flex space-x-4">
-                <div>
-                  <Avatar>
-                    <AvatarImage src="https://placehold.co/40x40.png" alt="User Avatar" data-ai-hint="profile avatar"/>
-                    <AvatarFallback>U</AvatarFallback>
-                  </Avatar>
-                </div>
-                <div className="flex-1 space-y-4">
-                  <Textarea
-                    placeholder="Share an update..."
-                    rows={6}
-                    className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary resize-none"
-                  />
-                  <div className="flex items-center justify-between">
-                    <div className="flex space-x-1 text-muted-foreground">
-                      <Button variant="ghost" size="icon" className="hover:bg-muted/50 h-8 w-8" aria-label="Bold">
-                        <Bold className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="hover:bg-muted/50 h-8 w-8" aria-label="Italic">
-                        <Italic className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="hover:bg-muted/50 h-8 w-8" aria-label="Underline">
-                        <Underline className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="hover:bg-muted/50 h-8 w-8" aria-label="Bulleted List">
-                        <ListChecks className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="hover:bg-muted/50 h-8 w-8" aria-label="Insert Link">
-                        <Link2 className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="hover:bg-muted/50 h-8 w-8" aria-label="Insert Table">
-                        <TableIcon className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="hover:bg-muted/50 h-8 w-8" aria-label="Insert Emoji">
-                        <Smile className="h-4 w-4" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="hover:bg-muted/50 h-8 w-8" aria-label="Voice Note">
-                        <Mic className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <Button className="bg-primary hover:bg-primary/90 text-primary-foreground px-6">Post</Button>
-                  </div>
+              <TabsContent value="update" className="mt-6">
+                <div className="flex space-x-4">
                   <div>
-                    <Input
-                      type="text"
-                      placeholder="Tag contacts... (e.g., @Client Name or type to search)"
-                      className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary text-sm h-9"
+                    <Avatar>
+                      <AvatarImage src="https://placehold.co/40x40.png" alt="User Avatar" data-ai-hint="profile avatar"/>
+                      <AvatarFallback>U</AvatarFallback>
+                    </Avatar>
+                  </div>
+                  <div className="flex-1 space-y-4">
+                    <Textarea
+                      placeholder="Share an update..."
+                      rows={6}
+                      className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary resize-none"
                     />
+                    <div className="flex items-center justify-between">
+                      <div className="flex space-x-1 text-muted-foreground">
+                        <Button variant="ghost" size="icon" className="hover:bg-muted/50 h-8 w-8" aria-label="Bold">
+                          <Bold className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="hover:bg-muted/50 h-8 w-8" aria-label="Italic">
+                          <Italic className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="hover:bg-muted/50 h-8 w-8" aria-label="Underline">
+                          <Underline className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="hover:bg-muted/50 h-8 w-8" aria-label="Bulleted List">
+                          <ListChecks className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="hover:bg-muted/50 h-8 w-8" aria-label="Insert Link">
+                          <Link2 className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="hover:bg-muted/50 h-8 w-8" aria-label="Insert Table">
+                          <TableIcon className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="hover:bg-muted/50 h-8 w-8" aria-label="Insert Emoji">
+                          <Smile className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="icon" className="hover:bg-muted/50 h-8 w-8" aria-label="Voice Note">
+                          <Mic className="h-4 w-4" />
+                        </Button>
+                      </div>
+                      <Button className="bg-primary hover:bg-primary/90 text-primary-foreground px-6">Post</Button>
+                    </div>
+                    <div>
+                      <Input
+                        type="text"
+                        placeholder="Tag contacts... (e.g., @Client Name or type to search)"
+                        className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary text-sm h-9"
+                      />
+                    </div>
                   </div>
                 </div>
-              </div>
-            </TabsContent>
+              </TabsContent>
 
-            <TabsContent value="contact" className="mt-6">
+              <TabsContent value="contact" className="mt-6">
               <div className="mb-6 text-center">
                 <p className="text-foreground">
                   Add a new Person – or – add a new
-                  <Button variant="link" className="p-0 h-auto text-primary hover:text-primary/80 mx-1">Household</Button> |
-                  <Button variant="link" className="p-0 h-auto text-primary hover:text-primary/80 mx-1">Company</Button> |
-                  <Button variant="link" className="p-0 h-auto text-primary hover:text-primary/80 ml-1">Trust</Button>
+                  <Button variant="link" className="p-0 h-auto text-primary hover:text-primary/80 mx-1 text-sm">Household</Button> |
+                  <Button variant="link" className="p-0 h-auto text-primary hover:text-primary/80 mx-1 text-sm">Company</Button> |
+                  <Button variant="link" className="p-0 h-auto text-primary hover:text-primary/80 ml-1 text-sm">Trust</Button>
                 </p>
               </div>
               <div className="space-y-6">
@@ -311,6 +312,10 @@ export default function ClientPortalHomePage() {
                           <SelectItem value="meeting_prep">Meeting Prep</SelectItem>
                           <SelectItem value="follow_up">Follow Up</SelectItem>
                           <SelectItem value="paperwork">Paperwork</SelectItem>
+                          <SelectItem value="documentation">Documentation</SelectItem>
+                          <SelectItem value="client_communication">Client Communication</SelectItem>
+                          <SelectItem value="internal_review">Internal Review</SelectItem>
+                           <SelectItem value="uncategorized">Uncategorized</SelectItem>
                         </SelectContent>
                       </Select>
                       <Button variant="link" className="p-0 h-auto text-primary hover:text-primary/80 whitespace-nowrap">Edit Categories</Button>
@@ -358,7 +363,7 @@ export default function ClientPortalHomePage() {
             </TabsContent>
 
             <TabsContent value="event" className="mt-6">
-              <div className="space-y-6">
+               <div className="space-y-6">
                 <div>
                   <Label htmlFor="eventName">Event Name</Label>
                   <Input id="eventName" placeholder="Enter event name..." className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary" />
@@ -369,14 +374,15 @@ export default function ClientPortalHomePage() {
                   <div className="flex items-center gap-2">
                     <Select>
                       <SelectTrigger id="eventCategory" className="bg-input border-border/50 text-foreground focus:ring-primary flex-grow">
-                        <SelectValue placeholder="Select category" />
+                         <SelectValue placeholder="Uncategorized" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="client_meeting">Client Meeting</SelectItem>
-                        <SelectItem value="internal_meeting">Internal Meeting</SelectItem>
-                        <SelectItem value="conference_call">Conference Call</SelectItem>
-                        <SelectItem value="webinar">Webinar</SelectItem>
-                        <SelectItem value="personal">Personal</SelectItem>
+                        <SelectItem value="uncategorized">Uncategorized</SelectItem>
+                        <SelectItem value="meeting">Meeting</SelectItem>
+                        <SelectItem value="client_review">Client Review</SelectItem>
+                        <SelectItem value="prospect_introduction">Prospect Introduction</SelectItem>
+                        <SelectItem value="social_event">Social Event</SelectItem>
+                        <SelectItem value="conference">Conference</SelectItem>
                       </SelectContent>
                     </Select>
                     <Button variant="link" className="p-0 h-auto text-primary hover:text-primary/80 whitespace-nowrap">Edit Categories</Button>
@@ -577,8 +583,9 @@ export default function ClientPortalHomePage() {
                 </div>
               </div>
             </TabsContent>
-          </Tabs>
-        </PlaceholderCard>
+            </Tabs>
+          </PlaceholderCard>
+        </div>
 
         <div className="lg:col-span-1 space-y-6 lg:space-y-8">
           <PlaceholderCard title="Events" icon={CalendarDays}>
@@ -621,10 +628,7 @@ export default function ClientPortalHomePage() {
           </PlaceholderCard>
         </div>
       </div>
-
-      <p className="text-muted-foreground mt-8 text-center">More content for client home page can go here.</p>
     </main>
   );
 }
 
-    
