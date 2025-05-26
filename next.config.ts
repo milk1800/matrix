@@ -24,6 +24,7 @@ const nextConfig: NextConfig = {
       'https://8888b-firebase-studio-174752607117.zcl.cloudworkstations.dev',
       'https://3001-firebase-studio-1747526771127-cluster-joak5ukfbnbyqspg4tewa33d24.cloudworkstations.dev',
       'https://3002-firebase-studio-1747526771127-cluster-joak5ukfbnbyqspg4tewa33d24.cloudworkstations.dev',
+      'https://3002-firebase-studio-1747526771127-cluster-joak5ukfbnbyqspg4tewa33d24.cloudworkstations.dev'
     ],
   },
 };
