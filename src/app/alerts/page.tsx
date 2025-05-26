@@ -13,6 +13,8 @@ import { Switch } from "@/components/ui/switch";
 import { AlertTriangle, CalendarDays, Filter, MessageSquare, Send, Server, Landmark, Briefcase, Video, Mail } from "lucide-react";
 import { format, subDays, addDays, subMinutes } from "date-fns";
 import { cn } from "@/lib/utils";
+import { useTicker } from "@/contexts/ticker-context"; // Import useTicker
+import { useToast } from "@/hooks/use-toast"; // Import useToast
 
 interface AlertItem {
   id: string;
@@ -113,6 +115,8 @@ export default function AlertsPage() {
   const [alerts, setAlerts] = React.useState<AlertItem[]>(mockAlerts);
   const [systemStatuses, setSystemStatuses] = React.useState<SystemStatusItem[]>(mockSystemStatuses);
   const [broadcastMessage, setBroadcastMessage] = React.useState("");
+  const { setTickerMessage } = useTicker(); // Get setTickerMessage from context
+  const { toast } = useToast(); // For success notifications
 
   const toggleReadStatus = (alertId: string) => {
     setAlerts(prevAlerts =>
@@ -124,9 +128,12 @@ export default function AlertsPage() {
 
   const handleSendBroadcast = () => {
     if (broadcastMessage.trim()) {
-      console.log("Broadcasting alert:", broadcastMessage);
-      alert(`Broadcast Sent (Simulated): ${broadcastMessage}`);
-      setBroadcastMessage("");
+      setTickerMessage(broadcastMessage.trim()); // Update the global ticker message
+      toast({
+        title: "Broadcast Sent!",
+        description: `Message "${broadcastMessage.trim()}" is now scrolling on the ticker.`,
+      });
+      setBroadcastMessage(""); // Clear the input field
     }
   };
 
@@ -255,5 +262,3 @@ export default function AlertsPage() {
     </main>
   );
 }
-
-

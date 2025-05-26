@@ -8,12 +8,8 @@ import './globals.css';
 import Sidebar from '@/components/Sidebar';
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Send, X, Brain } from 'lucide-react';
-import { AuthProvider } from "@/contexts/auth-context"; // Import AuthProvider
+import { AuthProvider } from "@/contexts/auth-context";
+import { TickerProvider, useTicker } from "@/contexts/ticker-context"; // Import TickerProvider
 
 const inter = Inter({
   variable: '--font-inter',
@@ -25,153 +21,77 @@ const robotoMono = Roboto_Mono({
   subsets: ['latin'],
 });
 
-interface ChatMessage {
-  id: string;
-  text: string;
-  sender: 'user' | 'bot';
+// Define a component to render the ticker content based on context
+function TickerContent() {
+  const { tickerMessage } = useTicker();
+
+  if (tickerMessage) {
+    // Repeat the message a few times to ensure scrolling for shorter messages
+    const repeatedMessage = Array(5).fill(tickerMessage).join(" ••• ");
+    return (
+      <div className="animate-ticker whitespace-nowrap flex space-x-6 text-sm font-mono">
+        <span className="text-white">{repeatedMessage}</span>
+      </div>
+    );
+  }
+
+  // Default stock ticker
+  const stockItems = [
+    { symbol: 'AAPL', price: '$189.45', change: '▲1.2%', color: 'text-green-400' },
+    { symbol: 'MSFT', price: '$324.12', change: '▼0.4%', color: 'text-red-400' },
+    { symbol: 'NVDA', price: '$1122.33', change: '▲2.1%', color: 'text-green-400' },
+    { symbol: 'GOOGL', price: '$132.99', change: '▲0.6%', color: 'text-green-400' },
+    { symbol: 'TSLA', price: '$172.43', change: '▼1.0%', color: 'text-red-400' },
+    { symbol: 'AMZN', price: '$123.55', change: '▲0.9%', color: 'text-green-400' },
+    { symbol: 'META', price: '$309.70', change: '▲1.7%', color: 'text-green-400' },
+    { symbol: 'NFLX', price: '$402.20', change: '▼0.6%', color: 'text-red-400' },
+    { symbol: 'AMD', price: '$132.44', change: '▲2.4%', color: 'text-green-400' },
+    { symbol: 'INTC', price: '$37.15', change: '▼0.2%', color: 'text-red-400' },
+    { symbol: 'SNOW', price: '$178.40', change: '▼1.2%', color: 'text-red-400' },
+    { symbol: 'SHOP', price: '$68.90', change: '▲1.5%', color: 'text-green-400' },
+    { symbol: 'COIN', price: '$142.70', change: '▲3.6%', color: 'text-green-400' },
+    { symbol: 'BABA', price: '$85.10', change: '▼0.9%', color: 'text-red-400' },
+    { symbol: 'ROKU', price: '$62.22', change: '▲2.0%', color: 'text-green-400' },
+  ];
+  const duplicatedStockItems = [...stockItems, ...stockItems]; // Duplicate for seamless scroll
+
+  return (
+    <div className="animate-ticker whitespace-nowrap flex space-x-6 text-sm font-mono">
+      {duplicatedStockItems.map((stock, index) => (
+        <span key={index} className="text-white">
+          {stock.symbol}: <span className={stock.color}>{stock.price} {stock.change}</span>
+        </span>
+      ))}
+    </div>
+  );
 }
+
 
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const [isChatOpen, setIsChatOpen] = React.useState(false);
-  const [chatMessages, setChatMessages] = React.useState<ChatMessage[]>([]);
-  const [currentMessage, setCurrentMessage] = React.useState('');
-  const messagesEndRef = React.useRef<HTMLDivElement>(null);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
-  React.useEffect(scrollToBottom, [chatMessages]);
-
-  const handleSendMessage = () => {
-    if (currentMessage.trim() === '') return;
-
-    const newUserMessage: ChatMessage = {
-      id: Date.now().toString(),
-      text: currentMessage,
-      sender: 'user',
-    };
-
-    const botResponse: ChatMessage = {
-      id: (Date.now() + 1).toString(),
-      text: `Maven echoes: "${currentMessage}"`,
-      sender: 'bot',
-    };
-
-    setChatMessages(prevMessages => [...prevMessages, newUserMessage, botResponse]);
-    setCurrentMessage('');
-  };
 
   return (
     <html lang="en" className="dark">
-      <body className={`${inter.variable} ${robotoMono.variable} antialiased`}>
-        <AuthProvider> {/* Wrap with AuthProvider */}
-          <div className="w-full overflow-hidden bg-black/90 border-b border-gray-700 py-2 fixed top-0 z-50">
-            <div className="animate-ticker whitespace-nowrap flex space-x-6 text-sm font-mono">
-              {/* Stock items - repeated for seamless scroll */}
-              <span className="text-white">AAPL: <span className="text-green-400">$189.45 ▲1.2%</span></span>
-              <span className="text-white">MSFT: <span className="text-red-400">$324.12 ▼0.4%</span></span>
-              <span className="text-white">NVDA: <span className="text-green-400">$1122.33 ▲2.1%</span></span>
-              <span className="text-white">GOOGL: <span className="text-green-400">$132.99 ▲0.6%</span></span>
-              <span className="text-white">TSLA: <span className="text-red-400">$172.43 ▼1.0%</span></span>
-              <span className="text-white">AMZN: <span className="text-green-400">$123.55 ▲0.9%</span></span>
-              <span className="text-white">META: <span className="text-green-400">$309.70 ▲1.7%</span></span>
-              <span className="text-white">NFLX: <span className="text-red-400">$402.20 ▼0.6%</span></span>
-              <span className="text-white">AMD: <span className="text-green-400">$132.44 ▲2.4%</span></span>
-              <span className="text-white">INTC: <span className="text-red-400">$37.15 ▼0.2%</span></span>
-              <span className="text-white">SNOW: <span className="text-red-400">$178.40 ▼1.2%</span></span>
-              <span className="text-white">SHOP: <span className="text-green-400">$68.90 ▲1.5%</span></span>
-              <span className="text-white">COIN: <span className="text-green-400">$142.70 ▲3.6%</span></span>
-              <span className="text-white">BABA: <span className="text-red-400">$85.10 ▼0.9%</span></span>
-              <span className="text-white">ROKU: <span className="text-green-400">$62.22 ▲2.0%</span></span>
-              {/* Duplicate set for seamless scroll */}
-              <span className="text-white">AAPL: <span className="text-green-400">$189.45 ▲1.2%</span></span>
-              <span className="text-white">MSFT: <span className="text-red-400">$324.12 ▼0.4%</span></span>
-              <span className="text-white">NVDA: <span className="text-green-400">$1122.33 ▲2.1%</span></span>
-              <span className="text-white">GOOGL: <span className="text-green-400">$132.99 ▲0.6%</span></span>
-              <span className="text-white">TSLA: <span className="text-red-400">$172.43 ▼1.0%</span></span>
-              <span className="text-white">AMZN: <span className="text-green-400">$123.55 ▲0.9%</span></span>
-              <span className="text-white">META: <span className="text-green-400">$309.70 ▲1.7%</span></span>
-              <span className="text-white">NFLX: <span className="text-red-400">$402.20 ▼0.6%</span></span>
-              <span className="text-white">AMD: <span className="text-green-400">$132.44 ▲2.4%</span></span>
-              <span className="text-white">INTC: <span className="text-red-400">$37.15 ▼0.2%</span></span>
-              <span className="text-white">SNOW: <span className="text-red-400">$178.40 ▼1.2%</span></span>
-              <span className="text-white">SHOP: <span className="text-green-400">$68.90 ▲1.5%</span></span>
-              <span className="text-white">COIN: <span className="text-green-400">$142.70 ▲3.6%</span></span>
-              <span className="text-white">BABA: <span className="text-red-400">$85.10 ▼0.9%</span></span>
-              <span className="text-white">ROKU: <span className="text-green-400">$62.22 ▲2.0%</span></span>
+      <body className={`${inter.variable} ${robotoMono.variable} antialiased flex flex-col h-screen`}>
+        <AuthProvider>
+          <TickerProvider> {/* Wrap with TickerProvider */}
+            <div className="w-full overflow-hidden bg-black/90 border-b border-gray-700 py-2 fixed top-0 z-50">
+              <TickerContent />
             </div>
-          </div>
-
-          <div className="flex flex-1 h-screen pt-10"> {/* Wrapper for sidebar and main content, accounting for ticker */}
-            <TooltipProvider delayDuration={0}>
-              <Sidebar />
-              <main className="flex-1 overflow-y-auto bg-transparent"> {/* bg-transparent to let body gradient show */}
-                {children}
-              </main>
-            </TooltipProvider>
-          </div>
-          
-          {/* Chat Dialog remains, but button to trigger it is removed */}
-          <Dialog open={isChatOpen} onOpenChange={setIsChatOpen}>
-            <DialogContent className="sm:max-w-[425px] md:max-w-[550px] lg:max-w-[40%] h-[70vh] flex flex-col bg-card/60 backdrop-blur-md border-none shadow-xl">
-              <DialogHeader className="p-4 border-b border-border/50">
-                <DialogTitle className="text-lg font-semibold text-foreground">Chat with Maven AI</DialogTitle>
-                <DialogClose asChild>
-                  <button className="absolute right-4 top-4 text-muted-foreground hover:text-foreground p-1 rounded-sm focus:outline-none focus:ring-2 focus:ring-ring">
-                    <X className="h-4 w-4" />
-                    <span className="sr-only">Close</span>
-                  </button>
-                </DialogClose>
-              </DialogHeader>
-              <ScrollArea className="flex-grow p-4 space-y-3 overflow-y-auto">
-                {chatMessages.map((msg) => (
-                  <div
-                    key={msg.id}
-                    className={`flex mb-3 ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}
-                  >
-                    <div
-                      className={`p-3 rounded-lg max-w-[75%] text-sm shadow-md ${
-                        msg.sender === 'user'
-                          ? 'bg-primary text-primary-foreground rounded-br-none'
-                          : 'bg-muted text-foreground rounded-bl-none'
-                      }`}
-                    >
-                      {msg.text}
-                    </div>
-                  </div>
-                ))}
-                <div ref={messagesEndRef} />
-              </ScrollArea>
-              <DialogFooter className="p-4 border-t border-border/50">
-                <div className="flex w-full items-center space-x-2">
-                  <Input
-                    type="text"
-                    placeholder="Type a message..."
-                    value={currentMessage}
-                    onChange={(e) => setCurrentMessage(e.target.value)}
-                    onKeyPress={(e) => e.key === 'Enter' && handleSendMessage()}
-                    className="flex-grow bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary"
-                  />
-                  <button
-                    type="submit"
-                    onClick={handleSendMessage}
-                    className="bg-primary hover:bg-primary/90 text-primary-foreground p-2.5 rounded-md flex items-center justify-center"
-                    aria-label="Send Message"
-                    disabled={!currentMessage.trim()}
-                  >
-                    <Send className="h-4 w-4" />
-                  </button>
-                </div>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
-          <Toaster />
-        </AuthProvider> {/* Close AuthProvider */}
+            <div className="flex flex-1 pt-10"> {/* pt-10 to account for fixed ticker height */}
+              <TooltipProvider delayDuration={0}>
+                <Sidebar />
+                <main className="flex-1 overflow-y-auto bg-transparent">
+                  {children}
+                </main>
+              </TooltipProvider>
+            </div>
+            <Toaster />
+          </TickerProvider>
+        </AuthProvider>
       </body>
     </html>
   );
