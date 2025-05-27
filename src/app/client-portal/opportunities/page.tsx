@@ -128,8 +128,8 @@ export default function ClientPortalOpportunitiesPage() {
   const resetForm = () => {
     setOpportunityName('');
     setOpportunityContact('');
-    setOpportunityPipeline('default_pipeline');
-    setOpportunityStage('evaluation');
+    // setOpportunityPipeline('default_pipeline'); // Keep current pipeline selected
+    // setOpportunityStage('evaluation'); // Keep current stage (first stage of selected pipeline)
     setOpportunityNextStep('');
     setOpportunityProbability('');
     setOpportunityAmount('');
@@ -174,13 +174,13 @@ export default function ClientPortalOpportunitiesPage() {
       return;
     }
     
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve => setTimeout(resolve, 700)); // Simulate API call
 
     const newOpportunity: OpportunityItem = {
       id: `opp${Date.now()}`,
       title: opportunityName,
       contactName: opportunityContact,
-      amountDisplay: `$${amountValue.toLocaleString()} (${opportunityAmountType.replace('_', ' ')})`,
+      amountDisplay: `$${amountValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} (${opportunityAmountType.replace('_', ' ')})`,
       amountValue: amountValue,
       amountType: opportunityAmountType,
       probability: isNaN(prob) ? 0 : prob,
@@ -217,18 +217,26 @@ export default function ClientPortalOpportunitiesPage() {
     e.dataTransfer.setData("opportunityId", opportunityId);
     e.dataTransfer.setData("sourceColumnId", sourceColumnId);
     e.currentTarget.classList.add('opacity-50');
+    // console.log(`Drag start: ${opportunityId} from ${sourceColumnId}`);
   };
 
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault(); 
+    // Optional: Add class to highlight drop target column
+    // e.currentTarget.classList.add('bg-primary/10');
   };
 
   const handleDragEnd = (e: React.DragEvent<HTMLDivElement>) => {
     e.currentTarget.classList.remove('opacity-50');
   };
+  
+  // const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+  //   e.currentTarget.classList.remove('bg-primary/10');
+  // };
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>, targetColumnId: string) => {
     e.preventDefault();
+    // e.currentTarget.classList.remove('bg-primary/10');
     
     const opportunityId = e.dataTransfer.getData("opportunityId");
     const sourceColumnId = e.dataTransfer.getData("sourceColumnId");
@@ -248,6 +256,7 @@ export default function ClientPortalOpportunitiesPage() {
       return column;
     }).map(column => {
       if (column.id === targetColumnId && draggedOpportunity) {
+        // Add to the new column at the beginning for visual feedback
         return {
           ...column,
           opportunities: [{ ...draggedOpportunity, stage: targetColumnId }, ...column.opportunities],
@@ -316,13 +325,14 @@ export default function ClientPortalOpportunitiesPage() {
         </div>
 
         {activeView === 'board' && (
-          <div className="flex space-x-4 overflow-x-auto pb-4 -mb-4 scrollbar-thin scrollbar-thumb-muted/50 scrollbar-track-transparent">
+          <div className="flex space-x-4 overflow-x-auto pb-4 -mb-4 no-visual-scrollbar">
             {pipelineData.map((column) => (
               <div 
                 key={column.id} 
                 className="bg-card/60 backdrop-blur-md rounded-lg p-4 w-80 md:w-96 shrink-0 shadow-lg border border-white/10"
                 onDragOver={handleDragOver}
                 onDrop={(e) => handleDrop(e, column.id)}
+                // onDragLeave={handleDragLeave} // Optional: for removing highlight on drag leave
               >
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-base font-semibold text-foreground">{column.title}</h2>
