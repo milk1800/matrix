@@ -20,8 +20,7 @@ import {
   UserPlus,
   ListChecks,
   CalendarPlus,
-  DollarSign as OpportunityIconLucide,
-  Briefcase,
+  Briefcase, // Using Briefcase for Opportunity icon
   FilePenLine,
   Trash2,
   UploadCloud,
@@ -45,14 +44,19 @@ import {
 const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
 
 export default function ClientPortalHomePage() {
+  const [isClient, setIsClient] = React.useState(false);
   const [updatePostText, setUpdatePostText] = React.useState("");
+
+  React.useEffect(() => {
+    setIsClient(true);
+  }, []);
 
   const quillModules = {
     toolbar: [
       [{ 'header': [1, 2, 3, false] }],
       ['bold', 'italic', 'underline', 'strike'],
       [{'list': 'ordered'}, {'list': 'bullet'}],
-      ['link', 'image'], // 'image' can be added if needed
+      ['link', 'image'],
       ['clean']
     ],
   };
@@ -100,7 +104,7 @@ export default function ClientPortalHomePage() {
                     </Avatar>
                   </div>
                   <div className="flex-1 space-y-4">
-                    {typeof window !== 'undefined' && ( // Ensure ReactQuill only renders on client
+                    {isClient && ( 
                         <ReactQuill
                         theme="snow"
                         value={updatePostText}
@@ -135,7 +139,6 @@ export default function ClientPortalHomePage() {
                     </p>
                 </div>
                 <div className="space-y-6">
-                    {/* Name Row */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 items-end">
                     <div>
                         <Label htmlFor="prefix">Prefix</Label>

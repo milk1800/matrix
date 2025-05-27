@@ -30,7 +30,7 @@
     --destructive-foreground: 0 0% 100%;
     
     --border: 240 4% 20%; /* Slightly lighter border for subtle definition */
-    --input: 253 36% 20%; 
+    --input: 0 0% 0% / 0.4; /* rgba(0,0,0,0.4) for inputs */
     --ring: 258 84% 70%;
 
     /* Chart Colors */
@@ -112,14 +112,14 @@
 
 
 /* Animation for missed opportunity rows */
-@keyframes flashRedBackground {
+@keyframes flashRed {
   0%   { background-color: rgba(255, 0, 0, 0.08); }
   50%  { background-color: rgba(255, 0, 0, 0.18); }
   100% { background-color: rgba(255, 0, 0, 0.08); }
 }
 
 .missed-opportunity-row {
-  animation: flashRedBackground 1.5s infinite;
+  animation: flashRed 1.5s infinite;
   transition: background-color 0.3s ease;
   border-radius: 8px; 
 }
@@ -285,19 +285,20 @@
   fill: hsl(var(--primary)) !important;
 }
 .ql-toolbar button:hover {
-    background-color: hsl(var(--primary)/0.1);
+    background-color: hsl(var(--primary)/0.1) !important; /* Ensure !important if needed */
 }
 .ql-toolbar button.ql-active {
-    background-color: hsl(var(--primary)/0.2);
+    background-color: hsl(var(--primary)/0.2) !important; /* Ensure !important if needed */
 }
 
 .ql-container.ql-snow {
   border-color: hsl(var(--border)/0.5) !important;
   border-bottom-left-radius: 0.5rem; /* Matches card radius */
   border-bottom-right-radius: 0.5rem;
+  background-color: hsl(var(--input)) !important; /* Apply input background to container */
 }
 .ql-editor {
-  background-color: hsl(var(--input)) !important;
+  /* background-color: hsl(var(--input)) !important; /* This might be redundant if container has it */
   color: hsl(var(--foreground)) !important;
   min-height: 120px; /* Or match the previous textarea rows */
   border-bottom-left-radius: 0.5rem;
