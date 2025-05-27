@@ -32,7 +32,8 @@ import {
   Clock,
   PlayCircle,
   Star,
-  CircleDollarSign
+  CircleDollarSign,
+  Briefcase // Added Briefcase icon
 } from "lucide-react";
 
 export default function ClientPortalHomePage() {
@@ -58,7 +59,7 @@ export default function ClientPortalHomePage() {
                   <CalendarPlus className="mr-2 h-4 w-4" /> Event
                 </TabsTrigger>
                 <TabsTrigger value="opportunity" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
-                  <DollarSign className="mr-2 h-4 w-4" /> Opportunity
+                  <Briefcase className="mr-2 h-4 w-4" /> Opportunity {/* Changed from DollarSign */}
                 </TabsTrigger>
               </TabsList>
 
@@ -590,7 +591,7 @@ export default function ClientPortalHomePage() {
         <div className="lg:col-span-1 space-y-6 lg:space-y-8">
           <PlaceholderCard title="Events" icon={CalendarDays}>
             <div className="flex flex-col items-center justify-center h-full text-center p-6">
-              <CalendarDays className="w-16 h-16 text-muted-foreground mb-4" />
+              <CalendarDays className="w-16 h-16 text-muted-foreground/50 mb-4" />
               <p className="text-muted-foreground">You have no events for today or tomorrow.</p>
             </div>
           </PlaceholderCard>
@@ -604,25 +605,25 @@ export default function ClientPortalHomePage() {
             }
           >
             <div className="flex flex-col items-center justify-center h-full text-center p-6">
-              <PlayCircle className="w-16 h-16 text-muted-foreground mb-4" />
+              <PlayCircle className="w-16 h-16 text-muted-foreground/50 mb-4" />
               <p className="text-muted-foreground">You have no workflows in progress.</p>
             </div>
           </PlaceholderCard>
           <PlaceholderCard title="Tasks" icon={ListChecks}>
             <div className="flex flex-col items-center justify-center h-full text-center p-6">
-              <ListChecks className="w-16 h-16 text-muted-foreground mb-4" />
+              <ListChecks className="w-16 h-16 text-muted-foreground/50 mb-4" />
               <p className="text-muted-foreground">You have no tasks for this week.</p>
             </div>
           </PlaceholderCard>
           <PlaceholderCard title="Special Dates (next 7 days)" icon={Star}>
             <div className="flex flex-col items-center justify-center h-full text-center p-6">
-              <Star className="w-16 h-16 text-muted-foreground mb-4" />
+              <Star className="w-16 h-16 text-muted-foreground/50 mb-4" />
               <p className="text-muted-foreground">You have no contacts with special dates in the next week.</p>
             </div>
           </PlaceholderCard>
           <PlaceholderCard title="Opportunities (next 30 days)" icon={CircleDollarSign}>
             <div className="flex flex-col items-center justify-center h-full text-center p-6">
-              <CircleDollarSign className="w-16 h-16 text-muted-foreground mb-4" />
+              <CircleDollarSign className="w-16 h-16 text-muted-foreground/50 mb-4" />
               <p className="text-muted-foreground">You have no open opportunities in the next 30 days.</p>
             </div>
           </PlaceholderCard>
