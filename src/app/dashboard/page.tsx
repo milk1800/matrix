@@ -38,10 +38,38 @@ interface MarketData {
 }
 
 const initialMarketOverviewData: MarketData[] = [
-  { label: 'Apple (AAPL)', polygonTicker: 'AAPL', icon: Landmark, openTime: '09:30', closeTime: '16:00', timezone: 'America/New_York' },
-  { label: 'Microsoft (MSFT)', polygonTicker: 'MSFT', icon: Landmark, openTime: '09:30', closeTime: '16:00', timezone: 'America/New_York' },
-  { label: 'S&P 500 (SPY)', polygonTicker: 'SPY', icon: Landmark, openTime: '09:30', closeTime: '16:00', timezone: 'America/New_York' },
-  { label: 'Dow Jones (DIA)', polygonTicker: 'DIA', icon: Landmark, openTime: '09:30', closeTime: '16:00', timezone: 'America/New_York' },
+  {
+    label: 'Apple (AAPL)',
+    polygonTicker: 'AAPL',
+    icon: Landmark,
+    openTime: '09:30',
+    closeTime: '16:00',
+    timezone: 'America/New_York',
+  },
+  {
+    label: 'Microsoft (MSFT)',
+    polygonTicker: 'MSFT',
+    icon: Landmark,
+    openTime: '09:30',
+    closeTime: '16:00',
+    timezone: 'America/New_York',
+  },
+  {
+    label: 'Dow Jones (DIA)', // Changed from VONE
+    polygonTicker: 'DIA',     // Changed from VONE
+    icon: Landmark,
+    openTime: '09:30',
+    closeTime: '16:00',
+    timezone: 'America/New_York',
+  },
+  {
+    label: 'S&P 500 (SPY)',   // Changed from IWM
+    polygonTicker: 'SPY',     // Changed from IWM
+    icon: Landmark,
+    openTime: '09:30',
+    closeTime: '16:00',
+    timezone: 'America/New_York',
+  },
 ];
 
 
@@ -96,25 +124,31 @@ interface MarketStatusInfo {
 // Function to fetch index data
 const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
   const apiKey = process.env.NEXT_PUBLIC_POLYGON_API_KEY;
-  // CRITICAL LOG: Check if the API key is being read.
+  // Log to check if the API key is being read, masking most of it for security
   console.log(`[Polygon API] Attempting to use API key ending with: ...${apiKey ? apiKey.slice(-4) : 'UNDEFINED'} for symbol: ${symbol}`);
 
   if (!apiKey) {
-    console.error(`[Polygon API Error] NEXT_PUBLIC_POLYGON_API_KEY is UNDEFINED. Please ensure it's set in .env.local and the dev server was restarted.`);
-    return { error: 'API Key Missing. Configure in .env.local & restart server.' };
+    const errorMsg = 'API Key Missing. Configure NEXT_PUBLIC_POLYGON_API_KEY in .env.local & restart server.';
+    console.error(`[Polygon API Error] ${errorMsg}`);
+    return { error: errorMsg };
   }
 
   try {
     const response = await fetch(`https://api.polygon.io/v2/aggs/ticker/${symbol}/prev?adjusted=true&apiKey=${apiKey}`);
+    
     if (!response.ok) {
-      let errorMessage = `API Error: ${response.status}`; // Default message
+      let errorMessage = `API Error: ${response.status}`;
+      let errorDetailsParsed = {}; 
+
       try {
         const errorData = await response.json();
+        errorDetailsParsed = errorData; // Store for logging
+
         if (Object.keys(errorData).length === 0 && errorData.constructor === Object) {
           console.warn(`[Polygon API Warn] Received empty JSON error object from Polygon for ${symbol}. Status: ${response.status}.`);
           errorMessage = `API Error: ${response.status} - Polygon returned an empty error response.`;
         } else {
-          console.log(`[Polygon API Info] Full error response object for ${symbol}:`, errorData); // Changed to log for non-empty error objects
+          console.log(`[Polygon API Info] Full error response object for ${symbol}:`, errorData);
           if (errorData.message) errorMessage = `API Error: ${response.status} - ${errorData.message}`;
           else if (errorData.error) errorMessage = `API Error: ${response.status} - ${errorData.error}`;
           else if (errorData.request_id) errorMessage = `API Error: ${response.status} (Request ID: ${errorData.request_id})`;
@@ -123,6 +157,7 @@ const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
           }
         }
       } catch (e) {
+        // If parsing JSON fails, try to get text
         try {
             const textError = await response.text();
             console.warn(`[Polygon API Warn] Could not parse JSON error response for ${symbol}. Status: ${response.status}. Response text snippet:`, textError.substring(0, 200) + (textError.length > 200 ? '...' : ''));
@@ -135,6 +170,7 @@ const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
       console.error(`Error fetching ${symbol}: ${errorMessage}`);
       return { error: errorMessage };
     }
+
     const data = await response.json();
     if (data.results && data.results.length > 0) {
       const { c, o } = data.results[0];
@@ -143,8 +179,9 @@ const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
     console.warn(`[Polygon API Warn] No data results found for ${symbol} in Polygon response.`);
     return { error: 'No data from Polygon' };
   } catch (error: any) {
-    console.error(`[Polygon API Error] Network/Fetch error for ${symbol}:`, error.message || error);
-    return { error: `Fetch error: ${error.message || 'Unknown network error'}` };
+    const networkErrorMsg = `Network/Fetch error for ${symbol}: ${error.message || 'Unknown network error'}`;
+    console.error(`[Polygon API Error] ${networkErrorMsg}`);
+    return { error: networkErrorMsg };
   }
 };
 
@@ -186,7 +223,10 @@ export default function DashboardPage() {
         if (result.status === 'fulfilled') {
           newApiData[result.value.symbol] = result.value.data;
         } else {
+          // Handle rejected promises if necessary, though fetchIndexData should always return an object
           console.error("[Polygon API] Promise rejected unexpectedly in loadMarketData:", result.reason);
+          // Potentially find which symbol failed if result.value is not available on rejection.
+          // For now, fetchIndexData always resolves, so this path might not be hit.
         }
       });
       setMarketApiData(prevData => ({ ...prevData, ...newApiData }));
@@ -334,7 +374,7 @@ export default function DashboardPage() {
 
   return (
     <main className="min-h-screen bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#5b21b6]/10 to-[#000104] flex-1 p-6 space-y-8 md:p-8">
-      <h1 className="text-3xl font-bold tracking-tight text-foreground">
+      <h1 className="text-3xl font-bold tracking-tight text-foreground mb-8">
         Welcome Josh!
       </h1>
 
@@ -432,7 +472,7 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1 hidden lg:block"> {/* Spacer */} </div>
-        <PlaceholderCard title="Ticker Lookup Tool" icon={Search} className="lg:col-span-3">
+        <PlaceholderCard title="Ticker Lookup Tool" icon={Search} className="lg:col-span-3"> {/* Changed to lg:col-span-3 */}
           <div className="flex space-x-2 mb-4">
             <Input
               type="text"
@@ -542,3 +582,5 @@ export default function DashboardPage() {
     </main>
   );
 }
+
+    
