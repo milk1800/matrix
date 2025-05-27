@@ -1,9 +1,9 @@
 
 "use client";
 
-import * as React from "react";
+import * as React from 'react';
 import Image from "next/image";
-import { UserCircle2, Send, Download, Loader2, Brain, RotateCcw, Edit3, FileText, Shield, Laptop } from 'lucide-react'; // Added Brain
+import { UserCircle2, Send, Download, Loader2, Brain, RotateCcw, Edit3, FileText, Shield, Laptop, MessageSquareReply, ThumbsUp, Briefcase, ListChecks, UserPlus, StickyNote, Tag as TagIcon } from 'lucide-react';
 import { PlaceholderCard } from '@/components/dashboard/placeholder-card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -11,6 +11,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
+import { ActivityFeed, type ActivityCardProps } from "@/components/dashboard/ActivityFeed";
 
 interface ContextTag {
   name: string;
@@ -50,7 +51,7 @@ const getContextTag = (question: string): ContextTag | undefined => {
 };
 
 const renderTextWithLinks = (text: string) => {
-  const parts = text.split(/(\b\w+\.pdf\b)/gi);
+  const parts = text.split(/(\\b\\w+\\.pdf\\b)/gi); // Updated regex
   return parts.map((part, index) => {
     if (/\b\w+\.pdf\b/.test(part)) {
       return (
@@ -62,6 +63,49 @@ const renderTextWithLinks = (text: string) => {
     return part;
   });
 };
+
+const mockActivityFeedData: ActivityCardProps[] = [
+  {
+    id: 'activity1',
+    type: 'contact',
+    summary: 'John Smith is a new contact created by Josh Bajorek.',
+    user: 'Josh Bajorek',
+    timestamp: '2 hours ago',
+    tags: ['New Lead', 'Referral'],
+  },
+  {
+    id: 'activity2',
+    type: 'opportunity',
+    summary: 'Opportunity "ACME Corp Website Redesign" updated.',
+    user: 'Sarah Miller',
+    timestamp: '5 hours ago',
+    stageChange: 'Stage: Qualification to Needs Analysis',
+  },
+  {
+    id: 'activity3',
+    type: 'task',
+    summary: 'Task "Follow up with Jane Doe" completed by Josh Bajorek.',
+    user: 'Josh Bajorek',
+    timestamp: '1 day ago',
+  },
+  {
+    id: 'activity4',
+    type: 'note',
+    summary: 'Added a note to "Client Alpha Portfolio": Discussed Q3 performance and upcoming market volatility.',
+    user: 'Maven AI',
+    userAvatar: '/icons/brain-logo.png',
+    timestamp: '3 days ago',
+    details: "Client expressed interest in diversifying into emerging markets. Suggested scheduling a follow-up call."
+  },
+   {
+    id: 'activity5',
+    type: 'system',
+    summary: 'System successfully ran automated portfolio rebalancing for 15 accounts.',
+    user: 'System',
+    userAvatar: '/icons/brain-logo.png',
+    timestamp: 'Just now',
+  },
+];
 
 
 export default function ResourceMatrixPage() {
@@ -149,17 +193,18 @@ For more information, refer to document REF123.pdf or contact support. You can a
   };
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#5b21b6]/10 to-[#000104] flex-1 p-6 md:p-8 flex flex-col">
-      <div className="flex items-center justify-center space-x-3 mb-6">
+    <main className="min-h-screen bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#5b21b6]/10 to-[#000104] flex-1 p-6 md:p-8 flex flex-col space-y-8">
+      <div className="flex items-center justify-center space-x-3">
         <Brain className="w-10 h-10 text-purple-500 animate-pulse-neon" />
         <span className="text-4xl font-bold text-metallic-gradient">
           Maven
         </span>
       </div>
-      <div className="flex-grow flex flex-col items-center justify-center">
+      
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
         <PlaceholderCard
           title=""
-          className="w-full max-w-3xl h-[75vh] md:h-[80vh] flex flex-col bg-black/60 backdrop-blur-md shadow-xl rounded-xl border border-white/10 p-0"
+          className="w-full h-[75vh] md:h-[80vh] flex flex-col bg-black/50 backdrop-blur-md shadow-xl rounded-xl border border-white/10 p-0 sticky top-16" // Added sticky and top-16
         >
           <ScrollArea className="flex-grow rounded-t-xl" viewportRef={scrollViewportRef}>
             <div className="p-4 md:p-6 space-y-4">
@@ -174,7 +219,7 @@ For more information, refer to document REF123.pdf or contact support. You can a
                 >
                   {msg.sender === 'ai' && (
                     <div className="w-8 h-8 shrink-0 rounded-full overflow-hidden self-start bg-black/50 flex items-center justify-center border border-primary/30">
-                      <Image src="/icons/brain-logo.png" alt="AI Avatar" width={24} height={24} className="opacity-80" data-ai-hint="AI avatar" />
+                      <Image src="/icons/brain-logo.png" alt="AI Avatar" width={24} height={24} className="opacity-80" data-ai-hint="AI avatar"/>
                     </div>
                   )}
                   {msg.sender === 'user' && (
@@ -185,7 +230,7 @@ For more information, refer to document REF123.pdf or contact support. You can a
                       "p-3 text-sm shadow-md break-words rounded-lg",
                       msg.sender === 'user'
                         ? 'bg-primary text-primary-foreground rounded-br-none'
-                        : 'bg-muted/60 text-foreground rounded-bl-none border border-border/30'
+                        : 'bg-muted/80 text-foreground rounded-bl-none border border-border/30'
                     )}
                   >
                     {msg.contextTag && (
@@ -219,7 +264,7 @@ For more information, refer to document REF123.pdf or contact support. You can a
               {isLoadingAiResponse && (
                 <div className="flex items-start gap-3 mr-auto max-w-[85%] md:max-w-[75%] message-bubble-ai">
                    <div className="w-8 h-8 shrink-0 rounded-full overflow-hidden self-start bg-black/50 flex items-center justify-center border border-primary/30">
-                      <Image src="/icons/brain-logo.png" alt="AI Avatar" width={24} height={24} className="opacity-80" data-ai-hint="AI avatar thinking" />
+                      <Image src="/icons/brain-logo.png" alt="AI Avatar" width={24} height={24} className="opacity-80" data-ai-hint="AI avatar thinking"/>
                     </div>
                   <div className="p-3 text-sm shadow-md bg-muted/60 text-foreground rounded-lg rounded-bl-none border border-border/30">
                     <div className="flex space-x-1 items-center h-5">
@@ -266,17 +311,24 @@ For more information, refer to document REF123.pdf or contact support. You can a
           </div>
         </PlaceholderCard>
 
-        {currentAiResponseForPdf && (
-          <div className="mt-4 w-full max-w-3xl flex justify-center">
-            <Button
-              onClick={handleGeneratePdf}
-              variant="outline"
-              className="bg-black/50 backdrop-blur-md border-white/10 hover:bg-white/20 text-foreground shadow-md hover:shadow-lg rounded-lg"
-            >
-              <Download className="mr-2 h-4 w-4" /> Download Instructions as PDF
-            </Button>
-          </div>
-        )}
+        <div className="space-y-8"> {/* Container for the right-hand side cards */}
+          {currentAiResponseForPdf && (
+            <div className="w-full flex justify-center">
+              <Button
+                onClick={handleGeneratePdf}
+                variant="outline"
+                className="bg-black/50 backdrop-blur-md border-white/10 hover:bg-white/20 text-foreground shadow-md hover:shadow-lg rounded-lg"
+              >
+                <Download className="mr-2 h-4 w-4" /> Download Instructions as PDF
+              </Button>
+            </div>
+          )}
+
+          <PlaceholderCard title="Workspace Activity Feed" className="w-full">
+            <ActivityFeed activities={mockActivityFeedData} />
+          </PlaceholderCard>
+        </div>
+
       </div>
     </main>
   );
