@@ -55,16 +55,16 @@ const initialMarketOverviewData: MarketData[] = [
     timezone: 'America/New_York',
   },
   {
-    label: 'Dow Jones (DIA)', // Changed from VONE
-    polygonTicker: 'DIA',     // Changed from VONE
+    label: 'Total Market (VONE)', // Vanguard S&P 500 ETF
+    polygonTicker: 'VONE',
     icon: Landmark,
     openTime: '09:30',
     closeTime: '16:00',
     timezone: 'America/New_York',
   },
   {
-    label: 'S&P 500 (SPY)',   // Changed from IWM
-    polygonTicker: 'SPY',     // Changed from IWM
+    label: 'Small Caps (IWM)', // iShares Russell 2000 ETF
+    polygonTicker: 'IWM',
     icon: Landmark,
     openTime: '09:30',
     closeTime: '16:00',
@@ -121,10 +121,8 @@ interface MarketStatusInfo {
   shadowClass: string;
 }
 
-// Function to fetch index data
 const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
   const apiKey = process.env.NEXT_PUBLIC_POLYGON_API_KEY;
-  // Log to check if the API key is being read, masking most of it for security
   console.log(`[Polygon API] Attempting to use API key ending with: ...${apiKey ? apiKey.slice(-4) : 'UNDEFINED'} for symbol: ${symbol}`);
 
   if (!apiKey) {
@@ -135,10 +133,10 @@ const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
 
   try {
     const response = await fetch(`https://api.polygon.io/v2/aggs/ticker/${symbol}/prev?adjusted=true&apiKey=${apiKey}`);
-    
+
     if (!response.ok) {
       let errorMessage = `API Error: ${response.status}`;
-      let errorDetailsParsed = {}; 
+      let errorDetailsParsed = {}; // To store parsed JSON error if available
 
       try {
         const errorData = await response.json();
@@ -148,16 +146,17 @@ const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
           console.warn(`[Polygon API Warn] Received empty JSON error object from Polygon for ${symbol}. Status: ${response.status}.`);
           errorMessage = `API Error: ${response.status} - Polygon returned an empty error response.`;
         } else {
-          console.log(`[Polygon API Info] Full error response object for ${symbol}:`, errorData);
-          if (errorData.message) errorMessage = `API Error: ${response.status} - ${errorData.message}`;
-          else if (errorData.error) errorMessage = `API Error: ${response.status} - ${errorData.error}`;
-          else if (errorData.request_id) errorMessage = `API Error: ${response.status} (Request ID: ${errorData.request_id})`;
-          else if (response.statusText && errorMessage === `API Error: ${response.status}`) {
+          // Log the full errorData if available, this can be very helpful for complex API errors
+          console.log(`[Polygon API Debug] Full error response for ${symbol}:`, errorDetailsParsed);
+          if (errorData && errorData.message) errorMessage = `API Error: ${response.status} - ${errorData.message}`;
+          else if (errorData && errorData.error) errorMessage = `API Error: ${response.status} - ${errorData.error}`;
+          else if (errorData && errorData.request_id) errorMessage = `API Error: ${response.status} (Request ID: ${errorData.request_id})`; // Some Polygon errors might only have request_id
+          else if (response.statusText && errorMessage === `API Error: ${response.status}`) { // Fallback if no specific message in JSON
              errorMessage = `API Error: ${response.status} - ${response.statusText}`;
           }
         }
       } catch (e) {
-        // If parsing JSON fails, try to get text
+        // If parsing JSON fails, try to get text response
         try {
             const textError = await response.text();
             console.warn(`[Polygon API Warn] Could not parse JSON error response for ${symbol}. Status: ${response.status}. Response text snippet:`, textError.substring(0, 200) + (textError.length > 200 ? '...' : ''));
@@ -170,14 +169,13 @@ const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
       console.error(`Error fetching ${symbol}: ${errorMessage}`);
       return { error: errorMessage };
     }
-
     const data = await response.json();
     if (data.results && data.results.length > 0) {
       const { c, o } = data.results[0];
       return { c, o };
     }
     console.warn(`[Polygon API Warn] No data results found for ${symbol} in Polygon response.`);
-    return { error: 'No data from Polygon' };
+    return { error: 'No data results from Polygon' };
   } catch (error: any) {
     const networkErrorMsg = `Network/Fetch error for ${symbol}: ${error.message || 'Unknown network error'}`;
     console.error(`[Polygon API Error] ${networkErrorMsg}`);
@@ -196,7 +194,8 @@ export default function DashboardPage() {
 
   React.useEffect(() => {
     const loadMarketData = async () => {
-      if (!process.env.NEXT_PUBLIC_POLYGON_API_KEY) {
+      const apiKey = process.env.NEXT_PUBLIC_POLYGON_API_KEY;
+      if (!apiKey) {
         console.warn("[Polygon API] CRITICAL: NEXT_PUBLIC_POLYGON_API_KEY is not defined in the environment. Market data will not be fetched. Ensure .env.local is set and the dev server was restarted.");
         const errorState: Record<string, FetchedIndexData> = {};
         initialMarketOverviewData.forEach(market => {
@@ -223,10 +222,7 @@ export default function DashboardPage() {
         if (result.status === 'fulfilled') {
           newApiData[result.value.symbol] = result.value.data;
         } else {
-          // Handle rejected promises if necessary, though fetchIndexData should always return an object
           console.error("[Polygon API] Promise rejected unexpectedly in loadMarketData:", result.reason);
-          // Potentially find which symbol failed if result.value is not available on rejection.
-          // For now, fetchIndexData always resolves, so this path might not be hit.
         }
       });
       setMarketApiData(prevData => ({ ...prevData, ...newApiData }));
@@ -290,10 +286,11 @@ export default function DashboardPage() {
       let currentMinuteEST = 0;
 
       try {
+        // Get current hour and minute in EST/EDT
         const estFormatter = new Intl.DateTimeFormat('en-US', {
           hour: 'numeric',
           minute: 'numeric',
-          hour12: false,
+          hour12: false, // Use 24-hour format for easier calculations
           timeZone: 'America/New_York',
         });
         const parts = estFormatter.formatToParts(now);
@@ -303,71 +300,78 @@ export default function DashboardPage() {
         });
       } catch (e) {
         console.error("Error formatting EST time, defaulting to local time for logic:", e);
-        const localNow = new Date();
+        // Fallback to local time if Intl.DateTimeFormat fails (e.g., unsupported environment)
+        // This might not be perfectly accurate for market status but prevents a crash.
+        const localNow = new Date(); 
         currentHourEST = localNow.getHours();
         currentMinuteEST = localNow.getMinutes();
       }
       
+      // Create a "today" date object based on current EST date to avoid issues with date rollovers
+      // when comparing with marketOpenTime and marketCloseTime which are set on 'todayForLogic'
       const todayForLogic = new Date(now.toLocaleString('en-US', {timeZone: 'America/New_York'}));
-      todayForLogic.setHours(0,0,0,0);
+      todayForLogic.setHours(0,0,0,0); // Normalize to start of day in EST
 
 
       initialMarketOverviewData.forEach(market => {
         if (market.openTime && market.closeTime) {
-          const [openHour, openMinute] = market.openTime.split(':').map(Number);
-          const [closeHour, closeMinute] = market.closeTime.split(':').map(Number);
+            const [openHour, openMinute] = market.openTime.split(':').map(Number);
+            const [closeHour, closeMinute] = market.closeTime.split(':').map(Number);
 
-          const marketOpenTime = new Date(todayForLogic);
-          marketOpenTime.setHours(openHour, openMinute, 0, 0);
+            // Create market open and close times for "today" in EST
+            const marketOpenTime = new Date(todayForLogic);
+            marketOpenTime.setHours(openHour, openMinute, 0, 0);
 
-          const marketCloseTime = new Date(todayForLogic);
-          marketCloseTime.setHours(closeHour, closeMinute, 0, 0);
+            const marketCloseTime = new Date(todayForLogic);
+            marketCloseTime.setHours(closeHour, closeMinute, 0, 0);
+            
+            // Create a "now" representation in EST for comparison
+            const nowInEstEquivalentForLogic = new Date(todayForLogic);
+            nowInEstEquivalentForLogic.setHours(currentHourEST, currentMinuteEST, 0, 0);
 
-          const nowInEstEquivalentForLogic = new Date(todayForLogic);
-          nowInEstEquivalentForLogic.setHours(currentHourEST, currentMinuteEST, 0, 0);
 
-          const isCurrentlyOpen =
-            nowInEstEquivalentForLogic >= marketOpenTime &&
-            nowInEstEquivalentForLogic < marketCloseTime;
+            const isCurrentlyOpen = 
+                nowInEstEquivalentForLogic >= marketOpenTime &&
+                nowInEstEquivalentForLogic < marketCloseTime;
 
-          const timeToCloseMs = marketCloseTime.getTime() - nowInEstEquivalentForLogic.getTime();
-          const isClosingSoon = isCurrentlyOpen && timeToCloseMs > 0 && timeToCloseMs <= 60 * 60 * 1000; // 1 hour
+            const timeToCloseMs = marketCloseTime.getTime() - nowInEstEquivalentForLogic.getTime();
+            const isClosingSoon = isCurrentlyOpen && timeToCloseMs > 0 && timeToCloseMs <= 60 * 60 * 1000; // 1 hour
 
-          let statusText = "🔴 Market Closed";
-          let shadowClass = "shadow-market-closed";
-          let tooltipText = `Market Hours: ${market.openTime} - ${market.closeTime} ET`;
+            let statusText = "🔴 Market Closed";
+            let shadowClass = "shadow-market-closed";
+            let tooltipText = `Market Hours: ${market.openTime} - ${market.closeTime} ET`;
 
-          if (isClosingSoon) {
-            statusText = "🟡 Closing Soon";
-            shadowClass = "shadow-market-closing";
-            tooltipText = `Market closes at ${market.closeTime} ET`;
-          } else if (isCurrentlyOpen) {
-            statusText = "🟢 Market Open";
-            shadowClass = "shadow-market-open";
-            tooltipText = `Market closes at ${market.closeTime} ET`;
-          }
-
-          newStatuses[market.label] = { statusText, tooltipText, shadowClass };
+            if (isClosingSoon) {
+                statusText = "🟡 Closing Soon";
+                shadowClass = "shadow-market-closing";
+                tooltipText = `Market closes at ${market.closeTime} ET`;
+            } else if (isCurrentlyOpen) {
+                statusText = "🟢 Market Open";
+                shadowClass = "shadow-market-open";
+                tooltipText = `Market closes at ${market.closeTime} ET`;
+            }
+            
+            newStatuses[market.label] = { statusText, tooltipText, shadowClass }; // Use market.label as key
         } else {
-          newStatuses[market.label] = { statusText: "Status N/A", tooltipText: "Market hours not defined", shadowClass: "" };
+            newStatuses[market.label] = { statusText: "Status N/A", tooltipText: "Market hours not defined", shadowClass: "" };
         }
       });
       setMarketStatuses(newStatuses);
     };
-
+    
     updateMarketStatuses();
     const intervalId = setInterval(updateMarketStatuses, 60000);
     const clockIntervalId = setInterval(() => {
-      try {
-        setCurrentTimeEST(new Date().toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', second: '2-digit' }));
-      } catch (e) {
-        setCurrentTimeEST(new Date().toLocaleTimeString());
-      }
+        try {
+            setCurrentTimeEST(new Date().toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', second:'2-digit' }));
+        } catch (e) {
+            setCurrentTimeEST(new Date().toLocaleTimeString()); // Fallback to local time display on error
+        }
     }, 1000);
 
     return () => {
-      clearInterval(intervalId);
-      clearInterval(clockIntervalId);
+        clearInterval(intervalId);
+        clearInterval(clockIntervalId);
     };
   }, []);
 
@@ -383,11 +387,11 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {initialMarketOverviewData.map((market) => {
             const apiResult = marketApiData[market.polygonTicker];
-            const statusInfo = marketStatuses[market.label] || { statusText: "Loading...", tooltipText: "Fetching status...", shadowClass: "" };
-
+            const statusInfo = marketStatuses[market.label] || { statusText: "Loading...", tooltipText: "Fetching status...", shadowClass: ""};
+            
             let valueDisplay: React.ReactNode = "$0.00";
             let changeDisplay: React.ReactNode = "0.00%";
-
+            
             if (apiResult?.loading) {
               valueDisplay = <span className="text-sm text-muted-foreground">Loading...</span>;
               changeDisplay = <span className="text-xs text-muted-foreground">Loading...</span>;
@@ -411,19 +415,19 @@ export default function DashboardPage() {
             }
 
             return (
-              <PlaceholderCard
-                key={market.polygonTicker}
-                title={market.label}
+              <PlaceholderCard 
+                key={market.polygonTicker} 
+                title={market.label} 
                 icon={market.icon || Landmark}
                 className={cn(
-                  "transition-all duration-300 ease-in-out",
+                  "transition-all duration-300 ease-in-out", 
                   statusInfo.shadowClass
                 )}
               >
                 <div className="text-2xl font-bold text-foreground mb-1">{valueDisplay}</div>
                 <div className="text-sm mb-3">{changeDisplay}</div>
                 <div className="h-10 w-full my-2 bg-black/30 rounded-md flex items-center justify-center backdrop-blur-sm" data-ai-hint="mini trendline chart">
-                  <span className="text-xs text-muted-foreground/50">Mini Trend</span>
+                   <span className="text-xs text-muted-foreground/50">Mini Trend</span>
                 </div>
                 <TooltipProvider>
                   <Tooltip>
@@ -435,8 +439,8 @@ export default function DashboardPage() {
                     </TooltipTrigger>
                     <TooltipContent side="bottom" className="bg-popover text-popover-foreground">
                       <p>{statusInfo.tooltipText}</p>
-                      {apiResult?.c !== undefined && <p>Prev. Close: ${apiResult.c.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>}
-                      {apiResult?.o !== undefined && <p>Prev. Open: ${apiResult.o.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>}
+                       {apiResult?.c !== undefined && <p>Prev. Close: ${apiResult.c.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>}
+                       {apiResult?.o !== undefined && <p>Prev. Open: ${apiResult.o.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>}
                     </TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
@@ -472,7 +476,7 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1 hidden lg:block"> {/* Spacer */} </div>
-        <PlaceholderCard title="Ticker Lookup Tool" icon={Search} className="lg:col-span-3"> {/* Changed to lg:col-span-3 */}
+        <PlaceholderCard title="Ticker Lookup Tool" icon={Search} className="lg:col-span-2"> {/* Default span to 2, will be made 3 */}
           <div className="flex space-x-2 mb-4">
             <Input
               type="text"
