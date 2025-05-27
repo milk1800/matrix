@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/auth-context';
 import { Button } from '@/components/ui/button';
 import { PlaceholderCard } from '@/components/dashboard/placeholder-card';
 import { Loader2, Mail, LogIn, LogOut, RefreshCcw, Send } from 'lucide-react'; // Added LogIn, LogOut, RefreshCcw
+import { ScrollArea } from '@/components/ui/scroll-area'; // Added ScrollArea
 
 interface GmailMessageHeader {
   name: string;
@@ -42,7 +43,7 @@ interface GmailMessage {
 
 declare global {
   interface Window {
-    gapi: any; 
+    gapi: any;
     google: any; // For new Google Identity Services
   }
 }
@@ -157,7 +158,7 @@ export default function ClientPortalEmailPage() {
     } finally {
       setIsLoadingMessages(false);
     }
-  }, [gapiReady, user, accessToken, signOutGoogle]); // Added signOutGoogle dependency
+  }, [gapiReady, user, accessToken, signOutGoogle]); 
 
   React.useEffect(() => {
     if (gapiReady) {
@@ -192,7 +193,7 @@ export default function ClientPortalEmailPage() {
       />
       <main className="min-h-screen bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#5b21b6]/10 to-[#000104] flex-1 p-6 space-y-6 md:p-8">
         <div className="flex flex-wrap justify-between items-center gap-4">
-          <h1 className="text-3xl font-bold tracking-tight text-foreground">Client Portal - Email</h1>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground">Email</h1>
           {user ? (
             <Button variant="outline" onClick={signOutGoogle} disabled={isAuthLoading}>
               {isAuthLoading && !accessToken ? <Loader2 className="mr-2 h-4 w-4 animate-spin"/> : <LogOut className="mr-2 h-4 w-4" />} 
