@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogC
 import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { Filter, UserPlus, MoreHorizontal, Tags as TagsIcon, UploadCloud, Trash2 } from 'lucide-react';
+import { cn } from "@/lib/utils";
 
 interface Contact {
   id: string;
@@ -40,6 +41,17 @@ const mockContacts: Contact[] = [
   { id: '14', name: 'Megan Clark', phone: '555-468-5791', email: 'meganc@email.com', tags: ['Prospect'] },
   { id: '15', name: 'Tom Martinez', phone: '555-579-6802', email: 'tomm@email.com', tags: ['Client'] },
 ];
+
+const tagColorMap: Record<string, string> = {
+  Client: 'bg-green-600 text-white',
+  Prospect: 'bg-blue-600 text-white',
+  Lead: 'bg-purple-600 text-white',
+  Referred: 'bg-orange-500 text-white',
+  VIP: 'bg-yellow-400 text-black',
+  New: 'bg-cyan-600 text-white',
+  Default: 'bg-gray-500 text-white', // Default for unmapped tags
+};
+
 
 export default function ClientPortalContactsPage() {
   const [contacts, setContacts] = React.useState<Contact[]>(mockContacts);
@@ -144,13 +156,20 @@ export default function ClientPortalContactsPage() {
                           <TableCell className="px-6 py-4">
                             <Checkbox id={`contact-${contact.id}`} aria-label={`Select contact ${contact.name}`} />
                           </TableCell>
-                          <TableCell className="font-medium text-foreground px-6 py-4 whitespace-nowrap truncate">{contact.name}</TableCell>
+                          <TableCell className="font-medium text-foreground px-6 py-4 whitespace-nowrap truncate">
+                             <a href={`/client-portal/contacts/${contact.id}`} className="hover:underline hover:text-primary">
+                              {contact.name}
+                            </a>
+                          </TableCell>
                           <TableCell className="text-muted-foreground px-6 py-4 whitespace-nowrap truncate">{contact.phone}</TableCell>
                           <TableCell className="text-muted-foreground px-6 py-4 whitespace-nowrap truncate">{contact.email}</TableCell>
                           <TableCell className="px-6 py-4 whitespace-nowrap">
                             <div className="flex flex-wrap gap-1">
                               {contact.tags.map(tag => (
-                                <Badge key={tag} variant="outline" className="text-xs">
+                                <Badge 
+                                  key={tag} 
+                                  className={cn("text-xs", tagColorMap[tag] || tagColorMap.Default)}
+                                >
                                   {tag}
                                 </Badge>
                               ))}
