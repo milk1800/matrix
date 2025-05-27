@@ -34,7 +34,33 @@ import {
   Clock,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { format, subDays, addDays, subMonths, addMonths, startOfWeek, endOfWeek, getDay, getDate, getDaysInMonth, startOfMonth, endOfMonth, eachDayOfInterval, isToday, isSameMonth, setHours, setMinutes, getHours, getMinutes, isSameDay, addWeeks, subWeeks, isValid, addHours } from 'date-fns';
+import { 
+  format, 
+  subDays, 
+  addDays, 
+  subMonths, 
+  addMonths, 
+  startOfWeek, 
+  endOfWeek, 
+  getDay, 
+  getDate, 
+  getDaysInMonth, 
+  startOfMonth, 
+  endOfMonth, 
+  eachDayOfInterval, 
+  isToday, 
+  isSameMonth, 
+  setHours, 
+  setMinutes, 
+  getHours, 
+  getMinutes, 
+  isSameDay, 
+  addWeeks, 
+  subWeeks, 
+  isValid, 
+  addHours,
+  parse as parseDateFns // For robust date parsing
+} from 'date-fns';
 
 const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const hoursToDisplay = Array.from({ length: 24 }, (_, i) => {
@@ -45,6 +71,14 @@ const hoursToDisplay = Array.from({ length: 24 }, (_, i) => {
   return `${hour} ${ampm}`;
 });
 
+interface CalendarEvent {
+  id: string;
+  title: string;
+  start: Date;
+  end: Date;
+  allDay: boolean;
+  color?: string; // Optional for styling
+}
 
 const getMonthDays = (year: number, month: number): { day: number | null; isCurrentMonth: boolean; fullDate: Date | null }[] => {
   const firstDayOfMonth = startOfMonth(new Date(year, month));
@@ -83,6 +117,23 @@ const getWeekDates = (currentDate: Date): { dayName: string; dateNumber: number;
   });
 };
 
+// Helper function to parse time string "HH:MM AM/PM" and combine with a base date
+const parseTimeStringToDate = (baseDate: Date, timeString: string): Date => {
+  const timeParts = timeString.match(/(\d+):(\d+)\s*(AM|PM)/i);
+  if (!timeParts) return baseDate; // Return baseDate if parsing fails
+
+  let hours = parseInt(timeParts[1], 10);
+  const minutes = parseInt(timeParts[2], 10);
+  const period = timeParts[3].toUpperCase();
+
+  if (period === "PM" && hours < 12) hours += 12;
+  if (period === "AM" && hours === 12) hours = 0; // Midnight case
+
+  const newDate = new Date(baseDate);
+  newDate.setHours(hours, minutes, 0, 0);
+  return newDate;
+};
+
 
 export default function ClientPortalCalendarPage() {
   const { toast } = useToast();
@@ -101,6 +152,7 @@ export default function ClientPortalCalendarPage() {
   const [fullEventEndDate, setFullEventEndDate] = React.useState('');
   const [fullEventEndTime, setFullEventEndTime] = React.useState('');
 
+  const [events, setEvents] = React.useState<CalendarEvent[]>([]);
 
   const [activeView, setActiveView] = React.useState("month"); 
   const [currentDateForCalendar, setCurrentDateForCalendar] = React.useState(new Date());
@@ -123,7 +175,7 @@ export default function ClientPortalCalendarPage() {
         if (activeView === 'week') {
           const currentWeekStart = startOfWeek(now, { weekStartsOn: 0 });
           const displayedWeekStart = startOfWeek(currentDateForCalendar, { weekStartsOn: 0 });
-          if (!isSameDay(currentWeekStart, displayedWeekStart)) {
+          if (!isSameDay(currentWeekStart, displayedWeekStart)) { // Check if it's the current week
             setCurrentTimePosition(null);
             return;
           }
@@ -177,24 +229,23 @@ export default function ClientPortalCalendarPage() {
     if (dayDate && isValid(dayDate)) {
       setQuickAddEventSelectedDate(dayDate);
       setQuickAddEventTitle('');
-      setQuickAddEventAllDay(false);
-
-      let newStartTime;
-      let newEndTime;
+      
+      let newStartTimeDate;
+      let newEndTimeDate;
 
       if (typeof hourIndex === 'number') {
-        // For week/day view clicks
-        newStartTime = setMinutes(setHours(new Date(dayDate), hourIndex), 0);
-        newEndTime = addHours(newStartTime, 1);
-      } else {
-        // For month view clicks or default
-        const nextHour = setMinutes(setHours(new Date(), getHours(new Date()) + 1), 0);
-        newStartTime = nextHour;
-        newEndTime = addHours(nextHour, 1);
+        setQuickAddEventAllDay(false);
+        newStartTimeDate = setMinutes(setHours(new Date(dayDate), hourIndex), 0);
+        newEndTimeDate = addHours(newStartTimeDate, 1);
+      } else { // Month view click or default
+        setQuickAddEventAllDay(true); // Default to all-day for month click
+        const now = new Date();
+        newStartTimeDate = setMinutes(setHours(new Date(dayDate), getHours(now) +1 ), 0); // Default to next hour
+        newEndTimeDate = addHours(newStartTimeDate, 1);
       }
 
-      setQuickAddEventStartTime(format(newStartTime, 'hh:mm a'));
-      setQuickAddEventEndTime(format(newEndTime, 'hh:mm a'));
+      setQuickAddEventStartTime(format(newStartTimeDate, 'hh:mm a'));
+      setQuickAddEventEndTime(format(newEndTimeDate, 'hh:mm a'));
       setIsQuickAddEventDialogOpen(true);
     }
   };
@@ -205,12 +256,85 @@ export default function ClientPortalCalendarPage() {
       setFullEventAllDay(quickAddEventAllDay);
       setFullEventStartDate(format(quickAddEventSelectedDate, 'MM/dd/yyyy'));
       setFullEventStartTime(quickAddEventAllDay ? '' : quickAddEventStartTime);
-      setFullEventEndDate(format(quickAddEventSelectedDate, 'MM/dd/yyyy'));
+      setFullEventEndDate(format(quickAddEventSelectedDate, 'MM/dd/yyyy')); // Default to same day
       setFullEventEndTime(quickAddEventAllDay ? '' : quickAddEventEndTime);
     }
     setIsQuickAddEventDialogOpen(false);
     setIsAddEventDialogOpen(true);
   };
+
+  const handleSaveQuickEvent = () => {
+    if (!quickAddEventTitle.trim()) {
+      toast({
+        title: "Event Title Required",
+        description: "Please enter a title for your event.",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (!quickAddEventSelectedDate) {
+      toast({ title: "No date selected for quick add", variant: "destructive"});
+      return;
+    }
+
+    let eventStart: Date;
+    let eventEnd: Date;
+
+    if (quickAddEventAllDay) {
+      eventStart = startOfDay(quickAddEventSelectedDate);
+      eventEnd = endOfDay(quickAddEventSelectedDate); // For rendering, might adjust for display
+    } else {
+      eventStart = parseTimeStringToDate(quickAddEventSelectedDate, quickAddEventStartTime);
+      eventEnd = parseTimeStringToDate(quickAddEventSelectedDate, quickAddEventEndTime);
+      if (eventEnd <= eventStart) { // Ensure end time is after start time
+         eventEnd = addHours(eventStart, 1);
+      }
+    }
+    
+    const newEvent: CalendarEvent = {
+      id: Date.now().toString(),
+      title: quickAddEventTitle,
+      start: eventStart,
+      end: eventEnd,
+      allDay: quickAddEventAllDay,
+      color: 'hsl(var(--primary))' // Default color
+    };
+
+    setEvents(prevEvents => [...prevEvents, newEvent]);
+    toast({
+      title: "Event Added!",
+      description: `"${newEvent.title}" has been added to your calendar.`,
+    });
+    setIsQuickAddEventDialogOpen(false);
+    // Reset quick add form
+    setQuickAddEventTitle('');
+    setQuickAddEventAllDay(false);
+    setQuickAddEventSelectedDate(null);
+  };
+
+  // Helper to get events for a specific day (month view)
+  const getEventsForDay = (day: Date | null) => {
+    if (!day) return [];
+    return events.filter(event => 
+      (event.allDay && isSameDay(event.start, day)) ||
+      (!event.allDay && isSameDay(event.start, day)) 
+    );
+  };
+
+  // Helper to get events for a specific timeslot (week/day view)
+  const getEventsForSlot = (slotStart: Date, slotEnd: Date) => {
+    return events.filter(event => 
+      !event.allDay && event.start < slotEnd && event.end > slotStart
+    );
+  };
+
+  const getEventsForAllDaySlot = (day: Date | null) => {
+    if (!day) return [];
+    return events.filter(event => event.allDay && isSameDay(event.start, day));
+  }
+
+  const startOfDay = (date: Date) => setMinutes(setHours(new Date(date), 0), 0);
+  const endOfDay = (date: Date) => setMinutes(setHours(new Date(date), 23), 59);
 
 
   return (
@@ -237,7 +361,7 @@ export default function ClientPortalCalendarPage() {
           </div>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-6 lg:gap-8"> {/* Main layout grid */}
           <div className="flex-1 space-y-6"> 
             <PlaceholderCard title="" className="p-0 bg-card/80 backdrop-blur-sm">
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-b border-border/30">
@@ -261,7 +385,9 @@ export default function ClientPortalCalendarPage() {
                   {daysOfWeek.map((day) => (
                     <div key={day} className="py-2 px-1 text-center text-xs font-medium text-muted-foreground bg-card border-r border-b border-border/30">{day}</div>
                   ))}
-                  {monthDays.map((dayObj, index) => (
+                  {monthDays.map((dayObj, index) => {
+                    const dayEvents = getEventsForDay(dayObj.fullDate);
+                    return (
                     <div key={index}
                       className={cn("h-24 sm:h-28 md:h-32 p-1.5 text-xs bg-card border-r border-b border-border/30 overflow-hidden relative cursor-pointer hover:bg-muted/20",
                         dayObj.isCurrentMonth ? "text-foreground" : "text-muted-foreground/50",
@@ -275,14 +401,16 @@ export default function ClientPortalCalendarPage() {
                           {dayObj.day}
                         </span>
                       )}
-                      {dayObj.isCurrentMonth && dayObj.day === 10 && (
-                        <div className="mt-5 text-[10px] bg-purple-500/70 text-white p-1 rounded truncate">Client Meeting</div>
-                      )}
-                      {dayObj.isCurrentMonth && dayObj.day === 22 && (
-                         <div className="mt-5 text-[10px] bg-green-500/70 text-white p-1 rounded truncate">Follow Up Call</div>
-                      )}
+                       <div className="mt-5 space-y-0.5 max-h-[calc(100%-1.75rem)] overflow-y-auto no-scrollbar">
+                        {dayEvents.map(event => (
+                          <div key={event.id} className="text-[10px] bg-purple-500/70 text-white p-0.5 rounded truncate">
+                            {event.title}
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  ))}
+                  );
+                  })}
                 </div>
               )}
               {activeView === 'week' && (
@@ -300,7 +428,18 @@ export default function ClientPortalCalendarPage() {
                             </tr>
                             <tr>
                                 <td className="w-16 p-2 border-r border-b border-border/30 text-xs text-muted-foreground sticky left-0 bg-card z-10 text-center">all-day</td>
-                                {Array.from({ length: 7 }).map((_, i) => ( <td key={`all-day-${i}`} className="h-10 border-r border-b border-border/30 hover:bg-muted/20 cursor-pointer" onClick={() => openQuickAddDialogForDate(weekDates[i].fullDate)}></td> ))}
+                                {weekDates.map((day, i) => {
+                                  const allDayEvents = getEventsForAllDaySlot(day.fullDate);
+                                  return (
+                                    <td key={`all-day-${i}`} className="h-10 border-r border-b border-border/30 hover:bg-muted/20 cursor-pointer p-1 align-top" onClick={() => openQuickAddDialogForDate(weekDates[i].fullDate)}>
+                                      <div className="space-y-0.5">
+                                        {allDayEvents.map(event => (
+                                          <div key={event.id} className="text-[10px] bg-blue-500/70 text-white p-0.5 rounded truncate">{event.title}</div>
+                                        ))}
+                                      </div>
+                                    </td>
+                                  );
+                                })}
                             </tr>
                         </thead>
                         <tbody className="relative">
@@ -309,18 +448,29 @@ export default function ClientPortalCalendarPage() {
                                     <td className="w-16 p-2 border-r border-b border-border/30 text-xs text-muted-foreground align-top text-right sticky left-0 bg-card z-10">
                                         {hourIndex > 0 && hourLabel}
                                     </td>
-                                    {Array.from({ length: 7 }).map((_, dayIndex) => (
-                                        <td key={`${hourLabel}-${dayIndex}`} className="h-16 border-r border-b border-border/30 hover:bg-muted/20 cursor-pointer" onClick={() => openQuickAddDialogForDate(weekDates[dayIndex].fullDate, hourIndex)}></td>
-                                    ))}
+                                    {weekDates.map((day, dayIndex) => {
+                                      const slotStart = setMinutes(setHours(new Date(day.fullDate), hourIndex), 0);
+                                      const slotEnd = addHours(slotStart, 1);
+                                      const slotEvents = getEventsForSlot(slotStart, slotEnd);
+                                      return (
+                                        <td key={`${hourLabel}-${dayIndex}`} className="h-16 border-r border-b border-border/30 hover:bg-muted/20 cursor-pointer p-1 align-top" onClick={() => openQuickAddDialogForDate(weekDates[dayIndex].fullDate, hourIndex)}>
+                                          <div className="space-y-0.5">
+                                            {slotEvents.map(event => (
+                                              <div key={event.id} className="text-[10px] bg-green-500/70 text-white p-0.5 rounded truncate">{event.title}</div>
+                                            ))}
+                                          </div>
+                                        </td>
+                                      );
+                                    })}
                                 </tr>
                             ))}
+                             {currentTimePosition !== null && isSameDay(startOfWeek(currentDateForCalendar, { weekStartsOn: 0 }), startOfWeek(new Date(), { weekStartsOn: 0 })) && (
+                              <div className="absolute w-[calc(100%-4rem)] h-0.5 bg-red-500 z-10 right-0" style={{ top: `${currentTimePosition}%` }}>
+                                <div className="absolute -left-1.5 -top-1.5 w-3.5 h-3.5 bg-red-500 rounded-full"></div>
+                              </div>
+                            )}
                         </tbody>
                     </table>
-                    {currentTimePosition !== null && isSameDay(startOfWeek(currentDateForCalendar, { weekStartsOn: 0 }), startOfWeek(new Date(), { weekStartsOn: 0 })) && (
-                      <div className="absolute w-[calc(100%-4rem)] h-0.5 bg-red-500 z-10 right-0" style={{ top: `${currentTimePosition}%` }}>
-                        <div className="absolute -left-1.5 -top-1.5 w-3.5 h-3.5 bg-red-500 rounded-full"></div>
-                      </div>
-                    )}
                 </div>
               )}
               {activeView === 'day' && (
@@ -329,8 +479,11 @@ export default function ClientPortalCalendarPage() {
                         <div className="h-10 flex items-center justify-center text-xs text-muted-foreground border-b border-border/30"> 
                            {format(currentDateForCalendar, 'EEE')}
                         </div>
-                        <div className="h-10 flex items-center justify-center text-xs text-muted-foreground border-b border-border/30 hover:bg-muted/20 cursor-pointer" onClick={() => openQuickAddDialogForDate(currentDateForCalendar)}>
-                            all-day
+                        <div className="h-10 flex items-center justify-center text-xs text-muted-foreground border-b border-border/30 hover:bg-muted/20 cursor-pointer p-1 align-top" onClick={() => openQuickAddDialogForDate(currentDateForCalendar)}>
+                           {getEventsForAllDaySlot(currentDateForCalendar).map(event => (
+                              <div key={event.id} className="text-[10px] bg-blue-500/70 text-white p-0.5 rounded truncate w-full">{event.title}</div>
+                            ))}
+                            {getEventsForAllDaySlot(currentDateForCalendar).length === 0 && <span>all-day</span>}
                         </div>
                         {hoursToDisplay.map((hourLabel, index) => (
                             <div key={`time-${hourLabel}`} className="h-16 pr-1 text-xs text-muted-foreground text-right border-b border-border/30 flex items-start justify-end pt-1">
@@ -345,10 +498,20 @@ export default function ClientPortalCalendarPage() {
                             </div>
                         </div>
                          <div className="h-10 border-b border-border/30 hover:bg-muted/20 cursor-pointer" onClick={() => openQuickAddDialogForDate(currentDateForCalendar)}></div> 
-                        {hoursToDisplay.map((_, hourIndex) => (
-                            <div key={`slot-${hourIndex}`} className="h-16 border-b border-border/30 hover:bg-muted/20 cursor-pointer" onClick={() => openQuickAddDialogForDate(currentDateForCalendar, hourIndex)}>
-                            </div>
-                        ))}
+                        {hoursToDisplay.map((_, hourIndex) => {
+                            const slotStart = setMinutes(setHours(new Date(currentDateForCalendar), hourIndex), 0);
+                            const slotEnd = addHours(slotStart, 1);
+                            const slotEvents = getEventsForSlot(slotStart, slotEnd);
+                            return (
+                              <div key={`slot-${hourIndex}`} className="h-16 border-b border-border/30 hover:bg-muted/20 cursor-pointer p-1 align-top" onClick={() => openQuickAddDialogForDate(currentDateForCalendar, hourIndex)}>
+                                <div className="space-y-0.5">
+                                   {slotEvents.map(event => (
+                                    <div key={event.id} className="text-[10px] bg-green-500/70 text-white p-0.5 rounded truncate">{event.title}</div>
+                                  ))}
+                                </div>
+                              </div>
+                            );
+                        })}
                     </div>
                      {currentTimePosition !== null && isSameDay(currentDateForCalendar, new Date()) && (
                         <div className="absolute w-[calc(100%-4rem)] h-0.5 bg-red-500 z-10 right-0" style={{ top: `calc(${currentTimePosition}% + 2.5rem - 1px)`}}> 
@@ -468,30 +631,7 @@ export default function ClientPortalCalendarPage() {
               <Button 
                 size="sm"
                 className="bg-primary hover:bg-primary/90 text-primary-foreground" 
-                onClick={() => {
-                  if (!quickAddEventTitle.trim()) {
-                    toast({
-                      title: "Event Title Required",
-                      description: "Please enter a title for your event.",
-                      variant: "destructive",
-                    });
-                    return;
-                  }
-                  console.log("Quick Add Event:", {
-                    title: quickAddEventTitle,
-                    date: quickAddEventSelectedDate ? format(quickAddEventSelectedDate, 'MM/dd/yyyy') : 'N/A',
-                    allDay: quickAddEventAllDay,
-                    startTime: quickAddEventAllDay ? undefined : quickAddEventStartTime,
-                    endTime: quickAddEventAllDay ? undefined : quickAddEventEndTime,
-                  });
-                  toast({
-                    title: "Event Added (Mock)",
-                    description: `"${quickAddEventTitle}" has been added.`,
-                  });
-                  setIsQuickAddEventDialogOpen(false);
-                  setQuickAddEventTitle('');
-                  setQuickAddEventAllDay(false);
-                }}
+                onClick={handleSaveQuickEvent}
               >
                 Add Event
               </Button>
@@ -536,3 +676,5 @@ export default function ClientPortalCalendarPage() {
     </>
   );
 }
+
+    
