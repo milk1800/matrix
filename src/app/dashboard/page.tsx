@@ -20,12 +20,16 @@ import {
   Loader2,
   ArrowUpRight,
   ArrowDownRight,
+  BarChart4,
+  Cpu,
+  CalendarDays,
+  Sparkles
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from '@/lib/utils';
 
 interface MarketData {
-  name: string;
+  label: string;
   polygonTicker: string;
   icon?: React.ElementType;
   openTime?: string;
@@ -34,11 +38,12 @@ interface MarketData {
 }
 
 const initialMarketOverviewData: MarketData[] = [
-  { name: 'S&P 500 (SPY)', polygonTicker: 'SPY', icon: Landmark, openTime: '09:30', closeTime: '16:00', timezone: 'America/New_York' },
-  { name: 'Dow Jones (DIA)', polygonTicker: 'DIA', icon: Landmark, openTime: '09:30', closeTime: '16:00', timezone: 'America/New_York' },
-  { name: 'Total Market (VONE)', polygonTicker: 'VONE', icon: Landmark, openTime: '09:30', closeTime: '16:00', timezone: 'America/New_York' },
-  { name: 'Small Caps (IWM)', polygonTicker: 'IWM', icon: Landmark, openTime: '09:30', closeTime: '16:00', timezone: 'America/New_York' },
+  { label: 'Apple (AAPL)', polygonTicker: 'AAPL', icon: Landmark, openTime: '09:30', closeTime: '16:00', timezone: 'America/New_York' },
+  { label: 'Microsoft (MSFT)', polygonTicker: 'MSFT', icon: Landmark, openTime: '09:30', closeTime: '16:00', timezone: 'America/New_York' },
+  { label: 'S&P 500 (SPY)', polygonTicker: 'SPY', icon: Landmark, openTime: '09:30', closeTime: '16:00', timezone: 'America/New_York' },
+  { label: 'Dow Jones (DIA)', polygonTicker: 'DIA', icon: Landmark, openTime: '09:30', closeTime: '16:00', timezone: 'America/New_York' },
 ];
+
 
 const newsData = [
   {
@@ -102,29 +107,44 @@ const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
   try {
     const response = await fetch(`https://api.polygon.io/v2/aggs/ticker/${symbol}/prev?adjusted=true&apiKey=${apiKey}`);
     if (!response.ok) {
-      let errorMessage = `API Error: ${response.status}`;
+      let errorMessage = `API Error: ${response.status}`; // Default message
       try {
         const errorData = await response.json();
-        // Log the full errorData if available
-        console.error(`[Polygon API Error] Full error response for ${symbol}:`, errorData);
-        if (errorData && errorData.message) errorMessage = `API Error: ${response.status} - ${errorData.message}`;
-        else if (errorData && errorData.error) errorMessage = `API Error: ${response.status} - ${errorData.error}`;
-        else if (errorData && errorData.request_id) errorMessage = `API Error: ${response.status} (Request ID: ${errorData.request_id})`; // Some Polygon errors might only have request_id
+        if (Object.keys(errorData).length === 0 && errorData.constructor === Object) {
+          console.warn(`[Polygon API Warn] Received empty JSON error object from Polygon for ${symbol}. Status: ${response.status}.`);
+          errorMessage = `API Error: ${response.status} - Polygon returned an empty error response.`;
+        } else {
+          console.log(`[Polygon API Info] Full error response object for ${symbol}:`, errorData); // Changed to log for non-empty error objects
+          if (errorData.message) errorMessage = `API Error: ${response.status} - ${errorData.message}`;
+          else if (errorData.error) errorMessage = `API Error: ${response.status} - ${errorData.error}`;
+          else if (errorData.request_id) errorMessage = `API Error: ${response.status} (Request ID: ${errorData.request_id})`;
+          else if (response.statusText && errorMessage === `API Error: ${response.status}`) {
+             errorMessage = `API Error: ${response.status} - ${response.statusText}`;
+          }
+        }
       } catch (e) {
-         console.warn(`[Polygon API Warn] Could not parse JSON error response for ${symbol}. Status: ${response.status}, StatusText: ${response.statusText}`);
+        try {
+            const textError = await response.text();
+            console.warn(`[Polygon API Warn] Could not parse JSON error response for ${symbol}. Status: ${response.status}. Response text snippet:`, textError.substring(0, 200) + (textError.length > 200 ? '...' : ''));
+            errorMessage = `API Error: ${response.status} - ${response.statusText || 'Failed to parse error response as JSON or text.'}`;
+        } catch (textE) {
+            console.warn(`[Polygon API Warn] Could not parse JSON or text error response for ${symbol}. Status: ${response.status}.`);
+            errorMessage = `API Error: ${response.status} - ${response.statusText || 'Unknown error structure and failed to read response text.'}`;
+        }
       }
-      console.error(`Error fetching ${symbol}: ${errorMessage}`); // This logs the compiled error message
-      return { error: `API Error: ${response.status}` }; // This is what the UI might show
+      console.error(`Error fetching ${symbol}: ${errorMessage}`);
+      return { error: errorMessage };
     }
     const data = await response.json();
     if (data.results && data.results.length > 0) {
-      const { c, o } = data.results[0]; // c: close, o: open
+      const { c, o } = data.results[0];
       return { c, o };
     }
+    console.warn(`[Polygon API Warn] No data results found for ${symbol} in Polygon response.`);
     return { error: 'No data from Polygon' };
   } catch (error: any) {
     console.error(`[Polygon API Error] Network/Fetch error for ${symbol}:`, error.message || error);
-    return { error: 'Fetch error' };
+    return { error: `Fetch error: ${error.message || 'Unknown network error'}` };
   }
 };
 
@@ -287,9 +307,9 @@ export default function DashboardPage() {
             tooltipText = `Market closes at ${market.closeTime} ET`;
           }
 
-          newStatuses[market.name] = { statusText, tooltipText, shadowClass };
+          newStatuses[market.label] = { statusText, tooltipText, shadowClass };
         } else {
-          newStatuses[market.name] = { statusText: "Status N/A", tooltipText: "Market hours not defined", shadowClass: "" };
+          newStatuses[market.label] = { statusText: "Status N/A", tooltipText: "Market hours not defined", shadowClass: "" };
         }
       });
       setMarketStatuses(newStatuses);
@@ -323,7 +343,7 @@ export default function DashboardPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {initialMarketOverviewData.map((market) => {
             const apiResult = marketApiData[market.polygonTicker];
-            const statusInfo = marketStatuses[market.name] || { statusText: "Loading...", tooltipText: "Fetching status...", shadowClass: "" };
+            const statusInfo = marketStatuses[market.label] || { statusText: "Loading...", tooltipText: "Fetching status...", shadowClass: "" };
 
             let valueDisplay: React.ReactNode = "$0.00";
             let changeDisplay: React.ReactNode = "0.00%";
@@ -352,8 +372,8 @@ export default function DashboardPage() {
 
             return (
               <PlaceholderCard
-                key={market.polygonTicker} // Changed key to polygonTicker for more uniqueness if names could repeat
-                title={market.name}
+                key={market.polygonTicker}
+                title={market.label}
                 icon={market.icon || Landmark}
                 className={cn(
                   "transition-all duration-300 ease-in-out",
@@ -387,7 +407,7 @@ export default function DashboardPage() {
       </section>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <PlaceholderCard title="Why the Market Moved" icon={Brain} className="lg:col-span-1 h-full">
+        <PlaceholderCard title="Why the Market Moved" icon={Cpu} className="lg:col-span-1 h-full">
           <p className="text-sm text-muted-foreground leading-relaxed font-serif mt-2">
             Market sentiment turned positive following the release of favorable inflation data, suggesting that price pressures may be easing. This led to a broad rally across major indices, particularly in growth-oriented sectors like technology and consumer discretionary. Investors are now keenly awaiting upcoming corporate earnings reports for further direction.
           </p>
@@ -412,7 +432,7 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1 hidden lg:block"> {/* Spacer */} </div>
-        <PlaceholderCard title="Ticker Lookup Tool" icon={Search} className="lg:col-span-2">
+        <PlaceholderCard title="Ticker Lookup Tool" icon={Search} className="lg:col-span-3">
           <div className="flex space-x-2 mb-4">
             <Input
               type="text"
@@ -522,5 +542,3 @@ export default function DashboardPage() {
     </main>
   );
 }
-
-
