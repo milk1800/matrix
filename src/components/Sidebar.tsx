@@ -91,56 +91,65 @@ const alertsNavItem: NavItem = {
   name: 'Alerts',
   icon: BellRing,
   href: '/alerts',
-  hasNewAlerts: true,
+  hasNewAlerts: true, // Mock this for now
 };
 
 export default function Sidebar() {
+  const [collapsed, setCollapsed] = useState(false); // Default to expanded for SSR and initial client render
   const [isClient, setIsClient] = useState(false);
-  const [collapsed, setCollapsed] = useState(false); // Default to not collapsed for SSR
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
   const currentPathname = usePathname();
 
   useEffect(() => {
-    setIsClient(true);
-    const storedCollapsed = localStorage.getItem("matrix-sidebar-collapsed");
-    const initialCollapsedValue = storedCollapsed === "true";
-    setCollapsed(initialCollapsedValue);
-
-    const initialOpenState: Record<string, boolean> = {};
-    const storedSectionsState = localStorage.getItem("matrix-sidebar-sections-open");
-    
-    if (storedSectionsState && !initialCollapsedValue) {
-        try {
-            const parsedStored = JSON.parse(storedSectionsState);
-            navSectionsData.forEach(section => {
-                initialOpenState[section.id] = parsedStored.hasOwnProperty(section.id) ? parsedStored[section.id] : true;
-            });
-        } catch (e) {
-            navSectionsData.forEach(section => { initialOpenState[section.id] = true; });
-        }
-    } else {
-        navSectionsData.forEach(section => { initialOpenState[section.id] = !initialCollapsedValue; });
-    }
-    setOpenSections(initialOpenState);
+    setIsClient(true); // Component has mounted on the client
   }, []);
+
+  useEffect(() => {
+    if (isClient) {
+      const storedCollapsed = localStorage.getItem("matrix-sidebar-collapsed");
+      if (storedCollapsed !== null) {
+        setCollapsed(storedCollapsed === "true");
+      }
+
+      const initialOpenState: Record<string, boolean> = {};
+      const storedSectionsState = localStorage.getItem("matrix-sidebar-sections-open");
+      const effectiveCollapsed = storedCollapsed === "true";
+
+      if (storedSectionsState && !effectiveCollapsed) {
+          try {
+              const parsedStored = JSON.parse(storedSectionsState);
+              navSectionsData.forEach(section => {
+                  initialOpenState[section.id] = parsedStored.hasOwnProperty(section.id) ? parsedStored[section.id] : true;
+              });
+          } catch (e) {
+              navSectionsData.forEach(section => { initialOpenState[section.id] = true; });
+          }
+      } else {
+          navSectionsData.forEach(section => { initialOpenState[section.id] = !effectiveCollapsed; });
+      }
+      setOpenSections(initialOpenState);
+    }
+  }, [isClient]);
 
   const currentDisplayCollapsed = isClient ? collapsed : false;
 
   useEffect(() => {
     if (isClient) {
-      localStorage.setItem("matrix-sidebar-collapsed", String(currentDisplayCollapsed));
-      if (!currentDisplayCollapsed) {
+      localStorage.setItem("matrix-sidebar-collapsed", String(collapsed));
+      if (!collapsed) { // Only save section states if sidebar is expanded
         localStorage.setItem("matrix-sidebar-sections-open", JSON.stringify(openSections));
       }
     }
-  }, [currentDisplayCollapsed, openSections, isClient]);
+  }, [collapsed, openSections, isClient]);
   
   const toggleSidebar = useCallback(() => {
-    const newCollapsedState = !currentDisplayCollapsed;
+    const newCollapsedState = !collapsed;
     setCollapsed(newCollapsedState);
     if (newCollapsedState) {
+        // When collapsing, save the current open sections state
         localStorage.setItem("matrix-sidebar-sections-open", JSON.stringify(openSections));
     } else {
+        // When expanding, try to restore or default open section states
         const storedSectionsState = localStorage.getItem("matrix-sidebar-sections-open");
         const restoredOpenState: Record<string, boolean> = {};
         if (storedSectionsState) {
@@ -149,18 +158,18 @@ export default function Sidebar() {
                 navSectionsData.forEach(section => {
                     restoredOpenState[section.id] = parsedStored.hasOwnProperty(section.id) ? parsedStored[section.id] : true;
                 });
-            } catch (e) {
+            } catch (e) { // Fallback if JSON is malformed
                 navSectionsData.forEach(section => { restoredOpenState[section.id] = true; });
             }
-        } else {
+        } else { // Default to all open if no stored state
             navSectionsData.forEach(section => { restoredOpenState[section.id] = true; });
         }
         setOpenSections(restoredOpenState);
     }
-  }, [currentDisplayCollapsed, openSections, isClient]);
+  }, [collapsed, openSections, isClient]);
 
   const toggleSection = useCallback((sectionId: string) => {
-    if (!currentDisplayCollapsed && isClient) {
+    if (!currentDisplayCollapsed && isClient) { // Only allow toggling sections if expanded and on client
       setOpenSections(prev => {
         const newState = { ...prev, [sectionId]: !prev[sectionId] };
         return newState;
@@ -168,8 +177,8 @@ export default function Sidebar() {
     }
   }, [currentDisplayCollapsed, isClient]);
 
-  const renderNavItem = useCallback((item: NavItem) => {
-    const isActive = currentPathname === item.href || (currentPathname.startsWith(item.href) && item.href !== '/dashboard' && item.href !== '/');
+  const renderNavItem = useCallback((item: NavItem, index: number) => {
+    const isActive = currentPathname === item.href || (currentPathname.startsWith(item.href + '/') && item.href !== '/');
     
     const iconClasses = cn(
       "w-5 h-5 shrink-0 transition-colors duration-200",
@@ -195,7 +204,7 @@ export default function Sidebar() {
 
     if (currentDisplayCollapsed) {
       return (
-        <Tooltip key={item.href}>
+        <Tooltip key={`${item.href}-${index}`}>
           <TooltipTrigger asChild>
             <Link 
               href={item.href} 
@@ -213,7 +222,7 @@ export default function Sidebar() {
     } else {
       return (
         <Link 
-          key={item.href} 
+          key={`${item.href}-${index}`} 
           href={item.href} 
           className={linkClasses}
         >
@@ -222,24 +231,6 @@ export default function Sidebar() {
       );
     }
   }, [currentPathname, isClient, currentDisplayCollapsed]);
-
-  if (!isClient && typeof window === 'undefined') { 
-    return (
-      <aside className={cn("h-full bg-black/90 border-r border-gray-800/50 text-white transition-all duration-300 flex flex-col", "w-64")}>
-        <div className={cn("flex items-center p-4 px-5 justify-between")}>
-          <Link href="/dashboard" className="flex items-center justify-center space-x-3 group">
-            <Brain className="text-purple-500 animate-pulse-neon w-10 h-10" />
-            <span className="text-4xl font-bold text-metallic-gradient leading-tight group-hover:brightness-110 transition-all">
-              Matrix
-            </span>
-          </Link>
-        </div>
-        <nav className="flex-1 space-y-1 px-2 py-4 overflow-y-auto no-visual-scrollbar">
-          {/* Placeholder for SSR */}
-        </nav>
-      </aside>
-    );
-  }
   
   return (
     <aside
@@ -249,7 +240,7 @@ export default function Sidebar() {
       )}
     >
       <div className={cn("flex items-center p-4 px-5", currentDisplayCollapsed ? "justify-center" : "justify-between")}>
-        <Link href="/dashboard" className={cn("flex items-center justify-center space-x-3 group", currentDisplayCollapsed && "w-full")}>
+        <Link href="/dashboard" className={cn("flex items-center", currentDisplayCollapsed ? "justify-center w-full" : "space-x-3 group")}>
           <Brain className={cn("text-purple-500 animate-pulse-neon", currentDisplayCollapsed ? "w-8 h-8" : "w-10 h-10")} />
           {!currentDisplayCollapsed && (
             <span className="text-4xl font-bold text-metallic-gradient leading-tight group-hover:brightness-110 transition-all">
@@ -282,9 +273,9 @@ export default function Sidebar() {
       <TooltipProvider delayDuration={0}>
         <nav className={cn("flex-1 space-y-1 px-2 py-4 overflow-y-auto no-visual-scrollbar")}>
           {currentDisplayCollapsed ? (
-            navSectionsData.flatMap(section => section.items).map((item) =>
-              renderNavItem(item)
-            )
+            navSectionsData.flatMap((section, sectionIndex) => section.items.map((item, itemIndex) =>
+              renderNavItem(item, sectionIndex * 100 + itemIndex) // Ensure unique keys for flat list
+            ))
           ) : (
             navSectionsData.map((section) => (
               <div key={section.id} className="mb-1">
@@ -299,7 +290,7 @@ export default function Sidebar() {
                   <section.icon className="w-5 h-5 shrink-0 text-gray-400 group-hover/section:text-gray-200" />
                   <span className={cn(
                     "ml-3 font-bold text-lg tracking-wider truncate flex-1 group-hover/section:text-gray-100 text-gray-300",
-                     section.id === 'clientPortal' && "uppercase" // Keep CRM uppercase
+                    section.title !== 'Analytics' && "uppercase"
                   )}>
                       {section.title}
                   </span>
@@ -312,7 +303,7 @@ export default function Sidebar() {
                 </button>
                 {openSections[section.id] && (
                   <div className="mt-1 space-y-1 py-2 pl-4 border-l border-sidebar-border/20">
-                    {section.items.map((item) => renderNavItem(item))}
+                    {section.items.map((item, itemIndex) => renderNavItem(item, itemIndex))}
                   </div>
                 )}
               </div>
@@ -320,7 +311,7 @@ export default function Sidebar() {
           )}
         </nav>
         <div className="mt-auto p-2 border-t border-sidebar-border/30">
-          {renderNavItem(alertsNavItem)} 
+          {renderNavItem(alertsNavItem, 999)} 
         </div>
       </TooltipProvider>
     </aside>
