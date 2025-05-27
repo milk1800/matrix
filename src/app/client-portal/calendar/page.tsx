@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from '@/components/ui/textarea';
+import { useToast } from "@/hooks/use-toast";
 import {
   CalendarDays,
   MoreHorizontal,
@@ -25,7 +26,7 @@ import {
   ListChecks,
   ListOrdered,
   Link2,
-  Table as TableIcon, // Renamed to avoid conflict with Table component
+  Table as TableIcon, 
   Smile,
   Mic,
   Trash2,
@@ -33,14 +34,14 @@ import {
   Clock,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { format, subDays, addDays, subMonths, addMonths, startOfWeek, endOfWeek, getDay, getDate, getDaysInMonth, startOfMonth, endOfMonth, eachDayOfInterval, isToday, isSameMonth, setHours, setMinutes, getHours, getMinutes, isSameDay, addWeeks, subWeeks, isValid } from 'date-fns';
+import { format, subDays, addDays, subMonths, addMonths, startOfWeek, endOfWeek, getDay, getDate, getDaysInMonth, startOfMonth, endOfMonth, eachDayOfInterval, isToday, isSameMonth, setHours, setMinutes, getHours, getMinutes, isSameDay, addWeeks, subWeeks, isValid, addHours } from 'date-fns';
 
 const daysOfWeek = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const hoursToDisplay = Array.from({ length: 24 }, (_, i) => {
   const hour = i % 12 === 0 ? 12 : i % 12;
   const ampm = i < 12 || i === 24 ? "AM" : "PM";
-  if (i === 0) return "12 AM"; // Midnight
-  if (i === 12) return "12 PM"; // Noon
+  if (i === 0) return "12 AM"; 
+  if (i === 12) return "12 PM"; 
   return `${hour} ${ampm}`;
 });
 
@@ -51,19 +52,16 @@ const getMonthDays = (year: number, month: number): { day: number | null; isCurr
   const daysInCurrentMonth = getDaysInMonth(new Date(year, month));
   const daysArray = [];
 
-  // Days from previous month
-  const firstDayOfWeekOffset = getDay(firstDayOfMonth); // 0 for Sunday, 1 for Monday, etc.
+  const firstDayOfWeekOffset = getDay(firstDayOfMonth); 
   for (let i = 0; i < firstDayOfWeekOffset; i++) {
     const prevMonthDay = subDays(firstDayOfMonth, firstDayOfWeekOffset - i);
     daysArray.push({ day: getDate(prevMonthDay), isCurrentMonth: false, fullDate: prevMonthDay });
   }
 
-  // Days in current month
   for (let i = 1; i <= daysInCurrentMonth; i++) {
     daysArray.push({ day: i, isCurrentMonth: true, fullDate: new Date(year, month, i) });
   }
 
-  // Days from next month to fill the grid (usually up to 6 weeks or 42 cells)
   const totalCells = Math.ceil((firstDayOfWeekOffset + daysInCurrentMonth) / 7) * 7;
   let nextMonthDayCounter = 1;
   while (daysArray.length < totalCells) {
@@ -74,7 +72,7 @@ const getMonthDays = (year: number, month: number): { day: number | null; isCurr
 };
 
 const getWeekDates = (currentDate: Date): { dayName: string; dateNumber: number; fullDate: Date }[] => {
-  const start = startOfWeek(currentDate, { weekStartsOn: 0 }); // Sunday as start of week
+  const start = startOfWeek(currentDate, { weekStartsOn: 0 }); 
   return Array.from({ length: 7 }).map((_, i) => {
     const day = addDays(start, i);
     return {
@@ -87,6 +85,7 @@ const getWeekDates = (currentDate: Date): { dayName: string; dateNumber: number;
 
 
 export default function ClientPortalCalendarPage() {
+  const { toast } = useToast();
   const [isAddEventDialogOpen, setIsAddEventDialogOpen] = React.useState(false);
   const [isQuickAddEventDialogOpen, setIsQuickAddEventDialogOpen] = React.useState(false);
   const [quickAddEventSelectedDate, setQuickAddEventSelectedDate] = React.useState<Date | null>(null);
@@ -95,7 +94,6 @@ export default function ClientPortalCalendarPage() {
   const [quickAddEventStartTime, setQuickAddEventStartTime] = React.useState('09:00 AM');
   const [quickAddEventEndTime, setQuickAddEventEndTime] = React.useState('10:00 AM');
 
-  // States for the full event dialog (for pre-filling)
   const [fullEventTitle, setFullEventTitle] = React.useState('');
   const [fullEventAllDay, setFullEventAllDay] = React.useState(false);
   const [fullEventStartDate, setFullEventStartDate] = React.useState('');
@@ -104,7 +102,7 @@ export default function ClientPortalCalendarPage() {
   const [fullEventEndTime, setFullEventEndTime] = React.useState('');
 
 
-  const [activeView, setActiveView] = React.useState("month"); // "month", "week", "day"
+  const [activeView, setActiveView] = React.useState("month"); 
   const [currentDateForCalendar, setCurrentDateForCalendar] = React.useState(new Date());
   const [currentTimePosition, setCurrentTimePosition] = React.useState<number | null>(null);
 
@@ -118,12 +116,10 @@ export default function ClientPortalCalendarPage() {
     if (activeView === 'week' || activeView === 'day') {
       const updateLine = () => {
         const now = new Date();
-        // Only show current time line if the view is for today
         if (activeView === 'day' && !isSameDay(now, currentDateForCalendar)) {
           setCurrentTimePosition(null);
           return;
         }
-         // Check for week view: line only if current week matches displayed week
         if (activeView === 'week') {
           const currentWeekStart = startOfWeek(now, { weekStartsOn: 0 });
           const displayedWeekStart = startOfWeek(currentDateForCalendar, { weekStartsOn: 0 });
@@ -133,7 +129,6 @@ export default function ClientPortalCalendarPage() {
           }
         }
 
-
         const currentHour = getHours(now);
         const currentMinute = getMinutes(now);
         const totalMinutesInDay = 24 * 60;
@@ -141,11 +136,11 @@ export default function ClientPortalCalendarPage() {
         const percentageOfDay = (minutesPastMidnight / totalMinutesInDay) * 100;
         setCurrentTimePosition(percentageOfDay);
       };
-      updateLine(); // Initial call
-      const interval = setInterval(updateLine, 60000); // Update every minute
+      updateLine(); 
+      const interval = setInterval(updateLine, 60000); 
       return () => clearInterval(interval);
     } else {
-      setCurrentTimePosition(null); // Hide line for month view
+      setCurrentTimePosition(null); 
     }
   }, [activeView, currentDateForCalendar]);
 
@@ -160,7 +155,6 @@ export default function ClientPortalCalendarPage() {
       }
       return `${format(start, 'MMM d')} – ${format(end, 'MMM d, yyyy')}`;
     }
-    // Day view
     return format(currentDateForCalendar, "MMMM d, yyyy");
   };
   const headerDateDisplay = getFormattedHeaderDate();
@@ -179,14 +173,28 @@ export default function ClientPortalCalendarPage() {
 
   const handleToday = () => setCurrentDateForCalendar(new Date());
 
-  const handleDayClick = (dayDate: Date | null) => {
+  const openQuickAddDialogForDate = (dayDate: Date, hourIndex?: number) => {
     if (dayDate && isValid(dayDate)) {
       setQuickAddEventSelectedDate(dayDate);
       setQuickAddEventTitle('');
       setQuickAddEventAllDay(false);
-      const nextHour = setMinutes(setHours(new Date(), getHours(new Date()) + 1), 0);
-      setQuickAddEventStartTime(format(nextHour, 'hh:mm a'));
-      setQuickAddEventEndTime(format(addDays(nextHour,1), 'hh:mm a'));
+
+      let newStartTime;
+      let newEndTime;
+
+      if (typeof hourIndex === 'number') {
+        // For week/day view clicks
+        newStartTime = setMinutes(setHours(new Date(dayDate), hourIndex), 0);
+        newEndTime = addHours(newStartTime, 1);
+      } else {
+        // For month view clicks or default
+        const nextHour = setMinutes(setHours(new Date(), getHours(new Date()) + 1), 0);
+        newStartTime = nextHour;
+        newEndTime = addHours(nextHour, 1);
+      }
+
+      setQuickAddEventStartTime(format(newStartTime, 'hh:mm a'));
+      setQuickAddEventEndTime(format(newEndTime, 'hh:mm a'));
       setIsQuickAddEventDialogOpen(true);
     }
   };
@@ -196,9 +204,9 @@ export default function ClientPortalCalendarPage() {
       setFullEventTitle(quickAddEventTitle);
       setFullEventAllDay(quickAddEventAllDay);
       setFullEventStartDate(format(quickAddEventSelectedDate, 'MM/dd/yyyy'));
-      setFullEventStartTime(quickAddEventStartTime);
+      setFullEventStartTime(quickAddEventAllDay ? '' : quickAddEventStartTime);
       setFullEventEndDate(format(quickAddEventSelectedDate, 'MM/dd/yyyy'));
-      setFullEventEndTime(quickAddEventEndTime);
+      setFullEventEndTime(quickAddEventAllDay ? '' : quickAddEventEndTime);
     }
     setIsQuickAddEventDialogOpen(false);
     setIsAddEventDialogOpen(true);
@@ -230,7 +238,7 @@ export default function ClientPortalCalendarPage() {
         </div>
 
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-8">
-          <div className="flex-1 space-y-6"> {/* Main calendar area */}
+          <div className="flex-1 space-y-6"> 
             <PlaceholderCard title="" className="p-0 bg-card/80 backdrop-blur-sm">
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4 p-4 border-b border-border/30">
                 <div className="flex items-center gap-2">
@@ -248,7 +256,6 @@ export default function ClientPortalCalendarPage() {
                 </div>
               </div>
 
-              {/* Calendar Grid Area */}
               {activeView === 'month' && (
                 <div className="grid grid-cols-7 gap-px border-l border-t border-border/30 bg-border/30">
                   {daysOfWeek.map((day) => (
@@ -260,7 +267,7 @@ export default function ClientPortalCalendarPage() {
                         dayObj.isCurrentMonth ? "text-foreground" : "text-muted-foreground/50",
                         dayObj.fullDate && isToday(dayObj.fullDate) && dayObj.isCurrentMonth && "bg-primary/10"
                       )}
-                      onClick={() => dayObj.fullDate && dayObj.isCurrentMonth && handleDayClick(dayObj.fullDate)}
+                      onClick={() => dayObj.fullDate && dayObj.isCurrentMonth && openQuickAddDialogForDate(dayObj.fullDate)}
                     >
                       {dayObj.day && (
                         <span className={cn("absolute top-1.5 right-1.5 flex items-center justify-center w-5 h-5 rounded-full",
@@ -268,7 +275,6 @@ export default function ClientPortalCalendarPage() {
                           {dayObj.day}
                         </span>
                       )}
-                      {/* Example event */}
                       {dayObj.isCurrentMonth && dayObj.day === 10 && (
                         <div className="mt-5 text-[10px] bg-purple-500/70 text-white p-1 rounded truncate">Client Meeting</div>
                       )}
@@ -280,11 +286,11 @@ export default function ClientPortalCalendarPage() {
                 </div>
               )}
               {activeView === 'week' && (
-                 <div className="overflow-x-auto relative"> {/* Added relative for current time line */}
+                 <div className="overflow-x-auto relative">
                     <table className="w-full border-collapse bg-card">
                         <thead>
                             <tr>
-                                <th className="w-16 p-2 border-r border-b border-border/30 text-xs text-muted-foreground font-normal sticky left-0 bg-card z-10"></th>{/* Time labels corner */}
+                                <th className="w-16 p-2 border-r border-b border-border/30 text-xs text-muted-foreground font-normal sticky left-0 bg-card z-10"></th>
                                 {weekDates.map(day => (
                                     <th key={day.dateNumber} className="p-2 border-r border-b border-border/30 text-center">
                                         <div className={cn("text-xs font-medium", isToday(day.fullDate) ? "text-primary" : "text-muted-foreground")}>{day.dayName}</div>
@@ -294,23 +300,22 @@ export default function ClientPortalCalendarPage() {
                             </tr>
                             <tr>
                                 <td className="w-16 p-2 border-r border-b border-border/30 text-xs text-muted-foreground sticky left-0 bg-card z-10 text-center">all-day</td>
-                                {Array.from({ length: 7 }).map((_, i) => ( <td key={`all-day-${i}`} className="h-10 border-r border-b border-border/30 hover:bg-muted/20"></td> ))}
+                                {Array.from({ length: 7 }).map((_, i) => ( <td key={`all-day-${i}`} className="h-10 border-r border-b border-border/30 hover:bg-muted/20 cursor-pointer" onClick={() => openQuickAddDialogForDate(weekDates[i].fullDate)}></td> ))}
                             </tr>
                         </thead>
                         <tbody className="relative">
                             {hoursToDisplay.map((hourLabel, hourIndex) => (
                                 <tr key={hourLabel}>
                                     <td className="w-16 p-2 border-r border-b border-border/30 text-xs text-muted-foreground align-top text-right sticky left-0 bg-card z-10">
-                                        {hourIndex > 0 && hourLabel /* Don't show 12AM for the first hour slot again */}
+                                        {hourIndex > 0 && hourLabel}
                                     </td>
                                     {Array.from({ length: 7 }).map((_, dayIndex) => (
-                                        <td key={`${hourLabel}-${dayIndex}`} className="h-16 border-r border-b border-border/30 hover:bg-muted/20"></td>
+                                        <td key={`${hourLabel}-${dayIndex}`} className="h-16 border-r border-b border-border/30 hover:bg-muted/20 cursor-pointer" onClick={() => openQuickAddDialogForDate(weekDates[dayIndex].fullDate, hourIndex)}></td>
                                     ))}
                                 </tr>
                             ))}
                         </tbody>
                     </table>
-                    {/* Current Time Indicator for Week View - Now a sibling to the table, within the relative container */}
                     {currentTimePosition !== null && isSameDay(startOfWeek(currentDateForCalendar, { weekStartsOn: 0 }), startOfWeek(new Date(), { weekStartsOn: 0 })) && (
                       <div className="absolute w-[calc(100%-4rem)] h-0.5 bg-red-500 z-10 right-0" style={{ top: `${currentTimePosition}%` }}>
                         <div className="absolute -left-1.5 -top-1.5 w-3.5 h-3.5 bg-red-500 rounded-full"></div>
@@ -319,11 +324,13 @@ export default function ClientPortalCalendarPage() {
                 </div>
               )}
               {activeView === 'day' && (
-                <div className="flex flex-1 h-[calc(24*4rem+2.5rem)] border-t border-border/30 relative"> {/* Approx height for 24 hours * 4rem + all-day row */}
-                    {/* Time Gutter */}
+                <div className="flex flex-1 h-[calc(24*4rem+2.5rem)] border-t border-border/30 relative"> 
                     <div className="w-16 border-r border-border/30 shrink-0">
-                        <div className="h-10 flex items-center justify-center text-xs text-muted-foreground border-b border-border/30"> {/* All-day header placeholder */}
+                        <div className="h-10 flex items-center justify-center text-xs text-muted-foreground border-b border-border/30"> 
                            {format(currentDateForCalendar, 'EEE')}
+                        </div>
+                        <div className="h-10 flex items-center justify-center text-xs text-muted-foreground border-b border-border/30 hover:bg-muted/20 cursor-pointer" onClick={() => openQuickAddDialogForDate(currentDateForCalendar)}>
+                            all-day
                         </div>
                         {hoursToDisplay.map((hourLabel, index) => (
                             <div key={`time-${hourLabel}`} className="h-16 pr-1 text-xs text-muted-foreground text-right border-b border-border/30 flex items-start justify-end pt-1">
@@ -331,23 +338,20 @@ export default function ClientPortalCalendarPage() {
                             </div>
                         ))}
                     </div>
-                    {/* Day Column */}
                     <div className="flex-1">
                         <div className="h-10 flex flex-col items-center justify-center border-b border-border/30">
                             <div className={cn("text-2xl font-semibold", isToday(currentDateForCalendar) ? "text-primary bg-primary/10 rounded-full w-10 h-10 flex items-center justify-center" : "text-foreground")}>
                                 {format(currentDateForCalendar, 'd')}
                             </div>
                         </div>
-                         <div className="h-10 border-b border-border/30 hover:bg-muted/20 text-xs text-muted-foreground flex items-center justify-center">all-day</div> {/* All-day slot */}
+                         <div className="h-10 border-b border-border/30 hover:bg-muted/20 cursor-pointer" onClick={() => openQuickAddDialogForDate(currentDateForCalendar)}></div> 
                         {hoursToDisplay.map((_, hourIndex) => (
-                            <div key={`slot-${hourIndex}`} className="h-16 border-b border-border/30 hover:bg-muted/20">
-                                {/* Event content would go here */}
+                            <div key={`slot-${hourIndex}`} className="h-16 border-b border-border/30 hover:bg-muted/20 cursor-pointer" onClick={() => openQuickAddDialogForDate(currentDateForCalendar, hourIndex)}>
                             </div>
                         ))}
                     </div>
-                     {/* Current Time Indicator for Day View */}
                      {currentTimePosition !== null && isSameDay(currentDateForCalendar, new Date()) && (
-                        <div className="absolute w-[calc(100%-4rem)] h-0.5 bg-red-500 z-10 right-0" style={{ top: `calc(${currentTimePosition}% + 2.5rem - 1px)`}}> {/* Adjust for all-day row height approx */}
+                        <div className="absolute w-[calc(100%-4rem)] h-0.5 bg-red-500 z-10 right-0" style={{ top: `calc(${currentTimePosition}% + 2.5rem - 1px)`}}> 
                            <div className="absolute -left-1.5 -top-1.5 w-3.5 h-3.5 bg-red-500 rounded-full"></div>
                         </div>
                       )}
@@ -356,9 +360,8 @@ export default function ClientPortalCalendarPage() {
             </PlaceholderCard>
           </div>
 
-          {/* Right Sidebar Filters */}
           <aside className="lg:w-72 xl:w-80 space-y-6 shrink-0">
-            <PlaceholderCard title="" className="p-0"> {/* No header title for card wrapping tabs */}
+            <PlaceholderCard title="" className="p-0"> 
                 <Tabs defaultValue="calendars" className="w-full">
                 <TabsList className="grid w-full grid-cols-2 bg-muted/50">
                     <TabsTrigger value="calendars" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary">Calendars</TabsTrigger>
@@ -401,62 +404,108 @@ export default function ClientPortalCalendarPage() {
         </div>
       </main>
 
-      {/* Quick Add Event Dialog */}
       <Dialog open={isQuickAddEventDialogOpen} onOpenChange={setIsQuickAddEventDialogOpen}>
         <DialogContent className="sm:max-w-md bg-card/95 backdrop-blur-md border-border/50">
           <DialogHeader>
             <DialogTitle className="text-lg font-bold text-foreground">Quick Add Event</DialogTitle>
           </DialogHeader>
           <div className="py-4 space-y-4">
-            <div className="grid grid-cols-3 items-center gap-4">
-              <Label htmlFor="quickEventTitle" className="text-right text-muted-foreground">Title</Label>
-              <Input id="quickEventTitle" value={quickAddEventTitle} onChange={(e) => setQuickAddEventTitle(e.target.value)} className="col-span-2 bg-input border-border/50" />
-            </div>
-            <div className="grid grid-cols-3 items-center gap-4">
-              <span /> {/* Spacer for alignment */}
-              <div className="col-span-2 flex items-center space-x-2">
-                <Checkbox id="quickAllDayEvent" checked={quickAddEventAllDay} onCheckedChange={(checked) => setQuickAddEventAllDay(!!checked)} />
-                <Label htmlFor="quickAllDayEvent" className="font-normal text-muted-foreground">All day?</Label>
-              </div>
-            </div>
-            <div className="grid grid-cols-3 items-center gap-4">
-              <Label className="text-right text-muted-foreground">Date</Label>
-              <p className="col-span-2 text-foreground">{quickAddEventSelectedDate ? format(quickAddEventSelectedDate, 'MMMM d, yyyy') : 'N/A'}</p>
-            </div>
-            {!quickAddEventAllDay && (
-              <>
-                <div className="grid grid-cols-3 items-center gap-4">
-                  <Label htmlFor="quickStartTime" className="text-right text-muted-foreground">Start Time</Label>
-                  <Input id="quickStartTime" type="text" placeholder="e.g., 09:00 AM" value={quickAddEventStartTime} onChange={(e) => setQuickAddEventStartTime(e.target.value)} className="col-span-2 bg-input border-border/50" />
+            <div className="grid grid-cols-[1fr_auto] items-center gap-4">
+                <div className="col-span-1">
+                    <Label htmlFor="quickEventTitle" className="sr-only">Title</Label>
+                    <Input 
+                        id="quickEventTitle" 
+                        placeholder="Event Title"
+                        value={quickAddEventTitle} 
+                        onChange={(e) => setQuickAddEventTitle(e.target.value)} 
+                        className="bg-input border-border/50" 
+                    />
                 </div>
-                <div className="grid grid-cols-3 items-center gap-4">
-                  <Label htmlFor="quickEndTime" className="text-right text-muted-foreground">End Time</Label>
-                  <Input id="quickEndTime" type="text" placeholder="e.g., 10:00 AM" value={quickAddEventEndTime} onChange={(e) => setQuickAddEventEndTime(e.target.value)} className="col-span-2 bg-input border-border/50" />
+                <div className="col-span-1 flex items-center space-x-2 justify-end">
+                    <Checkbox id="quickAllDayEvent" checked={quickAddEventAllDay} onCheckedChange={(checked) => setQuickAddEventAllDay(!!checked)} />
+                    <Label htmlFor="quickAllDayEvent" className="font-normal text-muted-foreground text-xs">All day?</Label>
                 </div>
-              </>
-            )}
+            </div>
+            <div className="space-y-2">
+                <div className="flex items-center text-sm">
+                    <CalendarDays className="h-4 w-4 mr-2 text-muted-foreground"/>
+                    <span className="text-foreground">
+                        {quickAddEventSelectedDate ? format(quickAddEventSelectedDate, 'MMMM d, yyyy') : 'N/A'}
+                    </span>
+                </div>
+                {!quickAddEventAllDay && (
+                <div className="flex items-center space-x-2 text-sm">
+                    <Clock className="h-4 w-4 mr-2 text-muted-foreground"/>
+                    <Input 
+                        id="quickStartTime" 
+                        type="text" 
+                        placeholder="Start" 
+                        value={quickAddEventStartTime} 
+                        onChange={(e) => setQuickAddEventStartTime(e.target.value)} 
+                        className="w-28 bg-input border-border/50 h-8 text-xs" 
+                    />
+                    <span>-</span>
+                    <Input 
+                        id="quickEndTime" 
+                        type="text" 
+                        placeholder="End" 
+                        value={quickAddEventEndTime} 
+                        onChange={(e) => setQuickAddEventEndTime(e.target.value)} 
+                        className="w-28 bg-input border-border/50 h-8 text-xs" 
+                    />
+                </div>
+                )}
+            </div>
           </div>
           <DialogFooter className="justify-between sm:justify-between">
-            <Button variant="link" className="p-0 h-auto text-primary hover:text-primary/80" onClick={openFullEventFormFromQuickAdd}>
+            <Button variant="link" className="p-0 h-auto text-primary hover:text-primary/80 text-xs" onClick={openFullEventFormFromQuickAdd}>
               Include more details?
             </Button>
             <div className="flex gap-2">
               <DialogClose asChild>
-                <Button variant="outline">Cancel</Button>
+                <Button variant="outline" size="sm">Cancel</Button>
               </DialogClose>
-              <Button className="bg-primary hover:bg-primary/90 text-primary-foreground" onClick={() => {/* Mock save */ setIsQuickAddEventDialogOpen(false); }}>Add Event</Button>
+              <Button 
+                size="sm"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground" 
+                onClick={() => {
+                  if (!quickAddEventTitle.trim()) {
+                    toast({
+                      title: "Event Title Required",
+                      description: "Please enter a title for your event.",
+                      variant: "destructive",
+                    });
+                    return;
+                  }
+                  console.log("Quick Add Event:", {
+                    title: quickAddEventTitle,
+                    date: quickAddEventSelectedDate ? format(quickAddEventSelectedDate, 'MM/dd/yyyy') : 'N/A',
+                    allDay: quickAddEventAllDay,
+                    startTime: quickAddEventAllDay ? undefined : quickAddEventStartTime,
+                    endTime: quickAddEventAllDay ? undefined : quickAddEventEndTime,
+                  });
+                  toast({
+                    title: "Event Added (Mock)",
+                    description: `"${quickAddEventTitle}" has been added.`,
+                  });
+                  setIsQuickAddEventDialogOpen(false);
+                  setQuickAddEventTitle('');
+                  setQuickAddEventAllDay(false);
+                }}
+              >
+                Add Event
+              </Button>
             </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Full Event Dialog (existing) */}
       <Dialog open={isAddEventDialogOpen} onOpenChange={setIsAddEventDialogOpen}>
         <DialogContent className="sm:max-w-xl md:max-w-2xl lg:max-w-3xl max-h-[90vh] flex flex-col bg-card/95 backdrop-blur-md border-border/50">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold text-foreground">New Event</DialogTitle>
           </DialogHeader>
-          <div className="flex-grow overflow-y-auto pr-2 py-4 space-y-6"> {/* Added pr-2 for scrollbar spacing */}
+          <div className="flex-grow overflow-y-auto pr-2 py-4 space-y-6"> 
             <div><Label htmlFor="eventName-dialog">Event Name</Label><Input id="eventName-dialog" value={fullEventTitle} onChange={(e) => setFullEventTitle(e.target.value)} placeholder="Enter event name..." className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary" /></div>
             <div><Label htmlFor="eventCategory-dialog">Category</Label><div className="flex items-center gap-2"><Select><SelectTrigger id="eventCategory-dialog" className="bg-input border-border/50 text-foreground focus:ring-primary flex-grow"><SelectValue placeholder="Uncategorized" /></SelectTrigger><SelectContent><SelectItem value="uncategorized">Uncategorized</SelectItem><SelectItem value="meeting">Meeting</SelectItem><SelectItem value="client_review">Client Review</SelectItem><SelectItem value="prospect_introduction">Prospect Introduction</SelectItem><SelectItem value="social_event">Social Event</SelectItem><SelectItem value="conference">Conference</SelectItem></SelectContent></Select><Button variant="link" className="p-0 h-auto text-primary hover:text-primary/80 whitespace-nowrap">Edit Categories</Button></div></div>
             <div className="space-y-3"><Label>Date &amp; Time</Label><div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-x-3 gap-y-2 items-center">
@@ -487,6 +536,3 @@ export default function ClientPortalCalendarPage() {
     </>
   );
 }
-
-    
-
