@@ -7,16 +7,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Checkbox } from "@/components/ui/checkbox";
+import { Checkbox } from '@/components/ui/checkbox';
 import {
   MessageSquare,
   UserPlus,
   ListChecks,
   CalendarPlus,
-  DollarSign,
+  DollarSign as OpportunityIconLucide, // Aliased to avoid conflict with other DollarSign
   Bold,
   Italic,
   Underline,
@@ -34,6 +34,7 @@ import {
   Star,
   CircleDollarSign,
   Briefcase,
+  UserCircle2, // Added UserCircle2
 } from "lucide-react";
 import { cn } from '@/lib/utils';
 
@@ -59,7 +60,7 @@ export default function ClientPortalHomePage() {
       case 'italic':
         newText = `*${selectedText || "text"}*`;
         break;
-      case 'underline': // Note: Underline is not standard Markdown, this is a common convention
+      case 'underline': 
         newText = `__${selectedText || "text"}__`;
         break;
       case 'bullet':
@@ -83,11 +84,10 @@ export default function ClientPortalHomePage() {
         break;
       case 'table':
         console.log("Table format clicked - placeholder. Would insert Markdown table.");
-        // Example: newText = "\n| Header 1 | Header 2 |\n| -------- | -------- |\n| Cell 1   | Cell 2   |\n";
         return; 
       case 'emoji':
         console.log("Emoji format clicked - placeholder. Would insert emoji/picker.");
-        newText = "😊"; // Insert a sample emoji
+        newText = "😊"; 
         break;
       case 'mic':
         console.log("Mic format clicked - placeholder. Voice input not implemented.");
@@ -98,7 +98,6 @@ export default function ClientPortalHomePage() {
 
     setUpdatePostText(beforeText + newText + afterText);
 
-    // Attempt to set cursor position after the inserted/modified text
     setTimeout(() => {
       textarea.focus();
       textarea.selectionStart = textarea.selectionEnd = start + newText.length;
@@ -128,16 +127,19 @@ export default function ClientPortalHomePage() {
                   <CalendarPlus className="mr-2 h-4 w-4" /> Event
                 </TabsTrigger>
                 <TabsTrigger value="opportunity" className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary">
-                  <Briefcase className="mr-2 h-4 w-4" /> Opportunity
+                   <Briefcase className="mr-2 h-4 w-4" /> {/* Replaced DollarSign with Briefcase */}
+                  Opportunity
                 </TabsTrigger>
               </TabsList>
 
               <TabsContent value="update" className="mt-6">
                 <div className="flex space-x-4">
                   <div>
-                    <Avatar>
-                      <AvatarImage src="https://placehold.co/40x40.png" alt="User Avatar" data-ai-hint="profile avatar"/>
-                      <AvatarFallback>U</AvatarFallback>
+                    <Avatar className="w-10 h-10 border-2 border-primary/50">
+                      {/* <AvatarImage src="https://placehold.co/40x40.png" alt="User Avatar" data-ai-hint="profile avatar"/> */}
+                      <AvatarFallback className="bg-transparent">
+                        <UserCircle2 className="w-7 h-7 text-muted-foreground" />
+                      </AvatarFallback>
                     </Avatar>
                   </div>
                   <div className="flex-1 space-y-4">
@@ -690,3 +692,4 @@ export default function ClientPortalHomePage() {
   );
 }
 
+    
