@@ -73,7 +73,6 @@ const navSectionsData: NavSection[] = [
     title: 'Analytics',
     icon: BarChart3,
     items: [
-      // "Dashboard" item removed from here
       { name: 'Asset Analytics', icon: BarChart3, href: '/asset-analytics' },
       { name: 'Client Analytics', icon: Users, href: '/client-analytics' },
       { name: 'Financial Analytics', icon: TrendingUp, href: '/financial-analytics' },
@@ -92,48 +91,38 @@ const alertsNavItem: NavItem = {
   name: 'Alerts',
   icon: BellRing,
   href: '/alerts',
-  hasNewAlerts: true, // Mock data
+  hasNewAlerts: true,
 };
 
 export default function Sidebar() {
   const [isClient, setIsClient] = useState(false);
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(false); // Default to not collapsed for SSR
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
   const currentPathname = usePathname();
 
   useEffect(() => {
     setIsClient(true);
-  }, []);
+    const storedCollapsed = localStorage.getItem("matrix-sidebar-collapsed");
+    const initialCollapsedValue = storedCollapsed === "true";
+    setCollapsed(initialCollapsedValue);
 
-  useEffect(() => {
-    if (isClient) {
-      const storedCollapsed = localStorage.getItem("matrix-sidebar-collapsed");
-      const initialCollapsedValue = storedCollapsed === "true";
-      setCollapsed(initialCollapsedValue);
-
-      const initialOpenState: Record<string, boolean> = {};
-      const storedSectionsState = localStorage.getItem("matrix-sidebar-sections-open");
-      
-      if (storedSectionsState && !initialCollapsedValue) {
-          try {
-              const parsedStored = JSON.parse(storedSectionsState);
-              navSectionsData.forEach(section => {
-                  initialOpenState[section.id] = parsedStored.hasOwnProperty(section.id) ? parsedStored[section.id] : true;
-              });
-          } catch (e) {
-              console.error("Failed to parse sidebar sections state from localStorage", e);
-              navSectionsData.forEach(section => {
-                initialOpenState[section.id] = true;
-              });
-          }
-      } else {
-          navSectionsData.forEach(section => {
-             initialOpenState[section.id] = !initialCollapsedValue; // Default to open if not collapsed, or no stored state
-          });
-      }
-      setOpenSections(initialOpenState);
+    const initialOpenState: Record<string, boolean> = {};
+    const storedSectionsState = localStorage.getItem("matrix-sidebar-sections-open");
+    
+    if (storedSectionsState && !initialCollapsedValue) {
+        try {
+            const parsedStored = JSON.parse(storedSectionsState);
+            navSectionsData.forEach(section => {
+                initialOpenState[section.id] = parsedStored.hasOwnProperty(section.id) ? parsedStored[section.id] : true;
+            });
+        } catch (e) {
+            navSectionsData.forEach(section => { initialOpenState[section.id] = true; });
+        }
+    } else {
+        navSectionsData.forEach(section => { initialOpenState[section.id] = !initialCollapsedValue; });
     }
-  }, [isClient]);
+    setOpenSections(initialOpenState);
+  }, []);
 
   const currentDisplayCollapsed = isClient ? collapsed : false;
 
@@ -150,25 +139,23 @@ export default function Sidebar() {
     const newCollapsedState = !currentDisplayCollapsed;
     setCollapsed(newCollapsedState);
     if (newCollapsedState) {
-        // When collapsing, save the current open state of sections
         localStorage.setItem("matrix-sidebar-sections-open", JSON.stringify(openSections));
     } else {
-        // When expanding, try to restore or default to open
         const storedSectionsState = localStorage.getItem("matrix-sidebar-sections-open");
-        const initialOpenState: Record<string, boolean> = {};
+        const restoredOpenState: Record<string, boolean> = {};
         if (storedSectionsState) {
             try {
                 const parsedStored = JSON.parse(storedSectionsState);
                 navSectionsData.forEach(section => {
-                    initialOpenState[section.id] = parsedStored.hasOwnProperty(section.id) ? parsedStored[section.id] : true;
+                    restoredOpenState[section.id] = parsedStored.hasOwnProperty(section.id) ? parsedStored[section.id] : true;
                 });
             } catch (e) {
-                navSectionsData.forEach(section => { initialOpenState[section.id] = true; });
+                navSectionsData.forEach(section => { restoredOpenState[section.id] = true; });
             }
         } else {
-            navSectionsData.forEach(section => { initialOpenState[section.id] = true; });
+            navSectionsData.forEach(section => { restoredOpenState[section.id] = true; });
         }
-        setOpenSections(initialOpenState);
+        setOpenSections(restoredOpenState);
     }
   }, [currentDisplayCollapsed, openSections, isClient]);
 
@@ -181,7 +168,7 @@ export default function Sidebar() {
     }
   }, [currentDisplayCollapsed, isClient]);
 
-  const renderNavItem = useCallback((item: NavItem, isIconOnlyView: boolean) => {
+  const renderNavItem = useCallback((item: NavItem) => {
     const isActive = currentPathname === item.href || (currentPathname.startsWith(item.href) && item.href !== '/dashboard' && item.href !== '/');
     
     const iconClasses = cn(
@@ -194,19 +181,19 @@ export default function Sidebar() {
     );
 
     const linkClasses = cn(
-      "flex items-center gap-4 px-4 py-2.5 text-base rounded-[8px] transition-all duration-200 ease-out group/navitem",
+      "flex items-center gap-4 px-4 py-2.5 rounded-[8px] transition-all duration-200 ease-out group/navitem",
       "bg-white/[.02] text-sidebar-foreground/80 hover:text-sidebar-foreground hover:bg-white/[.05] hover:-translate-y-px",
-      isIconOnlyView && "justify-center p-2.5"
+      currentDisplayCollapsed && "justify-center p-2.5"
     );
 
     const linkContent = (
       <>
         <item.icon className={iconClasses} />
-        {!isIconOnlyView && <span className="truncate text-base font-medium">{item.name}</span>}
+        {!currentDisplayCollapsed && <span className="truncate text-base font-medium">{item.name}</span>}
       </>
     );
 
-    if (isIconOnlyView) {
+    if (currentDisplayCollapsed) {
       return (
         <Tooltip key={item.href}>
           <TooltipTrigger asChild>
@@ -234,29 +221,31 @@ export default function Sidebar() {
         </Link>
       );
     }
-  }, [currentPathname, isClient]);
+  }, [currentPathname, isClient, currentDisplayCollapsed]);
 
-  if (!isClient && typeof window === 'undefined') { // Basic SSR placeholder
+  if (!isClient && typeof window === 'undefined') { 
     return (
-      <aside className={cn("h-full bg-black/90 border-r border-gray-800/50 text-white transition-all duration-300 flex flex-col w-64")}>
-        <div className="flex items-center justify-center p-4 px-5 space-x-3">
-          <Brain className="w-10 h-10 text-purple-500 animate-pulse-neon" />
-          <span className="text-4xl font-bold text-metallic-gradient leading-tight">
-            Matrix
-          </span>
+      <aside className={cn("h-full bg-black/90 border-r border-gray-800/50 text-white transition-all duration-300 flex flex-col", "w-64")}>
+        <div className={cn("flex items-center p-4 px-5 justify-between")}>
+          <Link href="/dashboard" className="flex items-center justify-center space-x-3 group">
+            <Brain className="text-purple-500 animate-pulse-neon w-10 h-10" />
+            <span className="text-4xl font-bold text-metallic-gradient leading-tight group-hover:brightness-110 transition-all">
+              Matrix
+            </span>
+          </Link>
         </div>
-        <nav className="flex-1 space-y-1 px-2 py-4 overflow-y-auto">
-          {/* Placeholder content for SSR */}
+        <nav className="flex-1 space-y-1 px-2 py-4 overflow-y-auto no-visual-scrollbar">
+          {/* Placeholder for SSR */}
         </nav>
       </aside>
     );
   }
-
+  
   return (
     <aside
       className={cn(
         "h-full bg-black/90 border-r border-gray-800/50 text-white transition-all duration-300 flex flex-col",
-        currentDisplayCollapsed ? "w-20" : "w-64" // w-16 is 4rem, w-20 is 5rem
+        currentDisplayCollapsed ? "w-16" : "w-64" 
       )}
     >
       <div className={cn("flex items-center p-4 px-5", currentDisplayCollapsed ? "justify-center" : "justify-between")}>
@@ -272,7 +261,7 @@ export default function Sidebar() {
           <button
             onClick={toggleSidebar}
             className="p-1 text-gray-400 hover:text-white hover:bg-white/10 rounded-md"
-            aria-label={currentDisplayCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            aria-label="Collapse sidebar"
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
@@ -291,10 +280,10 @@ export default function Sidebar() {
       )}
       
       <TooltipProvider delayDuration={0}>
-        <nav className="flex-1 space-y-1 px-2 py-4 overflow-y-auto scrollbar-thin scrollbar-thumb-gray-700/50 scrollbar-track-transparent">
+        <nav className={cn("flex-1 space-y-1 px-2 py-4 overflow-y-auto no-visual-scrollbar")}>
           {currentDisplayCollapsed ? (
             navSectionsData.flatMap(section => section.items).map((item) =>
-              renderNavItem(item, true)
+              renderNavItem(item)
             )
           ) : (
             navSectionsData.map((section) => (
@@ -309,8 +298,8 @@ export default function Sidebar() {
                 >
                   <section.icon className="w-5 h-5 shrink-0 text-gray-400 group-hover/section:text-gray-200" />
                   <span className={cn(
-                    "ml-3 font-bold text-lg tracking-wider truncate flex-1 group-hover/section:text-gray-100",
-                    section.id === 'crm' ? "text-gray-300 uppercase" : "text-gray-300" // Keep CRM uppercase
+                    "ml-3 font-bold text-lg tracking-wider truncate flex-1 group-hover/section:text-gray-100 text-gray-300",
+                     section.id === 'clientPortal' && "uppercase" // Keep CRM uppercase
                   )}>
                       {section.title}
                   </span>
@@ -323,7 +312,7 @@ export default function Sidebar() {
                 </button>
                 {openSections[section.id] && (
                   <div className="mt-1 space-y-1 py-2 pl-4 border-l border-sidebar-border/20">
-                    {section.items.map((item) => renderNavItem(item, false))}
+                    {section.items.map((item) => renderNavItem(item))}
                   </div>
                 )}
               </div>
@@ -331,10 +320,9 @@ export default function Sidebar() {
           )}
         </nav>
         <div className="mt-auto p-2 border-t border-sidebar-border/30">
-          {renderNavItem(alertsNavItem, currentDisplayCollapsed)} 
+          {renderNavItem(alertsNavItem)} 
         </div>
       </TooltipProvider>
     </aside>
   );
 }
-
