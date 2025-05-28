@@ -55,16 +55,16 @@ const initialMarketOverviewData: MarketData[] = [
     timezone: 'America/New_York',
   },
   {
-    label: 'Total Market (VONE)', // Vanguard S&P 500 ETF
-    polygonTicker: 'VONE',
+    label: 'Google (GOOGL)', 
+    polygonTicker: 'GOOGL',
     icon: Landmark,
     openTime: '09:30',
     closeTime: '16:00',
     timezone: 'America/New_York',
   },
   {
-    label: 'Small Caps (IWM)', // iShares Russell 2000 ETF
-    polygonTicker: 'IWM',
+    label: 'Tesla (TSLA)', 
+    polygonTicker: 'TSLA',
     icon: Landmark,
     openTime: '09:30',
     closeTime: '16:00',
@@ -136,31 +136,27 @@ const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
 
     if (!response.ok) {
       let errorMessage = `API Error: ${response.status}`;
-      let errorDetailsParsed = {}; // To store parsed JSON error if available
-
+      let errorData: any = {};
       try {
-        const errorData = await response.json();
-        errorDetailsParsed = errorData; // Store for logging
-
+        errorData = await response.json();
+        // Log the full errorData if available, this can be very helpful for complex API errors
         if (Object.keys(errorData).length === 0 && errorData.constructor === Object) {
-          console.warn(`[Polygon API Warn] Received empty JSON error object from Polygon for ${symbol}. Status: ${response.status}.`);
-          errorMessage = `API Error: ${response.status} - Polygon returned an empty error response.`;
+            console.warn(`[Polygon API Warn] Received empty JSON error object from Polygon for ${symbol}. Status: ${response.status}.`);
+            errorMessage = `API Error: ${response.status} - Polygon returned an empty error response. Ensure API key is valid and has permissions for ${symbol}.`;
         } else {
-          // Log the full errorData if available, this can be very helpful for complex API errors
-          console.log(`[Polygon API Debug] Full error response for ${symbol}:`, errorDetailsParsed);
-          if (errorData && errorData.message) errorMessage = `API Error: ${response.status} - ${errorData.message}`;
-          else if (errorData && errorData.error) errorMessage = `API Error: ${response.status} - ${errorData.error}`;
-          else if (errorData && errorData.request_id) errorMessage = `API Error: ${response.status} (Request ID: ${errorData.request_id})`; // Some Polygon errors might only have request_id
-          else if (response.statusText && errorMessage === `API Error: ${response.status}`) { // Fallback if no specific message in JSON
-             errorMessage = `API Error: ${response.status} - ${response.statusText}`;
-          }
+            console.log(`[Polygon API Debug] Full error response for ${symbol}:`, errorData);
+            if (errorData && errorData.message) errorMessage = `API Error: ${response.status} - ${errorData.message}`;
+            else if (errorData && errorData.error) errorMessage = `API Error: ${response.status} - ${errorData.error}`;
+            else if (errorData && errorData.request_id) errorMessage = `API Error: ${response.status} (Request ID: ${errorData.request_id})`;
+            else if (response.statusText && errorMessage === `API Error: ${response.status}`) {
+               errorMessage = `API Error: ${response.status} - ${response.statusText}`;
+            }
         }
       } catch (e) {
-        // If parsing JSON fails, try to get text response
         try {
             const textError = await response.text();
             console.warn(`[Polygon API Warn] Could not parse JSON error response for ${symbol}. Status: ${response.status}. Response text snippet:`, textError.substring(0, 200) + (textError.length > 200 ? '...' : ''));
-            errorMessage = `API Error: ${response.status} - ${response.statusText || 'Failed to parse error response as JSON or text.'}`;
+            errorMessage = `API Error: ${response.status} - ${response.statusText || 'Failed to parse error response as JSON or text.'} Raw: ${textError.substring(0,50)}...`;
         } catch (textE) {
             console.warn(`[Polygon API Warn] Could not parse JSON or text error response for ${symbol}. Status: ${response.status}.`);
             errorMessage = `API Error: ${response.status} - ${response.statusText || 'Unknown error structure and failed to read response text.'}`;
@@ -205,11 +201,11 @@ export default function DashboardPage() {
         return;
       }
 
-      const initialApiData: Record<string, FetchedIndexData> = {};
+      const initialApiDataState: Record<string, FetchedIndexData> = {};
       initialMarketOverviewData.forEach(market => {
-        initialApiData[market.polygonTicker] = { loading: true };
+        initialApiDataState[market.polygonTicker] = { loading: true };
       });
-      setMarketApiData(initialApiData);
+      setMarketApiData(initialApiDataState);
 
       const promises = initialMarketOverviewData.map(market =>
         fetchIndexData(market.polygonTicker).then(data => ({ symbol: market.polygonTicker, data }))
@@ -223,6 +219,12 @@ export default function DashboardPage() {
           newApiData[result.value.symbol] = result.value.data;
         } else {
           console.error("[Polygon API] Promise rejected unexpectedly in loadMarketData:", result.reason);
+          // Find which symbol this was for to provide a more specific error in the UI
+          // This is a bit indirect, ideally the rejected promise would carry the symbol
+           const failedMarket = initialMarketOverviewData.find(m => promises.findIndex(p => p === result.reason) !== -1); // This might not work if promise itself is the reason
+           if (failedMarket) {
+             newApiData[failedMarket.polygonTicker] = { error: 'Fetch failed' };
+           }
         }
       });
       setMarketApiData(prevData => ({ ...prevData, ...newApiData }));
@@ -286,11 +288,10 @@ export default function DashboardPage() {
       let currentMinuteEST = 0;
 
       try {
-        // Get current hour and minute in EST/EDT
         const estFormatter = new Intl.DateTimeFormat('en-US', {
           hour: 'numeric',
           minute: 'numeric',
-          hour12: false, // Use 24-hour format for easier calculations
+          hour12: false, 
           timeZone: 'America/New_York',
         });
         const parts = estFormatter.formatToParts(now);
@@ -300,17 +301,13 @@ export default function DashboardPage() {
         });
       } catch (e) {
         console.error("Error formatting EST time, defaulting to local time for logic:", e);
-        // Fallback to local time if Intl.DateTimeFormat fails (e.g., unsupported environment)
-        // This might not be perfectly accurate for market status but prevents a crash.
         const localNow = new Date(); 
         currentHourEST = localNow.getHours();
         currentMinuteEST = localNow.getMinutes();
       }
       
-      // Create a "today" date object based on current EST date to avoid issues with date rollovers
-      // when comparing with marketOpenTime and marketCloseTime which are set on 'todayForLogic'
       const todayForLogic = new Date(now.toLocaleString('en-US', {timeZone: 'America/New_York'}));
-      todayForLogic.setHours(0,0,0,0); // Normalize to start of day in EST
+      todayForLogic.setHours(0,0,0,0); 
 
 
       initialMarketOverviewData.forEach(market => {
@@ -318,14 +315,12 @@ export default function DashboardPage() {
             const [openHour, openMinute] = market.openTime.split(':').map(Number);
             const [closeHour, closeMinute] = market.closeTime.split(':').map(Number);
 
-            // Create market open and close times for "today" in EST
             const marketOpenTime = new Date(todayForLogic);
             marketOpenTime.setHours(openHour, openMinute, 0, 0);
 
             const marketCloseTime = new Date(todayForLogic);
             marketCloseTime.setHours(closeHour, closeMinute, 0, 0);
             
-            // Create a "now" representation in EST for comparison
             const nowInEstEquivalentForLogic = new Date(todayForLogic);
             nowInEstEquivalentForLogic.setHours(currentHourEST, currentMinuteEST, 0, 0);
 
@@ -351,7 +346,7 @@ export default function DashboardPage() {
                 tooltipText = `Market closes at ${market.closeTime} ET`;
             }
             
-            newStatuses[market.label] = { statusText, tooltipText, shadowClass }; // Use market.label as key
+            newStatuses[market.label] = { statusText, tooltipText, shadowClass };
         } else {
             newStatuses[market.label] = { statusText: "Status N/A", tooltipText: "Market hours not defined", shadowClass: "" };
         }
@@ -365,7 +360,7 @@ export default function DashboardPage() {
         try {
             setCurrentTimeEST(new Date().toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', second:'2-digit' }));
         } catch (e) {
-            setCurrentTimeEST(new Date().toLocaleTimeString()); // Fallback to local time display on error
+            setCurrentTimeEST(new Date().toLocaleTimeString()); 
         }
     }, 1000);
 
@@ -476,7 +471,7 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1 hidden lg:block"> {/* Spacer */} </div>
-        <PlaceholderCard title="Ticker Lookup Tool" icon={Search} className="lg:col-span-2"> {/* Default span to 2, will be made 3 */}
+        <PlaceholderCard title="Ticker Lookup Tool" icon={Search} className="lg:col-span-3"> {/* Changed to lg:col-span-3 */}
           <div className="flex space-x-2 mb-4">
             <Input
               type="text"
@@ -586,5 +581,3 @@ export default function DashboardPage() {
     </main>
   );
 }
-
-    
