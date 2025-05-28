@@ -68,7 +68,7 @@ export default function ClientPortalHomePage() {
       [{ 'header': [1, 2, 3, false] }],
       ['bold', 'italic', 'underline', 'strike'],
       [{'list': 'ordered'}, {'list': 'bullet'}],
-      ['link', 'image'], // 'image' can be problematic without further setup (upload handlers)
+      ['link', 'image'], 
       ['clean']
     ],
   };
@@ -82,7 +82,7 @@ export default function ClientPortalHomePage() {
 
 
   return (
-    <main className="min-h-screen p-6 space-y-8 md:p-8">
+    <main className="min-h-screen p-6 space-y-8 md:p-8 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#5b21b6]/10 to-[#000104]">
       <h1 className="text-3xl font-bold tracking-tight text-foreground">Home</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
@@ -128,7 +128,6 @@ export default function ClientPortalHomePage() {
                         className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary rounded-md [&_.ql-editor]:min-h-[120px]"
                         />
                     ) : (
-                      // This placeholder must exactly match what next/dynamic's loading prop renders on the server
                       <p className="text-muted-foreground p-3 min-h-[calc(120px+theme(spacing.8))]">Loading editor...</p> 
                     )}
                     <div className="flex items-center justify-end">
@@ -318,6 +317,7 @@ export default function ClientPortalHomePage() {
                         <Button variant="ghost" size="icon" className="hover:bg-muted/50 h-8 w-8" aria-label="Bold"><Bold className="h-4 w-4" /></Button>
                         <Button variant="ghost" size="icon" className="hover:bg-muted/50 h-8 w-8" aria-label="Italic"><Italic className="h-4 w-4" /></Button>
                         <Button variant="ghost" size="icon" className="hover:bg-muted/50 h-8 w-8" aria-label="Underline"><Underline className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" className="hover:bg-muted/50 h-8 w-8" aria-label="Strikethrough"><Strikethrough className="h-4 w-4" /></Button>
                         <Button variant="ghost" size="icon" className="hover:bg-muted/50 h-8 w-8" aria-label="Bulleted List"><ListChecks className="h-4 w-4" /></Button>
                         <Button variant="ghost" size="icon" className="hover:bg-muted/50 h-8 w-8" aria-label="Numbered List"><ListOrdered className="h-4 w-4" /></Button>
                         <Button variant="ghost" size="icon" className="hover:bg-muted/50 h-8 w-8" aria-label="Insert Table"><TableIcon className="h-4 w-4" /></Button>
