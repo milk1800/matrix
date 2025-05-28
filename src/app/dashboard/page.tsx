@@ -139,7 +139,6 @@ const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
       let errorData: any = {};
       try {
         errorData = await response.json();
-        // Log the full errorData if available, this can be very helpful for complex API errors
         if (Object.keys(errorData).length === 0 && errorData.constructor === Object) {
             console.warn(`[Polygon API Warn] Received empty JSON error object from Polygon for ${symbol}. Status: ${response.status}.`);
             errorMessage = `API Error: ${response.status} - Polygon returned an empty error response. Ensure API key is valid and has permissions for ${symbol}.`;
@@ -190,8 +189,7 @@ export default function DashboardPage() {
 
   React.useEffect(() => {
     const loadMarketData = async () => {
-      const apiKey = process.env.NEXT_PUBLIC_POLYGON_API_KEY;
-      if (!apiKey) {
+      if (!process.env.NEXT_PUBLIC_POLYGON_API_KEY) {
         console.warn("[Polygon API] CRITICAL: NEXT_PUBLIC_POLYGON_API_KEY is not defined in the environment. Market data will not be fetched. Ensure .env.local is set and the dev server was restarted.");
         const errorState: Record<string, FetchedIndexData> = {};
         initialMarketOverviewData.forEach(market => {
@@ -200,6 +198,7 @@ export default function DashboardPage() {
         setMarketApiData(errorState);
         return;
       }
+      console.log("[Polygon API] Initiating market data fetch. Ensure NEXT_PUBLIC_POLYGON_API_KEY is correctly set in your environment if you see 401 errors.");
 
       const initialApiDataState: Record<string, FetchedIndexData> = {};
       initialMarketOverviewData.forEach(market => {
@@ -219,9 +218,7 @@ export default function DashboardPage() {
           newApiData[result.value.symbol] = result.value.data;
         } else {
           console.error("[Polygon API] Promise rejected unexpectedly in loadMarketData:", result.reason);
-          // Find which symbol this was for to provide a more specific error in the UI
-          // This is a bit indirect, ideally the rejected promise would carry the symbol
-           const failedMarket = initialMarketOverviewData.find(m => promises.findIndex(p => p === result.reason) !== -1); // This might not work if promise itself is the reason
+           const failedMarket = initialMarketOverviewData.find(m => promises.findIndex(p => p === result.reason) !== -1);
            if (failedMarket) {
              newApiData[failedMarket.polygonTicker] = { error: 'Fetch failed' };
            }
@@ -372,8 +369,8 @@ export default function DashboardPage() {
 
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#5b21b6]/10 to-[#000104] flex-1 p-6 space-y-8 md:p-8">
-      <h1 className="text-3xl font-bold tracking-tight text-foreground mb-8">
+    <main className="min-h-screen flex-1 space-y-8 p-6 md:p-8">
+      <h1 className="text-3xl font-bold tracking-tight text-foreground">
         Welcome Josh!
       </h1>
 
@@ -391,7 +388,7 @@ export default function DashboardPage() {
               valueDisplay = <span className="text-sm text-muted-foreground">Loading...</span>;
               changeDisplay = <span className="text-xs text-muted-foreground">Loading...</span>;
             } else if (apiResult?.error) {
-              valueDisplay = <span className="text-sm text-red-400/80 flex items-center"><AlertCircle className="w-4 h-4 mr-1" /> {apiResult.error}</span>;
+              valueDisplay = <TooltipProvider><Tooltip><TooltipTrigger asChild><span className="text-sm text-red-400/80 flex items-center truncate"><AlertCircle className="w-4 h-4 mr-1 shrink-0" /> Error</span></TooltipTrigger><TooltipContent><p>{apiResult.error}</p></TooltipContent></Tooltip></TooltipProvider>;
               changeDisplay = "";
             } else if (apiResult?.c !== undefined && apiResult?.o !== undefined) {
               valueDisplay = `$${apiResult.c.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
@@ -419,7 +416,7 @@ export default function DashboardPage() {
                   statusInfo.shadowClass
                 )}
               >
-                <div className="text-2xl font-bold text-foreground mb-1">{valueDisplay}</div>
+                <div className="text-2xl font-bold text-foreground mb-1 truncate" title={typeof valueDisplay === 'string' ? valueDisplay : undefined}>{valueDisplay}</div>
                 <div className="text-sm mb-3">{changeDisplay}</div>
                 <div className="h-10 w-full my-2 bg-black/30 rounded-md flex items-center justify-center backdrop-blur-sm" data-ai-hint="mini trendline chart">
                    <span className="text-xs text-muted-foreground/50">Mini Trend</span>
@@ -471,7 +468,7 @@ export default function DashboardPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-1 hidden lg:block"> {/* Spacer */} </div>
-        <PlaceholderCard title="Ticker Lookup Tool" icon={Search} className="lg:col-span-3"> {/* Changed to lg:col-span-3 */}
+        <PlaceholderCard title="Ticker Lookup Tool" icon={Search} className="lg:col-span-2">
           <div className="flex space-x-2 mb-4">
             <Input
               type="text"
@@ -488,7 +485,6 @@ export default function DashboardPage() {
           {isLoadingTicker && <p className="text-sm text-muted-foreground text-center">Fetching data...</p>}
           {tickerData && !isLoadingTicker && (
             <div className="space-y-6 text-sm">
-              {/* Header Section */}
               <div className="pb-4 border-b border-border/30">
                 <div className="flex items-start space-x-4 mb-3">
                   <Image src={tickerData.logo} alt={`${tickerData.companyName} logo`} width={48} height={48} className="rounded-md bg-muted p-1" data-ai-hint="company logo"/>
@@ -504,7 +500,6 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              {/* Live Price Section */}
               <div className="pb-4 border-b border-border/30">
                 <div className="flex items-baseline space-x-2 mb-2">
                   <p className="text-4xl font-bold text-foreground">${tickerData.currentPrice}</p>
@@ -526,7 +521,6 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              {/* Valuation Metrics Section */}
               <div className="pb-4 border-b border-border/30">
                 <h4 className="text-md font-semibold text-foreground mb-2">Valuation Metrics</h4>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
@@ -538,7 +532,6 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              {/* Key Dates Section */}
               <div className="pb-4 border-b border-border/30">
                 <h4 className="text-md font-semibold text-foreground mb-2">Key Dates</h4>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
@@ -547,7 +540,6 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              {/* Optional: 1D Price Trend (Placeholder) */}
               <div className="pb-4 border-b border-border/30">
                 <h4 className="text-md font-semibold text-foreground mb-2">1D Price Trend</h4>
                 <div className="h-20 w-full bg-muted/30 rounded-md flex items-center justify-center" data-ai-hint="mini stock chart">
@@ -555,7 +547,6 @@ export default function DashboardPage() {
                 </div>
               </div>
 
-              {/* Optional: Recent News (Placeholder) */}
               <div>
                 <h4 className="text-md font-semibold text-foreground mb-2">Recent News</h4>
                 <ul className="space-y-2 text-xs">
@@ -581,3 +572,4 @@ export default function DashboardPage() {
     </main>
   );
 }
+
