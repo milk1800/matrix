@@ -20,7 +20,7 @@ import {
   UserPlus,
   ListChecks,
   CalendarPlus,
-  Briefcase, // Using Briefcase for Opportunity icon
+  Briefcase,
   FilePenLine,
   Trash2,
   UploadCloud,
@@ -38,10 +38,22 @@ import {
   FileText,
   BarChart2,
   ChevronDown,
+  Bold,
+  Italic,
+  Underline,
+  Link2, 
+  Table as TableIcon, 
+  Smile, 
+  Mic,
+  ListOrdered,
+  Strikethrough,
 } from "lucide-react";
 
-// Dynamically import ReactQuill to avoid SSR issues
-const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
+// Dynamically import ReactQuill to avoid SSR issues and provide a loading fallback
+const ReactQuill = dynamic(() => import('react-quill'), { 
+  ssr: false,
+  loading: () => <p className="text-muted-foreground p-3 min-h-[calc(120px+theme(spacing.8))]">Loading editor...</p> 
+});
 
 export default function ClientPortalHomePage() {
   const [isClient, setIsClient] = React.useState(false);
@@ -56,7 +68,7 @@ export default function ClientPortalHomePage() {
       [{ 'header': [1, 2, 3, false] }],
       ['bold', 'italic', 'underline', 'strike'],
       [{'list': 'ordered'}, {'list': 'bullet'}],
-      ['link', 'image'],
+      ['link', 'image'], // 'image' can be problematic without further setup (upload handlers)
       ['clean']
     ],
   };
@@ -67,6 +79,7 @@ export default function ClientPortalHomePage() {
     'list', 'bullet',
     'link', 'image'
   ];
+
 
   return (
     <main className="min-h-screen p-6 space-y-8 md:p-8">
@@ -104,7 +117,7 @@ export default function ClientPortalHomePage() {
                     </Avatar>
                   </div>
                   <div className="flex-1 space-y-4">
-                    {isClient && ( 
+                    {isClient ? ( 
                         <ReactQuill
                         theme="snow"
                         value={updatePostText}
@@ -114,6 +127,9 @@ export default function ClientPortalHomePage() {
                         placeholder="Share an update..."
                         className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary rounded-md [&_.ql-editor]:min-h-[120px]"
                         />
+                    ) : (
+                      // This placeholder must exactly match what next/dynamic's loading prop renders on the server
+                      <p className="text-muted-foreground p-3 min-h-[calc(120px+theme(spacing.8))]">Loading editor...</p> 
                     )}
                     <div className="flex items-center justify-end">
                       <Button onClick={() => console.log("Post content (HTML):", updatePostText)} className="bg-primary hover:bg-primary/90 text-primary-foreground px-6">Post</Button>
@@ -298,6 +314,17 @@ export default function ClientPortalHomePage() {
                   <div>
                     <Label htmlFor="taskDescription">Description</Label>
                     <Textarea id="taskDescription" rows={5} placeholder="Add more details..." className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary resize-none" />
+                     <div className="flex items-center space-x-1 text-muted-foreground mt-2">
+                        <Button variant="ghost" size="icon" className="hover:bg-muted/50 h-8 w-8" aria-label="Bold"><Bold className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" className="hover:bg-muted/50 h-8 w-8" aria-label="Italic"><Italic className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" className="hover:bg-muted/50 h-8 w-8" aria-label="Underline"><Underline className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" className="hover:bg-muted/50 h-8 w-8" aria-label="Bulleted List"><ListChecks className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" className="hover:bg-muted/50 h-8 w-8" aria-label="Numbered List"><ListOrdered className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" className="hover:bg-muted/50 h-8 w-8" aria-label="Insert Table"><TableIcon className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" className="hover:bg-muted/50 h-8 w-8" aria-label="Insert Link"><Link2 className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" className="hover:bg-muted/50 h-8 w-8" aria-label="Insert Emoji"><Smile className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" className="hover:bg-muted/50 h-8 w-8" aria-label="Voice Note"><Mic className="h-4 w-4" /></Button>
+                    </div>
                   </div>
                   <div>
                     <Label htmlFor="taskAttachments">Attachments</Label>
@@ -352,6 +379,17 @@ export default function ClientPortalHomePage() {
                   <div>
                     <Label htmlFor="eventDescription">Description</Label>
                     <Textarea id="eventDescription" rows={5} placeholder="Add event details, agenda, notes..." className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary resize-none" />
+                     <div className="flex items-center space-x-1 text-muted-foreground mt-2">
+                        <Button variant="ghost" size="icon" className="hover:bg-muted/50 h-8 w-8" aria-label="Bold"><Bold className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" className="hover:bg-muted/50 h-8 w-8" aria-label="Italic"><Italic className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" className="hover:bg-muted/50 h-8 w-8" aria-label="Underline"><Underline className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" className="hover:bg-muted/50 h-8 w-8" aria-label="Bulleted List"><ListChecks className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" className="hover:bg-muted/50 h-8 w-8" aria-label="Numbered List"><ListOrdered className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" className="hover:bg-muted/50 h-8 w-8" aria-label="Insert Table"><TableIcon className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" className="hover:bg-muted/50 h-8 w-8" aria-label="Insert Link"><Link2 className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" className="hover:bg-muted/50 h-8 w-8" aria-label="Insert Emoji"><Smile className="h-4 w-4" /></Button>
+                        <Button variant="ghost" size="icon" className="hover:bg-muted/50 h-8 w-8" aria-label="Voice Note"><Mic className="h-4 w-4" /></Button>
+                    </div>
                   </div>
                   <div> <Label htmlFor="eventRelatedTo">Related To</Label> <Input id="eventRelatedTo" placeholder="Contact, project, or opportunity..." className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary" /> </div>
                   <div> <Label htmlFor="eventAttending">Attending</Label> <Input id="eventAttending" placeholder="Search users or resources..." className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary" /> </div>
@@ -448,3 +486,5 @@ export default function ClientPortalHomePage() {
     </main>
   );
 }
+
+    
