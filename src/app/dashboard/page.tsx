@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from 'react';
@@ -13,7 +14,7 @@ import {
   Newspaper, 
   Search, 
   Send,
-  Brain, 
+  Cpu, 
   BarChart4,
   AlertCircle,
   Clock,
@@ -21,8 +22,7 @@ import {
   CalendarDays,
   Loader2,
   ArrowUpRight,
-  ArrowDownRight,
-  Cpu
+  ArrowDownRight
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from '@/lib/utils';
@@ -153,7 +153,7 @@ const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
   console.log(`[Polygon API] Attempting to use API key ending with: ...${apiKey ? apiKey.slice(-4) : 'UNDEFINED'} for symbol: ${symbol}`);
 
   if (!apiKey) {
-    console.error("Polygon API key (NEXT_PUBLIC_POLYGON_API_KEY) is not set. Please ensure it's in .env.local and the development server was restarted.");
+    console.error("Polygon API key (NEXT_PUBLIC_POLYGON_API_KEY) is not set. Please ensure it's in .env.local and the dev server was restarted.");
     return { error: 'API Key Missing. Configure in .env.local & restart server.' };
   }
 
@@ -165,6 +165,7 @@ const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
       let errorData: any = {};
       try {
         errorData = await response.json();
+         console.log(`[Polygon API Debug] Raw error response for ${symbol}:`, JSON.stringify(errorData, null, 2));
         if (Object.keys(errorData).length === 0 && errorData.constructor === Object) {
             console.warn(`[Polygon API Warn] Received empty JSON error object from Polygon for ${symbol}. Status: ${response.status}.`);
             errorMessage = `API Error: ${response.status} - Polygon returned an empty error response. This often means the API key is invalid or lacks permissions for ${symbol}.`;
@@ -524,7 +525,7 @@ export default function DashboardPage() {
         </div>
       </section>
 
-       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <PlaceholderCard title="Why the Market Moved" icon={Cpu} className="lg:col-span-1 h-full">
           <p className="text-sm text-muted-foreground leading-relaxed font-serif mt-2">
             Market sentiment turned positive following the release of favorable inflation data, suggesting that price pressures may be easing. This led to a broad rally across major indices, particularly in growth-oriented sectors like technology and consumer discretionary. Investors are now keenly awaiting upcoming corporate earnings reports for further direction.
@@ -626,7 +627,7 @@ export default function DashboardPage() {
               <div className="pb-4 border-b-border/30">
                 <h4 className="text-md font-semibold text-foreground mb-2">Price History (1 Year)</h4>
                 {tickerData.priceHistory && tickerData.priceHistory.length > 0 ? (
-                  <div className="h-[250px] w-full bg-muted/30 rounded-md" data-ai-hint="stock line chart">
+                  <div className="h-[400px] w-full bg-muted/30 rounded-md" data-ai-hint="stock line chart">
                      <TickerPriceChart data={tickerData.priceHistory} />
                   </div>
                 ) : (
@@ -664,3 +665,4 @@ export default function DashboardPage() {
     </main>
   );
 }
+
