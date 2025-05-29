@@ -21,6 +21,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { boxMullerTransform, getPercentile } from "@/utils/math-helpers";
+// import jsPDF from "jspdf"; // Commented out as per previous error resolution
+// import html2canvas from "html2canvas"; // Commented out as per previous error resolution
 import * as XLSX from 'xlsx';
 
 
@@ -146,7 +148,7 @@ const sandboxSelectedManagers = modelPerformanceData
   .filter(m => ["strat1", "strat2", "strat4"].includes(m.id))
   .map((m, index) => ({
     ...m,
-    weight: index === 0 ? 50 : index === 1 ? 30 : 20,
+    weight: index === 0 ? 50 : index === 1 ? 30 : 20, 
   }));
 
 
@@ -170,12 +172,13 @@ const parseAUM = (aumString: string): number => {
   return value;
 };
 
-const formatCurrency = (value: number, includeDollarSign = true): string => {
+const formatCurrency = (value: number | null | undefined, includeDollarSign = true): string => {
+  if (value === null || value === undefined || isNaN(value)) return "N/A";
   const sign = includeDollarSign ? '$' : '';
-  if (value >= 1000000) {
+  if (Math.abs(value) >= 1000000) {
     return `${sign}${(value / 1000000).toFixed(1)}M`;
   }
-  if (value >= 1000) {
+  if (Math.abs(value) >= 1000) {
     return `${sign}${(value / 1000).toFixed(1)}K`;
   }
   return `${sign}${value.toFixed(0)}`;
@@ -188,7 +191,7 @@ interface ComparisonCardData extends Omit<ModelData, 'aum' | 'id' | 'strategyNam
   totalCostPercent: string;
 }
 
-const PROGRAM_FEE_PERCENT = 0.0020;
+const PROGRAM_FEE_PERCENT = 0.0020; // 0.20%
 
 const parsePercentage = (str: string | null | undefined): number => {
   if (!str || typeof str !== 'string' || str === "N/A") return 0;
@@ -215,8 +218,8 @@ interface MonteCarloSimulationParams {
   simulations: number;
   years: number;
   startValue: number;
-  meanReturn: number;
-  stdDev: number;
+  meanReturn: number; 
+  stdDev: number;    
 }
 
 interface MonteCarloSummary {
@@ -316,7 +319,7 @@ export default function ModelMatrixPage() {
         if (prevSelected.length < 3) {
           return [...prevSelected, managerName];
         }
-        return prevSelected;
+        return prevSelected; // Limit selection to 3
       }
     });
   };
@@ -325,16 +328,36 @@ export default function ModelMatrixPage() {
     return selectedManagerNames.map(managerName => {
       const managerStrategies = modelPerformanceData.filter(model => model.manager === managerName);
       if (managerStrategies.length === 0) {
+        // Should not happen if managerName comes from availableManagers
         return {
           manager: managerName, strategies: ["N/A"], totalAum: 0, feePercent: "N/A", programFeePercent: `${(PROGRAM_FEE_PERCENT * 100).toFixed(2)}%`, totalCostPercent: "N/A", style: "N/A", ytdReturn: "N/A", ytdBenchmark: "N/A", oneYearReturn: "N/A", oneYearBenchmark: "N/A", threeYearReturn: "N/A", threeYearBenchmark: "N/A", fiveYearReturn: "N/A", fiveYearBenchmark: "N/A", sharpeRatio: "N/A", irr: "N/A", beta: "N/A",
         };
       }
       const totalAum = managerStrategies.reduce((sum, strategy) => sum + parseAUM(strategy.aum), 0);
+      // For simplicity, taking metrics from the first strategy of the manager
       const firstStrategy = managerStrategies[0];
       const advisoryFee = parseFee(firstStrategy.feePercent);
       const totalCost = advisoryFee + PROGRAM_FEE_PERCENT;
+
       return {
-        manager: managerName, strategies: managerStrategies.map(s => s.strategyName), totalAum: totalAum, feePercent: firstStrategy.feePercent, programFeePercent: `${(PROGRAM_FEE_PERCENT * 100).toFixed(2)}%`, totalCostPercent: `${(totalCost * 100).toFixed(2)}%`, style: firstStrategy.style, ytdReturn: firstStrategy.ytdReturn, ytdBenchmark: firstStrategy.ytdBenchmark, oneYearReturn: firstStrategy.oneYearReturn, oneYearBenchmark: firstStrategy.oneYearBenchmark, threeYearReturn: firstStrategy.threeYearReturn, threeYearBenchmark: firstStrategy.threeYearBenchmark, fiveYearReturn: firstStrategy.fiveYearReturn, fiveYearBenchmark: firstStrategy.fiveYearBenchmark, sharpeRatio: firstStrategy.sharpeRatio, irr: firstStrategy.irr, beta: firstStrategy.beta,
+        manager: managerName,
+        strategies: managerStrategies.map(s => s.strategyName),
+        totalAum: totalAum,
+        feePercent: firstStrategy.feePercent,
+        programFeePercent: `${(PROGRAM_FEE_PERCENT * 100).toFixed(2)}%`,
+        totalCostPercent: `${(totalCost * 100).toFixed(2)}%`,
+        style: firstStrategy.style,
+        ytdReturn: firstStrategy.ytdReturn,
+        ytdBenchmark: firstStrategy.ytdBenchmark,
+        oneYearReturn: firstStrategy.oneYearReturn,
+        oneYearBenchmark: firstStrategy.oneYearBenchmark,
+        threeYearReturn: firstStrategy.threeYearReturn,
+        threeYearBenchmark: firstStrategy.threeYearBenchmark,
+        fiveYearReturn: firstStrategy.fiveYearReturn,
+        fiveYearBenchmark: firstStrategy.fiveYearBenchmark,
+        sharpeRatio: firstStrategy.sharpeRatio,
+        irr: firstStrategy.irr,
+        beta: firstStrategy.beta,
       };
     });
   }, [selectedManagerNames]);
@@ -348,20 +371,21 @@ export default function ModelMatrixPage() {
 
         if (currentTotalWeight > 100) {
             let overage = currentTotalWeight - 100;
-            
-            const otherManagerIdsSortedByWeight = sandboxSelectedManagers
-                .map(m => m.id)
-                .filter(id => id !== managerId && (updatedWeights[id] || 0) > 0) 
-                .sort((a, b) => (updatedWeights[b] || 0) - (updatedWeights[a] || 0)); 
+            // Attempt to reduce other managers' weights proportionally, starting with the largest
+            const otherManagers = sandboxSelectedManagers.filter(m => m.id !== managerId && (updatedWeights[m.id] || 0) > 0);
+            let totalOtherWeight = otherManagers.reduce((sum, m) => sum + (updatedWeights[m.id] || 0), 0);
 
-            for (const otherId of otherManagerIdsSortedByWeight) {
-                if (overage <= 0) break;
-                const currentOtherWeight = updatedWeights[otherId] || 0;
-                const reduction = Math.min(currentOtherWeight, overage);
-                updatedWeights[otherId] = currentOtherWeight - reduction;
-                overage -= reduction;
+            if (totalOtherWeight > 0) {
+                for (const otherManager of otherManagers) {
+                    const proportion = (updatedWeights[otherManager.id] || 0) / totalOtherWeight;
+                    const reduction = Math.min(overage * proportion, (updatedWeights[otherManager.id] || 0));
+                    updatedWeights[otherManager.id] = (updatedWeights[otherManager.id] || 0) - reduction;
+                    overage -= reduction;
+                    if (overage <= 0.001) break; // Account for floating point inaccuracies
+                }
             }
             
+            // If overage still exists (e.g., other weights were already 0), cap the current manager's weight
             currentTotalWeight = Object.values(updatedWeights).reduce((sum, w) => sum + w, 0);
             if (currentTotalWeight > 100) {
                  updatedWeights[managerId] = Math.max(0, newWeight - (currentTotalWeight - 100));
@@ -409,6 +433,7 @@ export default function ModelMatrixPage() {
 
   const runMonteCarloSimulation = React.useCallback(async () => {
     if (!blendedMetrics || weightError) { 
+        console.warn("Monte Carlo: Blended metrics not ready or weight error exists.");
         return;
     }
     setIsMonteCarloRunning(true);
@@ -466,42 +491,12 @@ export default function ModelMatrixPage() {
     setIsMonteCarloRunning(false);
   }, [blendedMetrics, weightError]); 
 
-  const handleDownloadExcelSummary = async () => {
-    const dataForSheet = modelPerformanceData.map(model => {
-      const row: any = {
-        Manager: model.manager,
-        'Strategy Name': model.strategyName,
-      };
-      if (columnVisibility.aum) row.AUM = model.aum;
-      if (columnVisibility.feePercent) row['Fee %'] = model.feePercent;
-      if (columnVisibility.style) row.Style = model.style;
-      if (columnVisibility.ytdReturn) row['YTD Ret'] = model.ytdReturn;
-      if (columnVisibility.ytdBenchmark) row['YTD Bench'] = model.ytdBenchmark;
-      if (columnVisibility.oneYearReturn) row['1Y Ret'] = model.oneYearReturn;
-      if (columnVisibility.oneYearBenchmark) row['1Y Bench'] = model.oneYearBenchmark;
-      if (columnVisibility.threeYearReturn) row['3Y Ret'] = model.threeYearReturn;
-      if (columnVisibility.threeYearBenchmark) row['3Y Bench'] = model.threeYearBenchmark;
-      if (columnVisibility.fiveYearReturn) row['5Y Ret'] = model.fiveYearReturn;
-      if (columnVisibility.fiveYearBenchmark) row['5Y Bench'] = model.fiveYearBenchmark;
-      if (columnVisibility.sharpeRatio) row['Sharpe'] = model.sharpeRatio;
-      if (columnVisibility.irr) row['IRR'] = model.irr;
-      if (columnVisibility.beta) row['Beta'] = model.beta;
-      return row;
-    });
-
-    const worksheet = XLSX.utils.json_to_sheet(dataForSheet);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "Model Performance");
-    XLSX.writeFile(workbook, "model_performance_summary.xlsx");
-  };
-  
   const handleDownloadMonteCarloReport = async () => {
-    // console.warn("PDF Download: 'jspdf' and 'html2canvas' libraries are required for full feature. Chart image will be skipped if not available.");
-    // if (!monteCarloSummary || !monteCarloData) {
-    //     alert("Monte Carlo data is not available. Please run a simulation first.");
-    //     return;
-    // }
-    
+    console.warn("PDF Download: 'jspdf' and 'html2canvas' libraries are required for full feature. Chart image will be skipped if not available.");
+    if (!monteCarloSummary || !monteCarloData) {
+        alert("Monte Carlo data is not available. Please run a simulation first.");
+        return;
+    }
     // const pdf = new jsPDF("p", "mm", "a4");
     // pdf.setFontSize(18);
     // pdf.text("Monte Carlo Simulation Report", 10, 15);
@@ -542,6 +537,97 @@ export default function ModelMatrixPage() {
     alert("PDF Download functionality is currently disabled because 'jspdf' or 'html2canvas' may not be installed. Please check console for details or install these libraries.");
   };
 
+  const handleDownloadExcelSummary = async () => {
+    const dataForSheet = modelPerformanceData.map(model => {
+      const row: any = {
+        Manager: model.manager,
+        'Strategy Name': model.strategyName,
+      };
+      if (columnVisibility.aum) row.AUM = model.aum;
+      if (columnVisibility.feePercent) row['Fee %'] = model.feePercent;
+      if (columnVisibility.style) row.Style = model.style;
+      if (columnVisibility.ytdReturn) row['YTD Ret'] = model.ytdReturn;
+      if (columnVisibility.ytdBenchmark) row['YTD Bench'] = model.ytdBenchmark;
+      if (columnVisibility.oneYearReturn) row['1Y Ret'] = model.oneYearReturn;
+      if (columnVisibility.oneYearBenchmark) row['1Y Bench'] = model.oneYearBenchmark;
+      if (columnVisibility.threeYearReturn) row['3Y Ret'] = model.threeYearReturn;
+      if (columnVisibility.threeYearBenchmark) row['3Y Bench'] = model.threeYearBenchmark;
+      if (columnVisibility.fiveYearReturn) row['5Y Ret'] = model.fiveYearReturn;
+      if (columnVisibility.fiveYearBenchmark) row['5Y Bench'] = model.fiveYearBenchmark;
+      if (columnVisibility.sharpeRatio) row['Sharpe'] = model.sharpeRatio;
+      if (columnVisibility.irr) row['IRR'] = model.irr;
+      if (columnVisibility.beta) row['Beta'] = model.beta;
+      return row;
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(dataForSheet);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Model Performance");
+    XLSX.writeFile(workbook, "model_performance_summary.xlsx");
+  };
+
+  const handleDownloadComparisonExcel = async () => {
+    if (comparisonCardsData.length === 0) {
+      alert("Please select managers to compare first.");
+      return;
+    }
+
+    const dataForExcel: any[] = [];
+    const metrics: (keyof ComparisonCardData | 'programFeePercent' | 'totalCostPercent')[] = [
+      'strategies', 'totalAum', 'feePercent', 'programFeePercent', 'totalCostPercent', 'style', 
+      'ytdReturn', 'ytdBenchmark', 'oneYearReturn', 'oneYearBenchmark', 
+      'threeYearReturn', 'threeYearBenchmark', 'fiveYearReturn', 'fiveYearBenchmark',
+      'sharpeRatio', 'irr', 'beta'
+    ];
+    const metricLabels: Record<string, string> = {
+      strategies: "Strategy Names", totalAum: "Total AUM", feePercent: "Advisory Fee %", 
+      programFeePercent: "Program Fee %", totalCostPercent: "Total Cost %", style: "Style",
+      ytdReturn: "YTD Return", ytdBenchmark: "YTD Benchmark", oneYearReturn: "1Y Return", oneYearBenchmark: "1Y Benchmark",
+      threeYearReturn: "3Y Return", threeYearBenchmark: "3Y Benchmark", fiveYearReturn: "5Y Return", fiveYearBenchmark: "5Y Benchmark",
+      sharpeRatio: "Sharpe Ratio", irr: "IRR", beta: "Beta"
+    };
+
+    metrics.forEach(metricKey => {
+      const row: any = { Metric: metricLabels[metricKey] || metricKey };
+      comparisonCardsData.forEach(managerData => {
+        const managerColumnName = `Manager: ${managerData.manager}`;
+        if (metricKey === 'strategies' && Array.isArray(managerData[metricKey])) {
+          row[managerColumnName] = (managerData[metricKey] as string[]).join(', ');
+        } else if (metricKey === 'totalAum') {
+          row[managerColumnName] = formatCurrency(managerData[metricKey as keyof ComparisonCardData] as number);
+        } else if (metricKey === 'programFeePercent' || metricKey === 'totalCostPercent' || metricKey === 'feePercent' || metricKey.toLowerCase().includes('return') || metricKey.toLowerCase().includes('irr')) {
+           row[managerColumnName] = managerData[metricKey as keyof ComparisonCardData]; // Already formatted as string like "X.XX%"
+        } else {
+          row[managerColumnName] = managerData[metricKey as keyof ComparisonCardData];
+        }
+      });
+      
+      if (blendedMetrics && !weightError) {
+        const blendedColumnName = "Blended Portfolio";
+        if (metricKey === 'totalAum') row[blendedColumnName] = formatCurrency(blendedMetrics.totalAum);
+        else if (metricKey === 'totalCostPercent') row[blendedColumnName] = formatPercentageDisplay(blendedMetrics.totalCost, 2);
+        else if (metricKey === 'programFeePercent') row[blendedColumnName] = formatPercentageDisplay(PROGRAM_FEE_PERCENT, 2);
+        else if (metricKey.toLowerCase().includes('return') || metricKey.toLowerCase().includes('irr')) row[blendedColumnName] = formatPercentageDisplay(blendedMetrics[metricKey]);
+        else if (metricKey === 'sharpeRatio' || metricKey === 'beta') row[blendedColumnName] = blendedMetrics[metricKey]?.toFixed(2) ?? "N/A";
+        else if (metricKey !== 'strategies' && metricKey !== 'style' && metricKey !== 'feePercent' && metricKey !== 'ytdBenchmark' && metricKey !== 'oneYearBenchmark' && metricKey !== 'threeYearBenchmark' && metricKey !== 'fiveYearBenchmark' ) {
+           row[blendedColumnName] = blendedMetrics[metricKey] ?? "N/A";
+        } else if (metricKey === 'style') {
+           row[blendedColumnName] = "Blended";
+        }
+         else {
+           row[blendedColumnName] = "N/A";
+        }
+      }
+      dataForExcel.push(row);
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(dataForExcel, {skipHeader: false});
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Manager Comparison");
+    XLSX.writeFile(workbook, "manager_comparison_summary.xlsx");
+  };
+  
+
   return (
     <main className="min-h-screen bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#5b21b6]/10 to-[#000104] flex-1 p-6 space-y-8 md:p-8">
       <h1 className="text-3xl font-bold tracking-tight text-foreground mb-8">Model Matrix</h1>
@@ -563,7 +649,7 @@ export default function ModelMatrixPage() {
                   key={managerName} checked={selectedManagerNames.includes(managerName)}
                   onCheckedChange={() => handleManagerSelect(managerName)}
                   disabled={!selectedManagerNames.includes(managerName) && selectedManagerNames.length >= 3}
-                  onSelect={(event) => event.preventDefault()}
+                  onSelect={(event) => event.preventDefault()} 
                 > {managerName} </DropdownMenuCheckboxItem>
               ))}
             </DropdownMenuContent>
@@ -599,7 +685,11 @@ export default function ModelMatrixPage() {
         <div className="mt-6 space-y-4">
             <div className="flex flex-wrap gap-4 items-center"> <p className="text-muted-foreground text-sm">Time Frame:</p> <Button variant="outline" size="sm" disabled>YTD</Button> <Button variant="ghost" size="sm" disabled>1Y</Button> <Button variant="ghost" size="sm" disabled>3Y</Button> <Button variant="ghost" size="sm" disabled>5Y</Button> </div>
             <div className="flex flex-wrap gap-4 items-center"> <p className="text-muted-foreground text-sm">Sort by:</p> <Button variant="outline" size="sm" disabled>Performance</Button> <Button variant="ghost" size="sm" disabled>Fee</Button> <Button variant="ghost" size="sm" disabled>Risk</Button> </div>
-             <div className="flex justify-end mt-4"> <Button variant="outline" disabled> <FileDown className="mr-2 h-4 w-4" /> Download Comparison PDF </Button> </div>
+             <div className="flex justify-end mt-4">
+                <Button variant="outline" onClick={handleDownloadComparisonExcel} disabled={comparisonCardsData.length === 0}>
+                    <Download className="mr-2 h-4 w-4" /> Download Comparison (Excel)
+                </Button>
+            </div>
         </div>
       </PlaceholderCard>
       
@@ -714,7 +804,9 @@ export default function ModelMatrixPage() {
             {monteCarloData && (
                 <div className="mt-6">
                     <h4 className="text-lg font-semibold text-foreground mb-2 text-center">Monte Carlo Simulation Results</h4>
-                    <MonteCarloChart data={monteCarloData} />
+                    <div id="monte-carlo-chart-container"> {/* Ensure this ID is present */}
+                        <MonteCarloChart data={monteCarloData} />
+                    </div>
                     {monteCarloSummary && (
                         <div className="mt-4 text-center text-sm text-muted-foreground space-y-1">
                             <p>
@@ -738,11 +830,11 @@ export default function ModelMatrixPage() {
         <div className="flex justify-end mt-6">
           <Button
             variant="outline"
-            onClick={handleDownloadMonteCarloReport}
-            disabled={true} 
-            title="PDF Download requires 'jspdf' and 'html2canvas' libraries. Please install them to enable this feature."
+            onClick={handleDownloadMonteCarloReport} 
+            disabled={!monteCarloSummary || isMonteCarloRunning}
+            title="Download a PDF summary of the Monte Carlo simulation results."
           >
-            <FileDown className="mr-2 h-4 w-4" /> Download Scenario PDF (Requires Libraries)
+            <FileDown className="mr-2 h-4 w-4" /> Download Scenario PDF
           </Button>
         </div>
       </PlaceholderCard>
