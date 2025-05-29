@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from 'react';
@@ -7,26 +6,28 @@ import { PlaceholderCard } from '@/components/dashboard/placeholder-card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
-import {
-  Brain,
-  Newspaper,
-  Search,
+import { 
+  Landmark, 
+  TrendingUp, 
+  TrendingDown, 
+  Newspaper, 
+  Search, 
   Send,
-  Landmark,
-  TrendingUp,
-  TrendingDown,
+  Brain, 
+  BarChart4,
   AlertCircle,
   Clock,
+  Sparkles,
+  CalendarDays,
   Loader2,
   ArrowUpRight,
   ArrowDownRight,
-  BarChart4,
-  Cpu,
-  CalendarDays,
-  Sparkles
+  Cpu
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from '@/lib/utils';
+import { format, subYears } from 'date-fns';
+import { TickerPriceChart, type PriceHistoryPoint } from '@/components/charts/TickerPriceChart';
 
 interface MarketData {
   label: string;
@@ -72,7 +73,6 @@ const initialMarketOverviewData: MarketData[] = [
   },
 ];
 
-
 const newsData = [
   {
     id: 1,
@@ -115,36 +115,59 @@ interface FetchedIndexData {
   loading?: boolean;
 }
 
+interface TickerFullData {
+  companyName: string;
+  symbol: string;
+  exchange: string;
+  sector: string;
+  industry: string;
+  logo: string;
+  marketCap: string;
+  currentPrice: string;
+  priceChangeAmount: string | null;
+  priceChangePercent: string | null;
+  previousClose: string;
+  openPrice: string;
+  daysRange: string;
+  fiftyTwoWeekRange: string;
+  volume: string;
+  avgVolume: string;
+  peRatio: string;
+  epsTTM: string;
+  dividendYield: string;
+  beta: string;
+  nextEarningsDate: string;
+  dividendDate: string;
+  priceHistory: PriceHistoryPoint[]; 
+  recentNews: any[]; 
+}
+
 interface MarketStatusInfo {
   statusText: string;
   tooltipText: string;
   shadowClass: string;
 }
 
-// Function to fetch index data
 const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
   const apiKey = process.env.NEXT_PUBLIC_POLYGON_API_KEY;
   console.log(`[Polygon API] Attempting to use API key ending with: ...${apiKey ? apiKey.slice(-4) : 'UNDEFINED'} for symbol: ${symbol}`);
 
   if (!apiKey) {
-    const errorMsg = '[Polygon API Error] API Key Missing. NEXT_PUBLIC_POLYGON_API_KEY is not set. Please ensure it is in .env.local and the development server was restarted.';
-    console.error(errorMsg);
-    return { error: errorMsg };
+    console.error("Polygon API key (NEXT_PUBLIC_POLYGON_API_KEY) is not set. Please ensure it's in .env.local and the development server was restarted.");
+    return { error: 'API Key Missing. Configure in .env.local & restart server.' };
   }
 
   try {
     const response = await fetch(`https://api.polygon.io/v2/aggs/ticker/${symbol}/prev?adjusted=true&apiKey=${apiKey}`);
-
+    
     if (!response.ok) {
       let errorMessage = `API Error: ${response.status}`;
       let errorData: any = {};
       try {
         errorData = await response.json();
-        console.log(`[Polygon API Debug] Full error response for ${symbol}:`, errorData);
-
         if (Object.keys(errorData).length === 0 && errorData.constructor === Object) {
             console.warn(`[Polygon API Warn] Received empty JSON error object from Polygon for ${symbol}. Status: ${response.status}.`);
-            errorMessage = `API Error: ${response.status} - Polygon returned an empty error response. Ensure API key is valid and has permissions for ${symbol}.`;
+            errorMessage = `API Error: ${response.status} - Polygon returned an empty error response. This often means the API key is invalid or lacks permissions for ${symbol}.`;
         } else {
             if (errorData && errorData.message) errorMessage = `API Error: ${response.status} - ${errorData.message}`;
             else if (errorData && errorData.error) errorMessage = `API Error: ${response.status} - ${errorData.error}`;
@@ -183,7 +206,7 @@ const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
 export default function DashboardPage() {
   const [marketApiData, setMarketApiData] = React.useState<Record<string, FetchedIndexData>>({});
   const [tickerQuery, setTickerQuery] = React.useState('');
-  const [tickerData, setTickerData] = React.useState<any>(null);
+  const [tickerData, setTickerData] = React.useState<TickerFullData | null>(null);
   const [isLoadingTicker, setIsLoadingTicker] = React.useState(false);
   const [tickerError, setTickerError] = React.useState<string | null>(null);
   const [marketStatuses, setMarketStatuses] = React.useState<Record<string, MarketStatusInfo>>({});
@@ -201,7 +224,7 @@ export default function DashboardPage() {
         setMarketApiData(errorState);
         return;
       }
-      console.log("[Polygon API] Initiating market data fetch.");
+      console.log("[Polygon API] Initiating market data fetch for overview cards.");
 
       const initialApiDataState: Record<string, FetchedIndexData> = {};
       initialMarketOverviewData.forEach(market => {
@@ -220,7 +243,7 @@ export default function DashboardPage() {
         if (result.status === 'fulfilled') {
           newApiData[result.value.symbol] = result.value.data;
         } else {
-          console.error("[Polygon API] Promise rejected unexpectedly in loadMarketData:", result.reason);
+          console.error("[Polygon API] Promise rejected unexpectedly in loadMarketData for overview cards:", result.reason);
         }
       });
       setMarketApiData(prevData => ({ ...prevData, ...newApiData }));
@@ -243,31 +266,28 @@ export default function DashboardPage() {
 
     const apiKey = process.env.NEXT_PUBLIC_POLYGON_API_KEY;
     if (!apiKey) {
-      setTickerError("API Key is missing. Please configure NEXT_PUBLIC_POLYGON_API_KEY.");
+      setTickerError("API Key is missing. Please configure NEXT_PUBLIC_POLYGON_API_KEY in .env.local and restart the server.");
       setIsLoadingTicker(false);
       return;
     }
 
     const symbol = tickerQuery.toUpperCase();
+    const toDate = format(new Date(), 'yyyy-MM-dd');
+    const fromDate = format(subYears(new Date(), 1), 'yyyy-MM-dd');
 
     try {
-      const [detailsRes, prevDayRes] = await Promise.all([
+      const [detailsRes, prevDayRes, historyRes] = await Promise.all([
         fetch(`https://api.polygon.io/v3/reference/tickers/${symbol}?apiKey=${apiKey}`),
-        fetch(`https://api.polygon.io/v2/aggs/ticker/${symbol}/prev?adjusted=true&apiKey=${apiKey}`)
+        fetch(`https://api.polygon.io/v2/aggs/ticker/${symbol}/prev?adjusted=true&apiKey=${apiKey}`),
+        fetch(`https://api.polygon.io/v2/aggs/ticker/${symbol}/range/1/day/${fromDate}/${toDate}?adjusted=true&sort=asc&limit=5000&apiKey=${apiKey}`)
       ]);
 
-      if (!detailsRes.ok && !prevDayRes.ok) {
-        setTickerError(`Ticker ${symbol} not found or API error. (Details: ${detailsRes.status}, PrevDay: ${prevDayRes.status})`);
-        setIsLoadingTicker(false);
-        return;
-      }
-      
       let companyDetails: any = {};
       if (detailsRes.ok) {
         const detailsData = await detailsRes.json();
         companyDetails = detailsData.results || {};
       } else {
-        console.warn(`Failed to fetch details for ${symbol}: ${detailsRes.status}`);
+        console.warn(`Failed to fetch details for ${symbol}: ${detailsRes.status} - ${await detailsRes.text()}`);
       }
 
       let ohlcvData: any = {};
@@ -275,11 +295,25 @@ export default function DashboardPage() {
         const prevDayData = await prevDayRes.json();
         ohlcvData = (prevDayData.results && prevDayData.results.length > 0) ? prevDayData.results[0] : {};
       } else {
-        console.warn(`Failed to fetch previous day OHLCV for ${symbol}: ${prevDayRes.status}`);
+        console.warn(`Failed to fetch previous day OHLCV for ${symbol}: ${prevDayRes.status} - ${await prevDayRes.text()}`);
+      }
+      
+      let priceHistory: PriceHistoryPoint[] = [];
+      if (historyRes.ok) {
+        const historyData = await historyRes.json();
+        if (historyData.results) {
+          priceHistory = historyData.results.map((r: any) => ({
+            date: format(new Date(r.t), 'yyyy-MM-dd'), // Polygon timestamps are in ms
+            close: r.c,
+          }));
+        }
+      } else {
+        console.warn(`Failed to fetch price history for ${symbol}: ${historyRes.status} - ${await historyRes.text()}`);
       }
 
-      if (Object.keys(companyDetails).length === 0 && Object.keys(ohlcvData).length === 0) {
-        setTickerError(`No data found for ticker ${symbol}.`);
+
+      if (Object.keys(companyDetails).length === 0 && Object.keys(ohlcvData).length === 0 && priceHistory.length === 0) {
+        setTickerError(`No data found for ticker ${symbol}. It may be invalid or not supported by your API plan.`);
         setIsLoadingTicker(false);
         return;
       }
@@ -293,7 +327,7 @@ export default function DashboardPage() {
         companyName: companyDetails.name || `${symbol} (Name N/A)`,
         symbol: companyDetails.ticker || symbol,
         exchange: companyDetails.primary_exchange || "N/A",
-        sector: companyDetails.market || "N/A",
+        sector: companyDetails.market_cap_category || companyDetails.market || "N/A",
         industry: companyDetails.sic_description || "N/A",
         logo: companyDetails.branding?.logo_url ? `${companyDetails.branding.logo_url}?apiKey=${apiKey}` : `https://placehold.co/48x48.png?text=${symbol}`,
         marketCap: companyDetails.market_cap ? (companyDetails.market_cap / 1_000_000_000).toFixed(2) + "B" : "N/A",
@@ -303,17 +337,17 @@ export default function DashboardPage() {
         previousClose: typeof ohlcvData.c === 'number' ? ohlcvData.c.toFixed(2) : "N/A",
         openPrice: typeof ohlcvData.o === 'number' ? ohlcvData.o.toFixed(2) : "N/A",
         daysRange: (typeof ohlcvData.l === 'number' && typeof ohlcvData.h === 'number') ? `${ohlcvData.l.toFixed(2)} - ${ohlcvData.h.toFixed(2)}` : "N/A",
-        fiftyTwoWeekRange: "N/A", // Requires different endpoint or calculation
+        fiftyTwoWeekRange: "N/A", 
         volume: typeof ohlcvData.v === 'number' ? ohlcvData.v.toLocaleString() : "N/A",
-        avgVolume: "N/A", // Typically from /v2/aggs/ticker/{ticker}/prev or daily aggregates over time
-        peRatio: "N/A", // Requires financial statements data
-        epsTTM: "N/A", // Requires financial statements data
-        dividendYield: "N/A", // Requires dividend data
-        beta: "N/A", // Requires historical price data and market data
-        nextEarningsDate: "N/A", // Requires earnings calendar data
-        dividendDate: "N/A", // Requires dividend data
-        priceHistory1D: [], // Placeholder
-        recentNews: [], // Placeholder
+        avgVolume: "N/A", 
+        peRatio: "N/A",
+        epsTTM: "N/A", 
+        dividendYield: "N/A",
+        beta: "N/A", 
+        nextEarningsDate: "N/A",
+        dividendDate: "N/A", 
+        priceHistory: priceHistory,
+        recentNews: [], 
       });
 
     } catch (error: any) {
@@ -514,9 +548,7 @@ export default function DashboardPage() {
         </PlaceholderCard>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1 hidden lg:block"> {/* Spacer */} </div>
-        <PlaceholderCard title="Ticker Lookup Tool" icon={Search} className="lg:col-span-3">
+      <PlaceholderCard title="Ticker Lookup Tool" icon={Search} className="lg:col-span-3">
           <div className="flex space-x-2 mb-4">
             <Input
               type="text"
@@ -577,7 +609,7 @@ export default function DashboardPage() {
                 <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
                   <div><strong className="text-muted-foreground">Market Cap:</strong> {tickerData.marketCap}</div>
                   <div><strong className="text-muted-foreground">P/E Ratio (TTM):</strong> {tickerData.peRatio}</div>
-                  <div><strong className="text-muted-foreground">EPS (TTM):</strong> ${tickerData.epsTTM}</div>
+                  <div><strong className="text-muted-foreground">EPS (TTM):</strong> {tickerData.epsTTM}</div>
                   <div><strong className="text-muted-foreground">Div. Yield:</strong> {tickerData.dividendYield}</div>
                   <div><strong className="text-muted-foreground">Beta:</strong> {tickerData.beta}</div>
                 </div>
@@ -590,37 +622,45 @@ export default function DashboardPage() {
                   <div><strong className="text-muted-foreground">Dividend Date:</strong> {tickerData.dividendDate}</div>
                 </div>
               </div>
-
-              <div className="pb-4 border-b border-border/30">
-                <h4 className="text-md font-semibold text-foreground mb-2">1D Price Trend</h4>
-                <div className="h-20 w-full bg-muted/30 rounded-md flex items-center justify-center" data-ai-hint="mini stock chart">
-                  <span className="text-xs text-muted-foreground">Chart Placeholder</span>
-                </div>
+              
+              <div className="pb-4 border-b-border/30">
+                <h4 className="text-md font-semibold text-foreground mb-2">Price History (1 Year)</h4>
+                {tickerData.priceHistory && tickerData.priceHistory.length > 0 ? (
+                  <div className="h-[250px] w-full bg-muted/30 rounded-md" data-ai-hint="stock line chart">
+                     <TickerPriceChart data={tickerData.priceHistory} />
+                  </div>
+                ) : (
+                  <p className="text-xs text-muted-foreground">Price history not available.</p>
+                )}
               </div>
 
               <div>
                 <h4 className="text-md font-semibold text-foreground mb-2">Recent News</h4>
-                <ul className="space-y-2 text-xs">
-                  {tickerData.recentNews.map((newsItem: any) => (
-                    <li key={newsItem.id} className="pb-1 border-b border-border/20 last:border-b-0">
-                      <p className="text-foreground hover:text-primary cursor-pointer">{newsItem.headline}</p>
-                      <p className={cn(
-                        "text-xs",
-                        newsItem.sentiment === 'positive' ? 'text-green-400' :
-                        newsItem.sentiment === 'negative' ? 'text-red-400' :
-                        'text-muted-foreground'
-                      )}>
-                        {newsItem.source} - {newsItem.sentiment}
-                      </p>
-                    </li>
-                  ))}
-                </ul>
+                {tickerData.recentNews && tickerData.recentNews.length > 0 ? (
+                  <ul className="space-y-2 text-xs">
+                    {tickerData.recentNews.map((newsItem: any, index: number) => (
+                      <li key={index} className="pb-1 border-b border-border/20 last:border-b-0">
+                        <a href={newsItem.article_url || '#'} target="_blank" rel="noopener noreferrer" className="text-foreground hover:text-primary cursor-pointer">
+                          {newsItem.title || 'Untitled News'}
+                        </a>
+                        <p className={cn(
+                          "text-xs",
+                           newsItem.sentiment === 'positive' ? 'text-green-400' :
+                           newsItem.sentiment === 'negative' ? 'text-red-400' :
+                           'text-muted-foreground'
+                        )}>
+                          {newsItem.publisher?.name || 'Unknown Source'} - {newsItem.sentiment || 'Neutral'}
+                        </p>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                   <p className="text-xs text-muted-foreground">No recent news available for this ticker.</p>
+                )}
               </div>
             </div>
           )}
         </PlaceholderCard>
-      </div>
     </main>
   );
 }
-
