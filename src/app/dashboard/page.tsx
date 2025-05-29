@@ -22,11 +22,12 @@ import {
   CalendarDays,
   Loader2,
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
+  Brain
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from '@/lib/utils';
-import { format, subYears } from 'date-fns';
+import { format, subYears, formatDistanceToNowStrict, parseISO } from 'date-fns';
 import { TickerPriceChart, type PriceHistoryPoint } from '@/components/charts/TickerPriceChart';
 
 interface MarketData {
@@ -40,7 +41,7 @@ interface MarketData {
 
 const initialMarketOverviewData: MarketData[] = [
   {
-    label: 'S&P 500 (I:SPX)',
+    label: 'S&P 500 (SPX)',
     polygonTicker: 'I:SPX',
     icon: Landmark,
     openTime: '09:30',
@@ -48,7 +49,7 @@ const initialMarketOverviewData: MarketData[] = [
     timezone: 'America/New_York',
   },
   {
-    label: 'Dow 30 (I:DJI)',
+    label: 'Dow 30 (DJI)',
     polygonTicker: 'I:DJI',
     icon: Landmark,
     openTime: '09:30',
@@ -56,7 +57,7 @@ const initialMarketOverviewData: MarketData[] = [
     timezone: 'America/New_York',
   },
   {
-    label: 'Nasdaq (I:IXIC)',
+    label: 'Nasdaq (IXIC)',
     polygonTicker: 'I:IXIC',
     icon: Landmark,
     openTime: '09:30',
@@ -64,7 +65,7 @@ const initialMarketOverviewData: MarketData[] = [
     timezone: 'America/New_York',
   },
   {
-    label: 'Russell 2000 (I:RUT)',
+    label: 'Russell 2000 (RUT)',
     polygonTicker: 'I:RUT',
     icon: Landmark,
     openTime: '09:30',
@@ -73,32 +74,9 @@ const initialMarketOverviewData: MarketData[] = [
   },
 ];
 
-const newsData = [
-  {
-    id: 1,
-    headline: "Global Markets Rally on Positive Inflation Outlook",
-    summary: "Major indices saw significant gains as new inflation data suggests a cooling trend, boosting investor confidence.",
-    timestamp: "2h ago",
-    sentiment: "positive",
-  },
-  {
-    id: 2,
-    headline: "Tech Sector Faces Scrutiny Over New Regulations",
-    summary: "Upcoming regulatory changes are causing uncertainty in the tech industry, with several large-cap stocks experiencing volatility.",
-    timestamp: "5h ago",
-    sentiment: "neutral",
-  },
-  {
-    id: 3,
-    headline: "Oil Prices Surge Amid Geopolitical Tensions",
-    summary: "Crude oil futures jumped over 3% today following new developments in international relations, impacting energy stocks.",
-    timestamp: "1d ago",
-    sentiment: "negative",
-  },
-];
 
-const getNewsSentimentBadgeClass = (sentiment: string) => {
-  switch (sentiment) {
+const getNewsSentimentBadgeClass = (sentiment?: string) => {
+  switch (sentiment?.toLowerCase()) {
     case "positive":
       return "bg-green-500/20 text-green-400 border-green-500/50";
     case "negative":
@@ -151,6 +129,7 @@ interface MarketStatusInfo {
 // Function to fetch index data
 const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
   const apiKey = process.env.NEXT_PUBLIC_POLYGON_API_KEY;
+  // Log to check if the API key is being read, masking most of it for security
   console.log(`[Polygon API] Attempting to use API key ending with: ...${apiKey ? apiKey.slice(-4) : 'UNDEFINED'} for symbol: ${symbol}`);
 
   if (!apiKey) {
@@ -160,25 +139,23 @@ const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
 
   try {
     const response = await fetch(`https://api.polygon.io/v2/aggs/ticker/${symbol}/prev?adjusted=true&apiKey=${apiKey}`);
-    
     if (!response.ok) {
       let errorMessage = `API Error: ${response.status}`;
       let responseText = "";
       try {
         const errorData = await response.json();
-        console.log(`[Polygon API Debug] Raw error response for ${symbol}:`, errorData); 
-
+        // Log the full errorData if available, useful for debugging
         if (Object.keys(errorData).length === 0 && errorData.constructor === Object) {
-            console.warn(`[Polygon API Warn] Received empty JSON error object from Polygon for ${symbol}. Status: ${response.status}. This often means the API key is invalid, lacks permissions for ${symbol}, or the requested ticker is unavailable on your plan.`);
-            errorMessage = `API Error: ${response.status} - Polygon returned an empty error response for ${symbol}. Check API key, permissions, or ticker availability.`;
-            if (response.status === 429) { // Explicitly check for 429
+          console.warn(`[Polygon API Warn] Received empty JSON error object from Polygon for ${symbol}. Status: ${response.status}. This often means the API key is invalid or lacks permissions for ${symbol}.`);
+          errorMessage = `API Error: ${response.status} - Polygon returned an empty error response for ${symbol}. Check API key, permissions, or ticker availability.`;
+           if (response.status === 429) { // Explicitly check for 429
               errorMessage = `API Error: 429 - You've exceeded the maximum requests per minute for ${symbol}, please wait or upgrade your subscription to continue. https://polygon.io/pricing`;
-            }
+           }
         } else {
             if (errorData && errorData.message) errorMessage = `API Error: ${response.status} - ${errorData.message}`;
             else if (errorData && errorData.error) errorMessage = `API Error: ${response.status} - ${errorData.error}`;
             else if (errorData && errorData.request_id) errorMessage = `API Error: ${response.status} (Request ID: ${errorData.request_id})`;
-            else errorMessage = `API Error: ${response.status} - ${response.statusText || 'Unknown error'}`;
+            else errorMessage = `API Error: ${response.status} - ${response.statusText || 'Unknown error from Polygon.'}`;
         }
       } catch (e: any) { 
           try {
@@ -191,7 +168,7 @@ const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
           }
       }
       console.error(`Error fetching ${symbol}: ${errorMessage}`);
-      return { error: errorMessage }; // Return the more detailed message
+      return { error: errorMessage };
     }
     const data = await response.json();
     if (data.results && data.results.length > 0) {
@@ -207,6 +184,46 @@ const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
   }
 };
 
+// Function to fetch news data
+const fetchNewsData = async (): Promise<any[]> => {
+  const apiKey = process.env.NEXT_PUBLIC_POLYGON_API_KEY;
+  if (!apiKey) {
+    console.error("Polygon API key for news is not set.");
+    throw new Error("API Key for news missing.");
+  }
+  const url = `https://api.polygon.io/v2/reference/news?order=desc&limit=5&sort=published_utc&apiKey=${apiKey}`;
+  console.log(`Fetching news from: ${url.replace(apiKey, '******' + apiKey.slice(-4))}`);
+
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      let errorMessage = `News API Error: ${response.status}`;
+      try {
+        const errorData = await response.json();
+        if (Object.keys(errorData).length === 0 && errorData.constructor === Object) {
+          errorMessage = `News API Error: ${response.status} - Polygon returned an empty error response. Check API key/permissions.`;
+        } else if (errorData.message) {
+          errorMessage += ` - ${errorData.message}`;
+        } else if (errorData.error) {
+          errorMessage += ` - ${errorData.error}`;
+        } else {
+          errorMessage += ` - ${response.statusText}`;
+        }
+      } catch (e) {
+         errorMessage += ` - ${response.statusText || 'Failed to parse error JSON.'}`;
+      }
+      console.error(errorMessage);
+      throw new Error(errorMessage);
+    }
+    const data = await response.json();
+    return data.results || [];
+  } catch (error: any) {
+    console.error("Failed to fetch news data:", error.message);
+    throw error; // Re-throw to be caught by calling useEffect
+  }
+};
+
+
 export default function DashboardPage() {
   const [marketApiData, setMarketApiData] = React.useState<Record<string, FetchedIndexData>>({});
   const [tickerQuery, setTickerQuery] = React.useState('');
@@ -215,6 +232,11 @@ export default function DashboardPage() {
   const [tickerError, setTickerError] = React.useState<string | null>(null);
   const [marketStatuses, setMarketStatuses] = React.useState<Record<string, MarketStatusInfo>>({});
   const [currentTimeEST, setCurrentTimeEST] = React.useState<string>('Loading...');
+  
+  const [newsData, setNewsData] = React.useState<any[]>([]);
+  const [isLoadingNews, setIsLoadingNews] = React.useState(true);
+  const [newsError, setNewsError] = React.useState<string | null>(null);
+
 
   React.useEffect(() => {
     const loadMarketData = async () => {
@@ -223,7 +245,7 @@ export default function DashboardPage() {
         console.warn("[Polygon API] CRITICAL: NEXT_PUBLIC_POLYGON_API_KEY is not defined in the environment. Market data will not be fetched. Ensure .env.local is set and the dev server was restarted.");
         const errorState: Record<string, FetchedIndexData> = {};
         initialMarketOverviewData.forEach(market => {
-          errorState[market.polygonTicker] = { error: 'API Key Missing. Configure in .env.local & restart server.' };
+          errorState[market.polygonTicker] = { error: 'API Key Missing. Check .env.local & restart server.' };
         });
         setMarketApiData(errorState);
         return;
@@ -248,14 +270,26 @@ export default function DashboardPage() {
           newApiData[result.value.symbol] = result.value.data;
         } else {
           console.error("[Polygon API] Promise rejected unexpectedly in loadMarketData for overview cards:", result.reason);
-          // Potentially set an error state for the specific symbol if result.reason contains it
-          // This part might need adjustment if result.reason is not structured as expected
-          // For now, the fetchIndexData itself handles setting the error for its specific symbol.
         }
       });
       setMarketApiData(prevData => ({ ...prevData, ...newApiData }));
     };
+
+    const loadNews = async () => {
+      setIsLoadingNews(true);
+      setNewsError(null);
+      try {
+        const fetchedNews = await fetchNewsData();
+        setNewsData(fetchedNews);
+      } catch (error: any) {
+        setNewsError(error.message || "Failed to load news.");
+      } finally {
+        setIsLoadingNews(false);
+      }
+    };
+
     loadMarketData();
+    loadNews();
   }, []);
 
   const calculateChangePercent = (currentPrice?: number, openPrice?: number) => {
@@ -326,10 +360,12 @@ export default function DashboardPage() {
       }
 
       if (Object.keys(companyDetails).length === 0 && Object.keys(ohlcvData).length === 0) {
-        let combinedError = `No data found for ticker ${symbol}.`;
-        const apiErrors = [detailsError, prevDayError, historyError].filter(Boolean).join(', ');
-        if (apiErrors) {
-            combinedError += ` API Issues: ${apiErrors}`;
+        let combinedError = `No data found for ticker ${symbol}. `;
+        if (detailsRes.status === 404 && prevDayRes.status === 404) {
+          combinedError = `Ticker symbol "${symbol}" not found. Please check the symbol and try again.`;
+        } else {
+            const apiErrors = [detailsError, prevDayError, historyError].filter(Boolean).join(', ');
+            if (apiErrors) combinedError += ` API Issues: ${apiErrors}`;
         }
         setTickerError(combinedError);
         setIsLoadingTicker(false);
@@ -347,25 +383,25 @@ export default function DashboardPage() {
         exchange: companyDetails.primary_exchange || "N/A",
         sector: companyDetails.sic_description || "N/A", 
         industry: companyDetails.sic_description || "N/A", 
-        logo: companyDetails.branding?.logo_url ? `${companyDetails.branding.logo_url}?apiKey=${apiKey}` : `https://placehold.co/48x48.png?text=${symbol}`,
+        logo: companyDetails.branding?.logo_url ? `${companyDetails.branding.logo_url}?apiKey=${apiKey}` : `https://placehold.co/48x48.png?text=${symbol.substring(0,3)}`,
         marketCap: companyDetails.market_cap ? (companyDetails.market_cap / 1_000_000_000).toFixed(2) + "B" : "N/A",
         currentPrice: typeof currentPrice === 'number' ? currentPrice.toFixed(2) : "N/A",
         priceChangeAmount: typeof priceChangeAmount === 'number' ? priceChangeAmount.toFixed(2) : "N/A",
         priceChangePercent: typeof priceChangePercent === 'number' ? priceChangePercent.toFixed(2) : "N/A",
-        previousClose: typeof ohlcvData.c === 'number' ? ohlcvData.c.toFixed(2) : "N/A", // Previous day's close
-        openPrice: typeof ohlcvData.o === 'number' ? ohlcvData.o.toFixed(2) : "N/A", // Previous day's open
-        daysRange: (typeof ohlcvData.l === 'number' && typeof ohlcvData.h === 'number') ? `${ohlcvData.l.toFixed(2)} - ${ohlcvData.h.toFixed(2)}` : "N/A", // Previous day's range
-        fiftyTwoWeekRange: "N/A", // Requires different endpoint or calculation
-        volume: typeof ohlcvData.v === 'number' ? ohlcvData.v.toLocaleString() : "N/A", // Previous day's volume
-        avgVolume: "N/A", // Requires different endpoint or calculation
-        peRatio: "N/A", // Requires different endpoint
-        epsTTM: "N/A", // Requires different endpoint
-        dividendYield: "N/A", // Requires different endpoint
-        beta: "N/A", // Requires different endpoint
-        nextEarningsDate: "N/A", // Requires different endpoint
-        dividendDate: "N/A", // Requires different endpoint
+        previousClose: typeof ohlcvData.c === 'number' ? ohlcvData.c.toFixed(2) : "N/A", 
+        openPrice: typeof ohlcvData.o === 'number' ? ohlcvData.o.toFixed(2) : "N/A", 
+        daysRange: (typeof ohlcvData.l === 'number' && typeof ohlcvData.h === 'number') ? `${ohlcvData.l.toFixed(2)} - ${ohlcvData.h.toFixed(2)}` : "N/A", 
+        fiftyTwoWeekRange: "N/A", 
+        volume: typeof ohlcvData.v === 'number' ? ohlcvData.v.toLocaleString() : "N/A", 
+        avgVolume: "N/A", 
+        peRatio: "N/A", 
+        epsTTM: "N/A", 
+        dividendYield: "N/A", 
+        beta: "N/A", 
+        nextEarningsDate: "N/A", 
+        dividendDate: "N/A", 
         priceHistory: priceHistoryPoints,
-        recentNews: [], // Placeholder, requires news API
+        recentNews: [], 
       });
 
     } catch (error: any) {
@@ -560,20 +596,49 @@ export default function DashboardPage() {
           </p>
         </PlaceholderCard>
         <PlaceholderCard title="Top News Stories" icon={Newspaper} className="lg:col-span-2 h-full">
-          <ul className="space-y-4">
-            {newsData.map((news) => (
-              <li key={news.id} className="pb-3 border-b border-border/30 last:border-b-0 last:pb-0">
-                <div className="flex items-center justify-between mb-1">
-                  <h4 className="text-base font-semibold text-foreground">{news.headline}</h4>
-                  <Badge variant="outline" className={cn("text-xs", getNewsSentimentBadgeClass(news.sentiment))}>
-                    {news.sentiment}
-                  </Badge>
-                </div>
-                <p className="text-xs text-muted-foreground mb-1">{news.summary}</p>
-                <p className="text-xs text-muted-foreground/70">{news.timestamp}</p>
-              </li>
-            ))}
-          </ul>
+          {isLoadingNews && (
+            <div className="flex items-center justify-center h-32">
+              <Loader2 className="w-6 h-6 animate-spin text-primary" />
+            </div>
+          )}
+          {newsError && (
+            <div className="flex flex-col items-center justify-center h-32 text-red-400">
+              <AlertCircle className="w-8 h-8 mb-2" />
+              <p className="text-sm">{newsError}</p>
+            </div>
+          )}
+          {!isLoadingNews && !newsError && newsData.length === 0 && (
+            <p className="text-muted-foreground text-center py-4">No news available.</p>
+          )}
+          {!isLoadingNews && !newsError && newsData.length > 0 && (
+            <ul className="space-y-4">
+              {newsData.map((item) => (
+                <li key={item.id || item.article_url} className="pb-3 border-b border-border/30 last:border-b-0 last:pb-0">
+                  <div className="flex items-center justify-between mb-1">
+                    <a 
+                      href={item.article_url} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-base font-semibold text-foreground hover:text-primary transition-colors truncate"
+                      title={item.title}
+                    >
+                      {item.title}
+                    </a>
+                    {item.sentiment && (
+                      <Badge variant="outline" className={cn("text-xs whitespace-nowrap ml-2", getNewsSentimentBadgeClass(item.sentiment))}>
+                        {item.sentiment.charAt(0).toUpperCase() + item.sentiment.slice(1)}
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-xs text-muted-foreground mb-1 line-clamp-2" title={item.description}>{item.description}</p>
+                  <div className="flex justify-between items-center text-xs text-muted-foreground/70">
+                    <span>{item.publisher?.name || 'Unknown Source'}</span>
+                    <span>{formatDistanceToNowStrict(parseISO(item.published_utc), { addSuffix: true })}</span>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          )}
         </PlaceholderCard>
       </div>
       
@@ -597,9 +662,10 @@ export default function DashboardPage() {
           
           {tickerData && !isLoadingTicker && (
             <div className="w-full">
+              {/* Primary Ticker Info - Centered */}
               <div className="w-full p-4 md:p-6 flex flex-col items-center text-center">
                 <div className="flex items-center gap-4 mb-3">
-                  <Image src={tickerData.logo} alt={`${tickerData.companyName} logo`} width={48} height={48} className="rounded-md bg-muted p-1 object-contain" data-ai-hint={`${tickerData.symbol} logo`}/>
+                  <Image src={tickerData.logo} alt={`${tickerData.companyName} logo`} width={48} height={48} className="rounded-full bg-muted p-1 object-contain" data-ai-hint={`${tickerData.symbol} logo`}/>
                   <h3 className="text-2xl font-bold text-foreground">{tickerData.companyName}</h3>
                 </div>
                 <p className="text-lg text-muted-foreground mb-3">
@@ -622,6 +688,7 @@ export default function DashboardPage() {
                 </div>
               </div>
 
+              {/* Valuation Metrics */}
               <div className="w-full pt-4 mt-4 border-t border-border/30">
                  <h4 className="text-md font-semibold text-foreground mb-2 text-center">Valuation Metrics</h4>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2 text-xs text-center md:text-left">
@@ -637,6 +704,7 @@ export default function DashboardPage() {
                 </div>
               </div>
 
+              {/* Key Dates */}
               <div className="w-full pt-4 mt-4 border-t border-border/30">
                 <h4 className="text-md font-semibold text-foreground mb-2 text-center">Key Dates</h4>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-center md:text-left">
@@ -645,6 +713,7 @@ export default function DashboardPage() {
                 </div>
               </div>
               
+              {/* Price History Chart */}
               <div className="w-full pt-4 mt-4 border-t border-border/30">
                 <h4 className="text-md font-semibold text-foreground mb-2 text-center">Price History (1 Year)</h4>
                 {tickerData.priceHistory && tickerData.priceHistory.length > 0 ? (
@@ -656,6 +725,7 @@ export default function DashboardPage() {
                 )}
               </div>
 
+              {/* Recent News (Placeholder) */}
               <div className="w-full pt-4 mt-4 border-t border-border/30">
                 <h4 className="text-md font-semibold text-foreground mb-2 text-center">Recent News</h4>
                 {tickerData.recentNews && tickerData.recentNews.length > 0 ? (
@@ -687,6 +757,3 @@ export default function DashboardPage() {
     </main>
   );
 }
-
-
-    
