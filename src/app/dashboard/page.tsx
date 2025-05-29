@@ -55,7 +55,7 @@ const initialMarketOverviewData: MarketData[] = [
     timezone: 'America/New_York',
   },
   {
-    label: 'Google (GOOGL)', 
+    label: 'Google (GOOGL)',
     polygonTicker: 'GOOGL',
     icon: Landmark,
     openTime: '09:30',
@@ -63,7 +63,7 @@ const initialMarketOverviewData: MarketData[] = [
     timezone: 'America/New_York',
   },
   {
-    label: 'Tesla (TSLA)', 
+    label: 'Tesla (TSLA)',
     polygonTicker: 'TSLA',
     icon: Landmark,
     openTime: '09:30',
@@ -121,12 +121,14 @@ interface MarketStatusInfo {
   shadowClass: string;
 }
 
+// Function to fetch index data
 const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
   const apiKey = process.env.NEXT_PUBLIC_POLYGON_API_KEY;
+  // Log to check if the API key is being read, masking most of it for security
   console.log(`[Polygon API] Attempting to use API key ending with: ...${apiKey ? apiKey.slice(-4) : 'UNDEFINED'} for symbol: ${symbol}`);
 
   if (!apiKey) {
-    const errorMsg = 'API Key Missing. Configure NEXT_PUBLIC_POLYGON_API_KEY in .env.local & restart server.';
+    const errorMsg = 'Polygon API key (NEXT_PUBLIC_POLYGON_API_KEY) is not set. Please ensure it is in .env.local and the development server was restarted.';
     console.error(`[Polygon API Error] ${errorMsg}`);
     return { error: errorMsg };
   }
@@ -136,14 +138,16 @@ const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
 
     if (!response.ok) {
       let errorMessage = `API Error: ${response.status}`;
-      let errorData: any = {};
+      let errorData: any = {}; // Initialize errorData as an empty object
+
       try {
         errorData = await response.json();
+        // Log the full errorData if available
+        console.log(`[Polygon API Debug] Full error response for ${symbol}:`, errorData);
         if (Object.keys(errorData).length === 0 && errorData.constructor === Object) {
             console.warn(`[Polygon API Warn] Received empty JSON error object from Polygon for ${symbol}. Status: ${response.status}.`);
             errorMessage = `API Error: ${response.status} - Polygon returned an empty error response. Ensure API key is valid and has permissions for ${symbol}.`;
         } else {
-            console.log(`[Polygon API Debug] Full error response for ${symbol}:`, errorData);
             if (errorData && errorData.message) errorMessage = `API Error: ${response.status} - ${errorData.message}`;
             else if (errorData && errorData.error) errorMessage = `API Error: ${response.status} - ${errorData.error}`;
             else if (errorData && errorData.request_id) errorMessage = `API Error: ${response.status} (Request ID: ${errorData.request_id})`;
@@ -152,6 +156,7 @@ const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
             }
         }
       } catch (e) {
+        // If response.json() fails, try to read as text
         try {
             const textError = await response.text();
             console.warn(`[Polygon API Warn] Could not parse JSON error response for ${symbol}. Status: ${response.status}. Response text snippet:`, textError.substring(0, 200) + (textError.length > 200 ? '...' : ''));
@@ -218,10 +223,8 @@ export default function DashboardPage() {
           newApiData[result.value.symbol] = result.value.data;
         } else {
           console.error("[Polygon API] Promise rejected unexpectedly in loadMarketData:", result.reason);
-           const failedMarket = initialMarketOverviewData.find(m => promises.findIndex(p => p === result.reason) !== -1);
-           if (failedMarket) {
-             newApiData[failedMarket.polygonTicker] = { error: 'Fetch failed' };
-           }
+           // Try to find which symbol failed from the reason or the promise array if possible
+           // For simplicity here, we are not re-finding the symbol, but in a more complex app you might
         }
       });
       setMarketApiData(prevData => ({ ...prevData, ...newApiData }));
@@ -288,7 +291,7 @@ export default function DashboardPage() {
         const estFormatter = new Intl.DateTimeFormat('en-US', {
           hour: 'numeric',
           minute: 'numeric',
-          hour12: false, 
+          hour12: false,
           timeZone: 'America/New_York',
         });
         const parts = estFormatter.formatToParts(now);
@@ -298,13 +301,13 @@ export default function DashboardPage() {
         });
       } catch (e) {
         console.error("Error formatting EST time, defaulting to local time for logic:", e);
-        const localNow = new Date(); 
+        const localNow = new Date();
         currentHourEST = localNow.getHours();
         currentMinuteEST = localNow.getMinutes();
       }
       
       const todayForLogic = new Date(now.toLocaleString('en-US', {timeZone: 'America/New_York'}));
-      todayForLogic.setHours(0,0,0,0); 
+      todayForLogic.setHours(0,0,0,0);
 
 
       initialMarketOverviewData.forEach(market => {
@@ -322,7 +325,7 @@ export default function DashboardPage() {
             nowInEstEquivalentForLogic.setHours(currentHourEST, currentMinuteEST, 0, 0);
 
 
-            const isCurrentlyOpen = 
+            const isCurrentlyOpen =
                 nowInEstEquivalentForLogic >= marketOpenTime &&
                 nowInEstEquivalentForLogic < marketCloseTime;
 
@@ -357,7 +360,7 @@ export default function DashboardPage() {
         try {
             setCurrentTimeEST(new Date().toLocaleTimeString('en-US', { timeZone: 'America/New_York', hour: '2-digit', minute: '2-digit', second:'2-digit' }));
         } catch (e) {
-            setCurrentTimeEST(new Date().toLocaleTimeString()); 
+            setCurrentTimeEST(new Date().toLocaleTimeString());
         }
     }, 1000);
 
@@ -369,7 +372,7 @@ export default function DashboardPage() {
 
 
   return (
-    <main className="min-h-screen flex-1 space-y-8 p-6 md:p-8">
+    <main className="min-h-screen bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#5b21b6]/10 to-[#000104] flex-1 p-6 space-y-8 md:p-8">
       <h1 className="text-3xl font-bold tracking-tight text-foreground">
         Welcome Josh!
       </h1>
@@ -407,12 +410,12 @@ export default function DashboardPage() {
             }
 
             return (
-              <PlaceholderCard 
-                key={market.polygonTicker} 
-                title={market.label} 
+              <PlaceholderCard
+                key={market.polygonTicker}
+                title={market.label}
                 icon={market.icon || Landmark}
                 className={cn(
-                  "transition-all duration-300 ease-in-out", 
+                  "transition-all duration-300 ease-in-out",
                   statusInfo.shadowClass
                 )}
               >
@@ -467,8 +470,8 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1 hidden lg:block"> {/* Spacer */} </div>
-        <PlaceholderCard title="Ticker Lookup Tool" icon={Search} className="lg:col-span-2">
+         <div className="lg:col-span-1 hidden lg:block"> {/* Spacer */} </div>
+        <PlaceholderCard title="Ticker Lookup Tool" icon={Search} className="lg:col-span-3">
           <div className="flex space-x-2 mb-4">
             <Input
               type="text"
@@ -572,4 +575,5 @@ export default function DashboardPage() {
     </main>
   );
 }
+
 
