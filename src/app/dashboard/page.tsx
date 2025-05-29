@@ -15,19 +15,16 @@ import {
   Search, 
   Send,
   Brain, 
-  BarChart4,
   AlertCircle,
   Clock,
-  Sparkles,
-  CalendarDays,
+  Cpu,
   Loader2,
   ArrowUpRight,
-  ArrowDownRight,
-  Cpu, // Added for AI/Market Narrative
+  ArrowDownRight
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from '@/lib/utils';
-import { format, subYears, formatDistanceToNowStrict, parseISO } from 'date-fns';
+import { format, subYears, formatDistanceToNowStrict, parseISO, startOfYear, isWithinInterval, subDays, subMonths, endOfDay, startOfDay } from 'date-fns';
 import { TickerPriceChart, type PriceHistoryPoint } from '@/components/charts/TickerPriceChart';
 
 interface MarketData {
@@ -40,7 +37,7 @@ interface MarketData {
 }
 
 const initialMarketOverviewData: MarketData[] = [
-  {
+ {
     label: 'S&P 500 (SPX)',
     polygonTicker: 'I:SPX',
     icon: Landmark,
@@ -74,17 +71,6 @@ const initialMarketOverviewData: MarketData[] = [
   },
 ];
 
-const getNewsSentimentBadgeClass = (sentiment?: string) => {
-  switch (sentiment?.toLowerCase()) {
-    case "positive":
-      return "bg-green-500/20 text-green-400 border-green-500/50";
-    case "negative":
-      return "bg-red-500/20 text-red-400 border-red-500/50";
-    default:
-      return "bg-gray-500/20 text-gray-400 border-gray-500/50";
-  }
-};
-
 interface FetchedIndexData {
   c?: number; // Close price
   o?: number; // Open price
@@ -92,30 +78,37 @@ interface FetchedIndexData {
   loading?: boolean;
 }
 
+interface TickerCompanyDetails {
+  name?: string;
+  ticker?: string;
+  primary_exchange?: string;
+  // sic_description?: string; 
+  // branding?: { logo_url?: string };
+  // market_cap?: number;
+}
+
+interface TickerPrevDayData {
+  c?: number; // Close
+  o?: number; // Open
+  // h?: number; // High
+  // l?: number; // Low
+  // v?: number; // Volume
+}
 interface TickerFullData {
   companyName: string;
-  symbol: string;
-  exchange: string;
-  sector: string;
-  industry: string;
-  logo: string;
-  marketCap: string;
+  // symbol: string;
+  // exchange: string;
+  // sector: string;
+  // industry: string;
+  // logo: string;
+  // marketCap: string;
   currentPrice: string;
   priceChangeAmount: string | null;
   priceChangePercent: string | null;
-  previousClose: string;
-  openPrice: string;
-  daysRange: string;
-  fiftyTwoWeekRange: string;
-  volume: string;
-  avgVolume: string;
-  peRatio: string;
-  epsTTM: string;
-  dividendYield: string;
-  beta: string;
-  nextEarningsDate: string;
-  dividendDate: string;
-  priceHistory: PriceHistoryPoint[]; 
+  // previousClose: string;
+  // openPrice: string;
+  // daysRange: string;
+  fullPriceHistory: PriceHistoryPoint[]; 
 }
 
 interface MarketStatusInfo {
@@ -129,7 +122,7 @@ const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
   console.log(`[Polygon API] Attempting to use API key ending with: ...${apiKey ? apiKey.slice(-4) : 'UNDEFINED'} for symbol: ${symbol}`);
 
   if (!apiKey) {
-    console.error("Polygon API key (NEXT_PUBLIC_POLYGON_API_KEY) is not set. Please ensure it's in .env.local and the dev server was restarted.");
+    console.warn("Polygon API key (NEXT_PUBLIC_POLYGON_API_KEY) is not set. UI will show API Key Missing error.");
     return { error: 'API Key Missing. Configure in .env.local & restart server.' };
   }
 
@@ -142,12 +135,9 @@ const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
         const errorData = await response.json();
         console.log(`[Polygon API Debug] Raw error response for ${symbol}:`, errorData); 
         if (Object.keys(errorData).length === 0 && errorData.constructor === Object) {
-           const specificMessage = `Polygon returned an empty error response for ${symbol}. Check API key, permissions, or ticker availability.`;
-           console.warn(`[Polygon API Warn] ${specificMessage} Status: ${response.status}.`);
+           const specificMessage = `Polygon returned an empty error response for ${symbol}. Check API key, permissions, or ticker availability. Status: ${response.status}.`;
+           console.warn(`[Polygon API Warn] ${specificMessage}`);
            errorMessage = `API Error: ${response.status} - ${specificMessage}`;
-           if (response.status === 429) { 
-              errorMessage = `API Error: 429 - You've exceeded the maximum requests per minute for ${symbol}, please wait or upgrade your subscription to continue. https://polygon.io/pricing`;
-           }
         } else if (errorData && errorData.message) {
           errorMessage = `API Error: ${response.status} - ${errorData.message}`;
         } else if (errorData && errorData.error) {
@@ -171,6 +161,9 @@ const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
             errorMessage = `API Error: ${response.status} - ${response.statusText || 'Unknown error structure and failed to read response text.'}`;
           }
       }
+      if (response.status === 429) {
+        errorMessage = `API Error: 429 - You've exceeded the maximum requests per minute for ${symbol}, please wait or upgrade your subscription to continue. https://polygon.io/pricing`;
+      }
       console.error(`Error fetching ${symbol}: ${errorMessage}`);
       return { error: errorMessage };
     }
@@ -188,6 +181,17 @@ const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
   }
 };
 
+const getNewsSentimentBadgeClass = (sentiment?: string) => {
+  switch (sentiment?.toLowerCase()) {
+    case "positive":
+      return "bg-green-500/20 text-green-400 border-green-500/50";
+    case "negative":
+      return "bg-red-500/20 text-red-400 border-red-500/50";
+    default:
+      return "bg-gray-500/20 text-gray-400 border-gray-500/50";
+  }
+};
+
 const fetchNewsData = async (): Promise<any[]> => {
   const apiKey = process.env.NEXT_PUBLIC_POLYGON_API_KEY;
   if (!apiKey) {
@@ -195,7 +199,6 @@ const fetchNewsData = async (): Promise<any[]> => {
     throw new Error("API Key for news missing. Configure in .env.local.");
   }
   const url = `https://api.polygon.io/v2/reference/news?order=desc&limit=5&sort=published_utc&apiKey=${apiKey}`;
-  // console.log(`[Polygon API] Fetching news from: ${url.replace(apiKey, '******' + apiKey.slice(-4))}`);
 
   try {
     const response = await fetch(url);
@@ -209,8 +212,12 @@ const fetchNewsData = async (): Promise<any[]> => {
           errorMessage += ` - ${errorData.message}`;
         } else if (errorData.error) {
           errorMessage += ` - ${errorData.error}`;
-        } else {
-          errorMessage += ` - ${response.statusText}`;
+        } else if (errorData.request_id) {
+          errorMessage += ` (Request ID: ${errorData.request_id})`;
+        }
+         else {
+          const responseText = await response.text();
+          errorMessage += ` - ${responseText.substring(0, 100) || response.statusText}`;
         }
       } catch (e) {
          errorMessage += ` - ${response.statusText || 'Failed to parse error JSON.'}`;
@@ -240,6 +247,9 @@ export default function DashboardPage() {
   const [isLoadingNews, setIsLoadingNews] = React.useState(true);
   const [newsError, setNewsError] = React.useState<string | null>(null);
 
+  const [selectedRange, setSelectedRange] = React.useState<string>('1Y');
+  const [chartData, setChartData] = React.useState<PriceHistoryPoint[]>([]);
+
 
   React.useEffect(() => {
     const loadMarketData = async () => {
@@ -253,7 +263,6 @@ export default function DashboardPage() {
         setMarketApiData(errorState);
         return;
       }
-      // console.log("[Polygon API] Initiating market data fetch for overview cards.");
 
       const initialApiDataState: Record<string, FetchedIndexData> = {};
       initialMarketOverviewData.forEach(market => {
@@ -302,11 +311,49 @@ export default function DashboardPage() {
     return ((currentPrice - openPrice) / openPrice) * 100;
   };
 
+  const getChartDataForRange = (fullHistory: PriceHistoryPoint[], range: string): PriceHistoryPoint[] => {
+    if (!fullHistory || fullHistory.length === 0) return [];
+    const today = endOfDay(new Date()); // Use end of today for YTD consistency
+
+    switch (range) {
+      case '1D':
+        // For 1D, we might want the last 2 data points to draw a line.
+        // If data is daily, this might just be the last point, or last two if available.
+        // This logic might need refinement based on actual data granularity.
+        return fullHistory.slice(-2); 
+      case '1W':
+        // For 1W, take the last 7 calendar days worth of data points.
+        const oneWeekAgo = startOfDay(subDays(today, 6)); // 7 days including today
+        return fullHistory.filter(point => parseISO(point.date) >= oneWeekAgo);
+      case '1M':
+        const oneMonthAgo = startOfDay(subMonths(today, 1));
+        return fullHistory.filter(point => parseISO(point.date) >= oneMonthAgo);
+      case '3M':
+        const threeMonthsAgo = startOfDay(subMonths(today, 3));
+        return fullHistory.filter(point => parseISO(point.date) >= threeMonthsAgo);
+      case 'YTD':
+        const startOfTheYear = startOfYear(today);
+        return fullHistory.filter(point => parseISO(point.date) >= startOfTheYear);
+      case '1Y':
+      default:
+        return fullHistory; // Already fetched for 1 year
+    }
+  };
+
+
+  React.useEffect(() => {
+    if (tickerData?.fullPriceHistory) {
+      setChartData(getChartDataForRange(tickerData.fullPriceHistory, selectedRange));
+    }
+  }, [tickerData?.fullPriceHistory, selectedRange]);
+
+
   const handleTickerLookup = async () => {
     if (!tickerQuery.trim()) return;
     setIsLoadingTicker(true);
     setTickerData(null);
     setTickerError(null);
+    setSelectedRange('1Y'); 
 
     const apiKey = process.env.NEXT_PUBLIC_POLYGON_API_KEY;
     if (!apiKey) {
@@ -320,105 +367,90 @@ export default function DashboardPage() {
     const fromDate = format(subYears(new Date(), 1), 'yyyy-MM-dd');
 
     try {
-      console.log(`[Ticker Lookup] Fetching details for ${symbol} using API key: ******${apiKey.slice(-4)}`);
+      console.log(`[Polygon API] Ticker Lookup: Fetching details for ${symbol} using API key: ******${apiKey.slice(-4)}`);
+      
       const [detailsRes, prevDayRes, historyRes] = await Promise.all([
         fetch(`https://api.polygon.io/v3/reference/tickers/${symbol}?apiKey=${apiKey}`),
         fetch(`https://api.polygon.io/v2/aggs/ticker/${symbol}/prev?adjusted=true&apiKey=${apiKey}`),
         fetch(`https://api.polygon.io/v2/aggs/ticker/${symbol}/range/1/day/${fromDate}/${toDate}?adjusted=true&sort=asc&limit=5000&apiKey=${apiKey}`)
       ]);
 
-      let companyDetails: any = {};
-      let detailsError: string | null = null;
+      let companyDetails: TickerCompanyDetails = {};
+      let prevDayData: TickerPrevDayData = {};
+      let priceHistoryPoints: PriceHistoryPoint[] = [];
+      let fetchErrors: string[] = [];
+
       if (detailsRes.ok) {
         const detailsData = await detailsRes.json();
         companyDetails = detailsData.results || {};
       } else {
         const errorText = await detailsRes.text();
-        detailsError = `Details: ${detailsRes.statusText || detailsRes.status} - ${errorText.substring(0,100)}`;
-        console.warn(`[Ticker Lookup] Failed to fetch details for ${symbol}: ${detailsRes.status} - ${errorText}`);
+        fetchErrors.push(`Details: ${detailsRes.status} - ${errorText.substring(0,100)}`);
+        console.warn(`[Polygon API Ticker Lookup] Failed to fetch details for ${symbol}: ${detailsRes.status} - ${errorText}`);
       }
 
-      let ohlcvData: any = {};
-      let prevDayError: string | null = null;
       if (prevDayRes.ok) {
-        const prevDayData = await prevDayRes.json();
-        ohlcvData = (prevDayData.results && prevDayData.results.length > 0) ? prevDayData.results[0] : {};
+        const prevDayJson = await prevDayRes.json();
+        prevDayData = (prevDayJson.results && prevDayJson.results.length > 0) ? prevDayJson.results[0] : {};
       } else {
-        const errorText = await prevDayRes.text();
-        prevDayError = `Prev. Day: ${prevDayRes.statusText || prevDayRes.status} - ${errorText.substring(0,100)}`;
-        console.warn(`[Ticker Lookup] Failed to fetch previous day OHLCV for ${symbol}: ${prevDayRes.status} - ${errorText}`);
+         const errorText = await prevDayRes.text();
+        fetchErrors.push(`Prev. Day: ${prevDayRes.status} - ${errorText.substring(0,100)}`);
+        console.warn(`[Polygon API Ticker Lookup] Failed to fetch previous day OHLCV for ${symbol}: ${prevDayRes.status} - ${errorText}`);
       }
       
-      let priceHistoryPoints: PriceHistoryPoint[] = [];
-      let historyError: string | null = null;
       if (historyRes.ok) {
         const historyData = await historyRes.json();
         if (historyData.results) {
           priceHistoryPoints = historyData.results.map((r: any) => ({
-            date: format(new Date(r.t), 'yyyy-MM-dd'), // Ensure date is just YYYY-MM-DD string
+            date: format(new Date(r.t), 'yyyy-MM-dd'),
             close: r.c,
           }));
         }
       } else {
         const errorText = await historyRes.text();
-        historyError = `History: ${historyRes.statusText || historyRes.status} - ${errorText.substring(0,100)}`;
-        console.warn(`[Ticker Lookup] Failed to fetch price history for ${symbol}: ${historyRes.status} - ${errorText}`);
+        fetchErrors.push(`History: ${historyRes.status} - ${errorText.substring(0,100)}`);
+        console.warn(`[Polygon API Ticker Lookup] Failed to fetch price history for ${symbol}: ${historyRes.status} - ${errorText}`);
       }
 
-      if (!detailsRes.ok && !prevDayRes.ok && !historyRes.ok) {
-        let combinedError = `No data found for ticker ${symbol}. `;
-        if (detailsRes.status === 404 && prevDayRes.status === 404) {
+      if (Object.keys(companyDetails).length === 0 && Object.keys(prevDayData).length === 0) {
+        let combinedError = `No primary data found for ticker ${symbol}.`;
+         if (fetchErrors.some(e => e.includes("404"))) {
           combinedError = `Ticker symbol "${symbol}" not found. Please check the symbol and try again.`;
-        } else if (detailsRes.status === 401 || prevDayRes.status === 401 || historyRes.status === 401) {
-          combinedError = `API Error: 401 - Unauthorized. Please check your Polygon API key and plan permissions for ticker ${symbol}.`;
-        } else {
-            const apiErrors = [detailsError, prevDayError, historyError].filter(Boolean).join('; ');
-            if (apiErrors) combinedError += ` API Issues: ${apiErrors}`;
+        } else if (fetchErrors.some(e => e.includes("401"))) {
+            combinedError = `API Error: 401 - Unauthorized. Please check your Polygon API key and plan permissions for ticker ${symbol}.`;
+        } else if (fetchErrors.length > 0) {
+            combinedError += ` API Issues: ${fetchErrors.join('; ')}`;
         }
         setTickerError(combinedError);
         setIsLoadingTicker(false);
         return;
       }
       
-      if (Object.keys(companyDetails).length === 0 && Object.keys(ohlcvData).length === 0) {
-         setTickerError(`No detailed data or price data found for ticker ${symbol}. It might be an invalid symbol or not covered by the API.`);
-         setIsLoadingTicker(false);
-         return;
-      }
-
-      const currentPrice = ohlcvData.c;
-      const openPriceForChange = ohlcvData.o; 
-      const priceChangeAmount = typeof currentPrice === 'number' && typeof openPriceForChange === 'number' ? (currentPrice - openPriceForChange) : null;
-      const priceChangePercent = calculateChangePercent(currentPrice, openPriceForChange);
+      const currentPrice = prevDayData.c;
+      const openPriceForDailyChange = prevDayData.o; 
+      const priceChangeNum = typeof currentPrice === 'number' && typeof openPriceForDailyChange === 'number' ? (currentPrice - openPriceForDailyChange) : null;
+      const priceChangePercentNum = calculateChangePercent(currentPrice, openPriceForDailyChange);
 
       setTickerData({
         companyName: companyDetails.name || `${symbol} (Name N/A)`,
-        symbol: companyDetails.ticker || symbol,
-        exchange: companyDetails.primary_exchange || "N/A",
-        sector: companyDetails.sic_description || "N/A", 
-        industry: companyDetails.sic_description || "N/A", 
-        logo: companyDetails.branding?.logo_url ? `${companyDetails.branding.logo_url}?apiKey=${apiKey}` : `https://placehold.co/48x48.png?text=${symbol.substring(0,3)}`,
-        marketCap: companyDetails.market_cap ? (companyDetails.market_cap / 1_000_000_000).toFixed(2) + "B" : "N/A",
         currentPrice: typeof currentPrice === 'number' ? currentPrice.toFixed(2) : "N/A",
-        priceChangeAmount: typeof priceChangeAmount === 'number' ? priceChangeAmount.toFixed(2) : "N/A",
-        priceChangePercent: typeof priceChangePercent === 'number' ? priceChangePercent.toFixed(2) : "N/A",
-        previousClose: typeof ohlcvData.c === 'number' ? ohlcvData.c.toFixed(2) : "N/A", // Prev close is the 'c' from /prev
-        openPrice: typeof ohlcvData.o === 'number' ? ohlcvData.o.toFixed(2) : "N/A", // Prev open is 'o' from /prev
-        daysRange: (typeof ohlcvData.l === 'number' && typeof ohlcvData.h === 'number') ? `${ohlcvData.l.toFixed(2)} - ${ohlcvData.h.toFixed(2)}` : "N/A", // This is prev day's range
-        fiftyTwoWeekRange: "N/A", 
-        volume: typeof ohlcvData.v === 'number' ? ohlcvData.v.toLocaleString() : "N/A", 
-        avgVolume: "N/A",
-        peRatio: "N/A", 
-        epsTTM: "N/A",
-        dividendYield: "N/A", 
-        beta: "N/A", 
-        nextEarningsDate: "N/A",
-        dividendDate: "N/A",
-        priceHistory: priceHistoryPoints,
+        priceChangeAmount: typeof priceChangeNum === 'number' ? priceChangeNum.toFixed(2) : "N/A",
+        priceChangePercent: typeof priceChangePercentNum === 'number' ? priceChangePercentNum.toFixed(2) : "N/A",
+        fullPriceHistory: priceHistoryPoints,
+        // The following fields are removed as per the new minimal header requirement
+        symbol: companyDetails.ticker || symbol, // Kept for internal use if needed
+        exchange: companyDetails.primary_exchange || "N/A", // Kept for internal use
+        sector: companyDetails.sic_description || "N/A", // Kept for internal use
+        industry: companyDetails.sic_description || "N/A", // Kept for internal use
+        logo: companyDetails.branding?.logo_url ? `${companyDetails.branding.logo_url}?apiKey=${apiKey}` : `https://placehold.co/48x48.png?text=${symbol.substring(0,3)}`, // Kept for internal use
+        marketCap: companyDetails.market_cap ? (companyDetails.market_cap / 1_000_000_000).toFixed(2) + "B" : "N/A", // Kept for internal use
+        previousClose: typeof prevDayData.c === 'number' ? prevDayData.c.toFixed(2) : "N/A", // Kept for internal use
+        openPrice: typeof prevDayData.o === 'number' ? prevDayData.o.toFixed(2) : "N/A", // Kept for internal use
+        daysRange: (typeof prevDayData.l === 'number' && typeof prevDayData.h === 'number') ? `${prevDayData.l.toFixed(2)} - ${prevDayData.h.toFixed(2)}` : "N/A", // Kept for internal use
       });
 
     } catch (error: any) {
-      console.error("[Ticker Lookup] Error in handleTickerLookup:", error);
+      console.error("[Polygon API Ticker Lookup] Error in handleTickerLookup:", error);
       setTickerError(`Failed to fetch data for ${symbol}. ${error.message || 'Unknown error'}`);
     } finally {
       setIsLoadingTicker(false);
@@ -514,6 +546,8 @@ export default function DashboardPage() {
         clearInterval(clockIntervalId);
     };
   }, []);
+
+  const chartTimeRanges = ['1D', '1W', '1M', '3M', 'YTD', '1Y'];
 
 
   return (
@@ -674,74 +708,51 @@ export default function DashboardPage() {
         {tickerError && <p className="text-sm text-red-400 text-center p-2 bg-red-500/10 rounded-md">{tickerError}</p>}
         
         {tickerData && !isLoadingTicker && (
-           <div className="w-full p-0 space-y-6"> {/* Removed p-4 md:p-0 */}
-            {/* Primary Ticker Info */}
-            <div className="w-full text-left mb-6"> {/* Ensure this block is left-aligned */}
-              <div className="flex items-center gap-4 mb-3">
-                <Image src={tickerData.logo} alt={`${tickerData.companyName} logo`} width={48} height={48} className="rounded-md bg-muted/30 p-1" data-ai-hint={`${tickerData.symbol} logo`}/>
-                <div>
-                  <h3 className="text-2xl font-bold text-foreground">{tickerData.companyName}</h3>
-                  <p className="text-md text-muted-foreground">{tickerData.symbol} • {tickerData.exchange}</p>
-                </div>
-              </div>
-              <div className="flex flex-wrap items-end gap-x-4 gap-y-1 mb-2">
+           <div className="w-full space-y-6">
+            {/* Minimal Header Section */}
+            <div className="w-full text-left mb-4"> {/* Reduced bottom margin */}
+              <h3 className="text-2xl font-bold text-foreground mb-1">{tickerData.companyName}</h3>
+              <div className="flex items-end gap-2 mb-1"> {/* Reduced bottom margin */}
                 <span className="text-4xl font-bold text-foreground">${tickerData.currentPrice}</span>
                 {(tickerData.priceChangeAmount && tickerData.priceChangeAmount !== "N/A" && tickerData.priceChangePercent && tickerData.priceChangePercent !== "N/A") && (
                   <span className={cn(
-                    "text-2xl font-semibold",
+                    "text-xl font-semibold", // Reduced font size for change
                     parseFloat(tickerData.priceChangeAmount) >= 0 ? "text-green-400" : "text-red-400"
                   )}>
                     {parseFloat(tickerData.priceChangeAmount) >= 0 ? <ArrowUpRight className="inline h-5 w-5 mb-0.5" /> : <ArrowDownRight className="inline h-5 w-5 mb-0.5" />}
                     {tickerData.priceChangeAmount} ({tickerData.priceChangePercent}%)
                   </span>
                 )}
-                <span className="text-md text-muted-foreground">Change</span> 
               </div>
-              <div className="text-sm text-muted-foreground">
-                Prev. Close: ${tickerData.previousClose} &nbsp;|&nbsp; Open: ${tickerData.openPrice}
-              </div>
+              <p className="text-sm text-muted-foreground">Today</p> {/* Placeholder, to be dynamic later */}
             </div>
 
             {/* Price History Chart */}
-            <div className="w-full pt-6 border-t border-border/30">
-              <h4 className="text-lg font-semibold text-foreground mb-3 text-left">Price History (1 Year)</h4>
-              {tickerData.priceHistory && tickerData.priceHistory.length > 0 ? (
+            <div className="w-full"> {/* Removed pt-4 for tighter spacing */}
+              {chartData && chartData.length > 0 ? (
                 <div className="h-[400px] w-full bg-muted/10 rounded-md p-2" data-ai-hint="stock line chart">
-                   <TickerPriceChart data={tickerData.priceHistory} />
+                   <TickerPriceChart data={chartData} />
                 </div>
               ) : (
                 <p className="text-sm text-muted-foreground text-center py-4">Price history not available.</p>
               )}
-            </div>
-
-            {/* Valuation & Key Dates in a Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 pt-6 mt-6 border-t border-border/30">
-              <div>
-                <h4 className="text-lg font-semibold text-foreground mb-3 text-left">Valuation Metrics</h4>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                  <div><strong className="text-muted-foreground block">Market Cap:</strong> {tickerData.marketCap}</div>
-                  <div><strong className="text-muted-foreground block">P/E Ratio (TTM):</strong> {tickerData.peRatio}</div>
-                  <div><strong className="text-muted-foreground block">EPS (TTM):</strong> {tickerData.epsTTM}</div>
-                  <div><strong className="text-muted-foreground block">Div. Yield:</strong> {tickerData.dividendYield}</div>
-                  <div><strong className="text-muted-foreground block">Beta:</strong> {tickerData.beta}</div>
-                </div>
-              </div>
-              <div>
-                <h4 className="text-lg font-semibold text-foreground mb-3 text-left">Key Dates</h4>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                  <div><strong className="text-muted-foreground block">Next Earnings:</strong> {tickerData.nextEarningsDate}</div>
-                  <div><strong className="text-muted-foreground block">Dividend Date:</strong> {tickerData.dividendDate}</div>
-                </div>
-              </div>
-            </div>
-             {/* Volume Section */}
-             <div className="w-full pt-6 mt-6 border-t border-border/30">
-              <h4 className="text-lg font-semibold text-foreground mb-3 text-left">Volume</h4>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
-                <div><strong className="text-muted-foreground block">Volume:</strong> {tickerData.volume}</div>
-                <div><strong className="text-muted-foreground block">Avg. Volume:</strong> {tickerData.avgVolume}</div>
-                <div><strong className="text-muted-foreground block">Day's Range:</strong> {tickerData.daysRange}</div>
-                <div><strong className="text-muted-foreground block">52W Range:</strong> {tickerData.fiftyTwoWeekRange}</div>
+               <div className="flex justify-center space-x-1 mt-2">
+                {chartTimeRanges.map(range => (
+                  <Button
+                    key={range}
+                    variant={selectedRange === range ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setSelectedRange(range)}
+                    className={cn(
+                        "text-xs h-7 px-2 py-1", // Adjusted padding for slightly smaller buttons
+                        selectedRange === range 
+                            ? "bg-primary text-primary-foreground hover:bg-primary/90" 
+                            : "text-muted-foreground border-border/50 hover:bg-muted/30 hover:border-border/70"
+                    )}
+                  >
+                    {range}
+                  </Button>
+                ))}
               </div>
             </div>
           </div>
