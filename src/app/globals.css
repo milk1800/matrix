@@ -74,7 +74,6 @@
   }
 }
 
-/* Neon Pulse for Brain Logo */
 @keyframes neonPulse {
   0%, 100% {
     filter: drop-shadow(0 0 5px #9147ff) drop-shadow(0 0 10px rgba(145, 71, 255, 0.4));
@@ -148,7 +147,7 @@
 }
 
 .animate-ticker {
-  animation: ticker 120s linear infinite; /* Increased duration for more items */
+  animation: ticker 120s linear infinite; 
 }
 
 /* Due Date Box Styles */
@@ -158,7 +157,6 @@
   font-weight: 600; /* font-semibold */
   display: inline-block;
   text-align: center;
-  /* Background and text color will be applied via Tailwind utility classes */
 }
 
 @keyframes pulse-red {
@@ -304,9 +302,8 @@
   background-color: hsl(var(--input)) !important; /* Apply input background to container */
 }
 .ql-editor {
-  /* background-color: hsl(var(--input)) !important; /* This might be redundant if container has it */
   color: hsl(var(--foreground)) !important;
-  min-height: 120px; /* Or match the previous textarea rows */
+  min-height: 120px; 
   border-bottom-left-radius: 0.5rem;
   border-bottom-right-radius: 0.5rem;
   padding: 12px 15px !important; /* Standard padding */

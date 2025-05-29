@@ -1,12 +1,10 @@
-
 "use client";
 
 import { Inter, Roboto_Mono } from 'next/font/google';
 import * as React from 'react';
 import Image from "next/image";
-import Link from "next/link";
 import './globals.css';
-import Sidebar from '@/components/Sidebar'; // New Sidebar import
+import Sidebar from '@/components/Sidebar';
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/auth-context";
@@ -39,11 +37,12 @@ interface TickerItem {
 }
 
 // Reduced tickers and increased interval to avoid rate limits
-const POLYGON_TICKERS_FOR_SCROLLING_TICKER = ['SPY', 'QQQ']; // Reduced to 2
+const POLYGON_TICKERS_FOR_SCROLLING_TICKER = ['SPY', 'QQQ']; 
 
 async function fetchPolygonTickerDataForScroll(symbol: string): Promise<TickerItem> {
   const apiKey = process.env.NEXT_PUBLIC_POLYGON_API_KEY;
   if (!apiKey) {
+    // console.warn(`[Polygon API] Ticker: NEXT_PUBLIC_POLYGON_API_KEY is not defined. Cannot fetch ${symbol}.`);
     return { symbol, error: true, price: 'Key Missing', change: '', color: 'text-red-400' };
   }
 
@@ -53,8 +52,16 @@ async function fetchPolygonTickerDataForScroll(symbol: string): Promise<TickerIt
       let errorMessage = `Error ${response.status}`;
        if (response.status === 429) {
         errorMessage = 'Rate Limit';
+      } else {
+        try {
+          const errorData = await response.json();
+          if (errorData && (errorData.message || errorData.error)) {
+            errorMessage = errorData.message || errorData.error;
+          }
+        } catch (e) { /* ignore */ }
       }
-      return { symbol, error: true, price: errorMessage, change: '', color: 'text-yellow-400' };
+      // console.warn(`[Polygon API] Ticker: Error fetching ${symbol}: ${errorMessage}`);
+      return { symbol, error: true, price: `API Err: ${response.status}`, change: '', color: 'text-yellow-400' };
     }
     const data = await response.json();
     if (data.results && data.results.length > 0) {
@@ -62,6 +69,7 @@ async function fetchPolygonTickerDataForScroll(symbol: string): Promise<TickerIt
       const prevOpen = data.results[0].o;
 
       if (typeof prevClose !== 'number' || typeof prevOpen !== 'number') {
+        // console.warn(`[Polygon API] Ticker: Invalid data for ${symbol}. Close: ${prevClose}, Open: ${prevOpen}`);
         return { symbol, error: true, price: 'Data N/A', change: '', color: 'text-yellow-400' };
       }
 
@@ -86,8 +94,10 @@ async function fetchPolygonTickerDataForScroll(symbol: string): Promise<TickerIt
         color,
       };
     }
+    // console.warn(`[Polygon API] Ticker: No data results for ${symbol}.`);
     return { symbol, error: true, price: 'No Data', change: '', color: 'text-yellow-400' };
   } catch (error: any) {
+    // console.error(`[Polygon API] Ticker: Fetch error for ${symbol}:`, error.message || error);
     return { symbol, error: true, price: 'Fetch Err', change: '', color: 'text-red-400' };
   }
 }
@@ -111,6 +121,7 @@ function TickerContent() {
       if (result.status === 'fulfilled') {
         return result.value;
       } else {
+        // console.error(`[Polygon API] Ticker: Promise rejected for ${POLYGON_TICKERS_FOR_SCROLLING_TICKER[index]}:`, result.reason);
         return { symbol: POLYGON_TICKERS_FOR_SCROLLING_TICKER[index], error: true, price: 'Fetch Error', change: '', color: 'text-red-400' };
       }
     });
@@ -120,16 +131,16 @@ function TickerContent() {
 
   React.useEffect(() => {
     loadAllTickerData();
-    const intervalId = setInterval(loadAllTickerData, 900000); // Increased to 15 minutes
+    const intervalId = setInterval(loadAllTickerData, 900000); // Refresh every 15 minutes
     return () => clearInterval(intervalId);
   }, [loadAllTickerData]);
 
   if (tickerMessage) {
-    const repeatedMessage = Array(15).fill(tickerMessage).join("  •••  "); // Increased repetition for very short messages
+    const repeatedMessage = Array(15).fill(tickerMessage).join("  •••  ");
     return (
       <div className="animate-ticker whitespace-nowrap flex items-center text-sm font-mono">
         <span className="text-white px-3">{repeatedMessage}</span>
-        <span className="text-white px-3">{repeatedMessage}</span> {/* Rendered twice for seamless loop */}
+        <span className="text-white px-3">{repeatedMessage}</span> 
       </div>
     );
   }
@@ -143,12 +154,14 @@ function TickerContent() {
      return <div className="text-sm font-mono text-center text-muted-foreground py-0.5">Ticker data unavailable. Check API Key or Polygon.io subscription.</div>;
   }
   
-  const duplicatedTickerItems = [...itemsToRender, ...itemsToRender, ...itemsToRender, ...itemsToRender, ...itemsToRender]; // Further duplication for smoother scroll with fewer items
+  // Duplicate the items multiple times to ensure smooth scrolling, especially if the list is short
+  const duplicatedTickerItems = Array(5).fill(itemsToRender).flat();
+
 
   return (
     <div className="animate-ticker whitespace-nowrap flex items-center text-sm font-mono">
       {duplicatedTickerItems.map((item, index) => (
-        <span key={`${item.symbol}-${index}`} className="text-white px-4"> {/* Increased padding slightly */}
+        <span key={`${item.symbol}-${index}`} className="text-white px-4"> 
           {item.symbol}: <span className={item.color || 'text-white'}>{item.price} {item.change} {item.changePercent}</span>
         </span>
       ))}
@@ -171,7 +184,6 @@ export default function RootLayout({
             <div className="w-full overflow-hidden bg-black/90 border-b border-gray-700 py-2 fixed top-0 z-50">
               <TickerContent />
             </div>
-            {/* This div handles the main layout below the ticker */}
             <div className="flex flex-1 h-screen pt-10"> {/* pt-10 to offset for fixed ticker */}
               <TooltipProvider delayDuration={0}>
                 <Sidebar />
