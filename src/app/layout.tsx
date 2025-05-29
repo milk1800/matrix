@@ -4,6 +4,7 @@
 import { Inter, Roboto_Mono } from 'next/font/google';
 import * as React from 'react';
 import Image from "next/image";
+import Link from "next/link";
 import './globals.css';
 import Sidebar from '@/components/Sidebar';
 import { Toaster } from "@/components/ui/toaster";
@@ -32,41 +33,41 @@ interface TickerItem {
   loading?: boolean;
 }
 
-const POLYGON_TICKERS = [
-  'IVV', 'AGG', 'IWM', 'EFA', 'EEM', 'LQD', 'IJR', 'IWF', 'IWD', 'TIP', 
-  'HYG', 'QUAL', 'IEFA', 'IEMG', 'ITOT', 'IVW', 'IVE', 'IWB', 'IWN', 
-  'IWO', 'IDV', 'ESGU', 'IJH', 'DVY', 'MBB', 'ICLN', 'TLT', 'SHV', 
-  'SHY', 'IEI', 'IEF', 'USMV', 'ACWI', 'EWT', 'SCZ', 'IYR', 'EWC', 
-  'EWA', 'EWH', 'MTUM', 'PFF', 'EPP', 'EPI', 'IAU', 'ICF', 'IJJ', 
-  'IJT', 'IXN', 'IYF', 'IYT'
-];
+// Reduced to 3 tickers to avoid hitting API rate limits quickly
+const POLYGON_TICKERS = ['SPY', 'QQQ', 'DIA'];
 
 async function fetchPolygonTickerData(symbol: string): Promise<TickerItem> {
   const apiKey = process.env.NEXT_PUBLIC_POLYGON_API_KEY;
   if (!apiKey) {
-    console.warn(`[Polygon Ticker] API Key Missing for ${symbol}`);
-    return { symbol, error: true, price: 'N/A', change: '', color: 'text-white' };
+    // console.warn(`[Polygon Ticker] API Key Missing for ${symbol}`);
+    return { symbol, error: true, price: 'API Key Missing', change: '', color: 'text-red-400' };
   }
 
   try {
     const response = await fetch(`https://api.polygon.io/v2/aggs/ticker/${symbol}/prev?adjusted=true&apiKey=${apiKey}`);
     if (!response.ok) {
-      console.error(`[Polygon Ticker] Error fetching ${symbol}: ${response.status}`);
-      return { symbol, error: true, price: 'N/A', change: '', color: 'text-white' };
+      // console.error(`[Polygon Ticker] Error fetching ${symbol}: ${response.status}`);
+      const errorText = `Error ${response.status}`;
+      return { symbol, error: true, price: errorText, change: '', color: 'text-red-400' };
     }
     const data = await response.json();
     if (data.results && data.results.length > 0) {
       const prevClose = data.results[0].c;
       const prevOpen = data.results[0].o;
+
+      if (typeof prevClose !== 'number' || typeof prevOpen !== 'number') {
+        return { symbol, error: true, price: 'Data N/A', change: '', color: 'text-yellow-400' };
+      }
+
       const changeValue = prevClose - prevOpen;
       const changePercent = prevOpen !== 0 ? (changeValue / prevOpen) * 100 : 0;
       
       let color = 'text-white';
       let arrow = '';
-      if (changePercent > 0.005) { // Use a small threshold to avoid "▲0.00%"
+      if (changePercent > 0.005) {
         color = 'text-green-400';
         arrow = '▲';
-      } else if (changePercent < -0.005) { // Use a small threshold
+      } else if (changePercent < -0.005) {
         color = 'text-red-400';
         arrow = '▼';
       }
@@ -78,10 +79,10 @@ async function fetchPolygonTickerData(symbol: string): Promise<TickerItem> {
         color,
       };
     }
-    return { symbol, error: true, price: 'N/A', change: '', color: 'text-white' };
-  } catch (error) {
-    console.error(`[Polygon Ticker] Fetch exception for ${symbol}:`, error);
-    return { symbol, error: true, price: 'N/A', change: '', color: 'text-white' };
+    return { symbol, error: true, price: 'No Data', change: '', color: 'text-yellow-400' };
+  } catch (error: any) {
+    // console.error(`[Polygon Ticker] Fetch exception for ${symbol}:`, error);
+    return { symbol, error: true, price: 'Fetch Error', change: '', color: 'text-red-400' };
   }
 }
 
@@ -93,14 +94,19 @@ function TickerContent() {
   const [isLoading, setIsLoading] = React.useState(true);
 
   const loadAllTickerData = React.useCallback(async () => {
+    if (!process.env.NEXT_PUBLIC_POLYGON_API_KEY) {
+      setTickerDataItems(POLYGON_TICKERS.map(symbol => ({ symbol, error: true, price: 'API Key Missing', change: '', color: 'text-red-400' })));
+      setIsLoading(false);
+      return;
+    }
     setIsLoading(true);
     const results = await Promise.allSettled(POLYGON_TICKERS.map(fetchPolygonTickerData));
     const newData = results.map((result, index) => {
       if (result.status === 'fulfilled') {
         return result.value;
       } else {
-        console.error(`[Polygon Ticker] Failed to fetch ${POLYGON_TICKERS[index]}:`, result.reason);
-        return { symbol: POLYGON_TICKERS[index], error: true, price: 'Error', change: '', color: 'text-red-400' };
+        // console.error(`[Polygon Ticker] Failed to fetch ${POLYGON_TICKERS[index]}:`, result.reason);
+        return { symbol: POLYGON_TICKERS[index], error: true, price: 'Fetch Error', change: '', color: 'text-red-400' };
       }
     });
     setTickerDataItems(newData);
@@ -109,7 +115,8 @@ function TickerContent() {
 
   React.useEffect(() => {
     loadAllTickerData();
-    const intervalId = setInterval(loadAllTickerData, 60000); // Refresh every 1 minute
+    // Increased interval to 5 minutes
+    const intervalId = setInterval(loadAllTickerData, 300000); 
     return () => clearInterval(intervalId);
   }, [loadAllTickerData]);
 
@@ -118,7 +125,7 @@ function TickerContent() {
     return (
       <div className="animate-ticker whitespace-nowrap flex items-center text-sm font-mono">
         <span className="text-white px-3">{repeatedMessage}</span>
-        <span className="text-white px-3">{repeatedMessage}</span>
+        <span className="text-white px-3">{repeatedMessage}</span> {/* Rendered twice for seamless loop */}
       </div>
     );
   }
@@ -126,13 +133,14 @@ function TickerContent() {
   if (isLoading && tickerDataItems.every(item => item.loading)) {
     return <div className="text-sm font-mono text-center text-muted-foreground py-0.5">Loading ticker data...</div>;
   }
-
-  const itemsToRender = tickerDataItems.filter(item => !item.error || item.price !== 'N/A');
+  
+  const itemsToRender = tickerDataItems.filter(item => !item.error || item.price !== 'API Key Missing'); // Don't render if API key is missing globally
   if (itemsToRender.length === 0 && !isLoading) {
-     return <div className="text-sm font-mono text-center text-muted-foreground py-0.5">Ticker data unavailable.</div>;
+     return <div className="text-sm font-mono text-center text-muted-foreground py-0.5">Ticker data unavailable. Check API Key or Polygon.io subscription.</div>;
   }
   
-  const duplicatedTickerItems = [...itemsToRender, ...itemsToRender, ...itemsToRender]; // Duplicate 3 times for very long ticker
+  // Duplicate the items to ensure a seamless scrolling effect
+  const duplicatedTickerItems = [...itemsToRender, ...itemsToRender, ...itemsToRender]; 
 
   return (
     <div className="animate-ticker whitespace-nowrap flex items-center text-sm font-mono">
@@ -152,7 +160,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <body className={`${inter.variable} ${robotoMono.variable} antialiased flex flex-col h-screen`}>
+      <body className={`${inter.variable} ${robotoMono.variable} antialiased`}>
         <AuthProvider>
           <TickerProvider>
             <div className="w-full overflow-hidden bg-black/90 border-b border-gray-700 py-2 fixed top-0 z-50">
