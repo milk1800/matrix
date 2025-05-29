@@ -6,13 +6,17 @@ import * as React from 'react';
 import Image from "next/image";
 import Link from "next/link";
 import './globals.css';
-import Sidebar from '@/components/Sidebar';
+import Sidebar from '@/components/Sidebar'; // New Sidebar import
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/auth-context";
 import { TickerProvider, useTicker } from "@/contexts/ticker-context";
 import { cn } from '@/lib/utils';
-import { Brain } from 'lucide-react';
+import { Brain, ChevronLeft, ChevronRight, MessageSquare, Send, X } from 'lucide-react'; // Added Brain, Chevron icons
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Button } from "@/components/ui/button";
 
 const inter = Inter({
   variable: '--font-inter',
@@ -28,27 +32,29 @@ interface TickerItem {
   symbol: string;
   price?: string;
   change?: string;
+  changePercent?: string;
   color?: string;
   error?: boolean;
   loading?: boolean;
 }
 
-// Reduced to 3 tickers to avoid hitting API rate limits quickly
-const POLYGON_TICKERS = ['SPY', 'QQQ', 'DIA'];
+// Reduced tickers and increased interval to avoid rate limits
+const POLYGON_TICKERS_FOR_SCROLLING_TICKER = ['SPY', 'QQQ']; // Reduced to 2
 
-async function fetchPolygonTickerData(symbol: string): Promise<TickerItem> {
+async function fetchPolygonTickerDataForScroll(symbol: string): Promise<TickerItem> {
   const apiKey = process.env.NEXT_PUBLIC_POLYGON_API_KEY;
   if (!apiKey) {
-    // console.warn(`[Polygon Ticker] API Key Missing for ${symbol}`);
-    return { symbol, error: true, price: 'API Key Missing', change: '', color: 'text-red-400' };
+    return { symbol, error: true, price: 'Key Missing', change: '', color: 'text-red-400' };
   }
 
   try {
     const response = await fetch(`https://api.polygon.io/v2/aggs/ticker/${symbol}/prev?adjusted=true&apiKey=${apiKey}`);
     if (!response.ok) {
-      // console.error(`[Polygon Ticker] Error fetching ${symbol}: ${response.status}`);
-      const errorText = `Error ${response.status}`;
-      return { symbol, error: true, price: errorText, change: '', color: 'text-red-400' };
+      let errorMessage = `Error ${response.status}`;
+       if (response.status === 429) {
+        errorMessage = 'Rate Limit';
+      }
+      return { symbol, error: true, price: errorMessage, change: '', color: 'text-yellow-400' };
     }
     const data = await response.json();
     if (data.results && data.results.length > 0) {
@@ -60,14 +66,14 @@ async function fetchPolygonTickerData(symbol: string): Promise<TickerItem> {
       }
 
       const changeValue = prevClose - prevOpen;
-      const changePercent = prevOpen !== 0 ? (changeValue / prevOpen) * 100 : 0;
+      const changePercentNum = prevOpen !== 0 ? (changeValue / prevOpen) * 100 : 0;
       
       let color = 'text-white';
       let arrow = '';
-      if (changePercent > 0.005) {
+      if (changePercentNum > 0.005) {
         color = 'text-green-400';
         arrow = '▲';
-      } else if (changePercent < -0.005) {
+      } else if (changePercentNum < -0.005) {
         color = 'text-red-400';
         arrow = '▼';
       }
@@ -75,38 +81,37 @@ async function fetchPolygonTickerData(symbol: string): Promise<TickerItem> {
       return {
         symbol,
         price: `$${prevClose.toFixed(2)}`,
-        change: `${arrow}${Math.abs(changePercent).toFixed(2)}%`,
+        change: `${arrow}${changeValue.toFixed(2)}`,
+        changePercent: `(${arrow}${Math.abs(changePercentNum).toFixed(2)}%)`,
         color,
       };
     }
     return { symbol, error: true, price: 'No Data', change: '', color: 'text-yellow-400' };
   } catch (error: any) {
-    // console.error(`[Polygon Ticker] Fetch exception for ${symbol}:`, error);
-    return { symbol, error: true, price: 'Fetch Error', change: '', color: 'text-red-400' };
+    return { symbol, error: true, price: 'Fetch Err', change: '', color: 'text-red-400' };
   }
 }
 
 function TickerContent() {
   const { tickerMessage } = useTicker();
   const [tickerDataItems, setTickerDataItems] = React.useState<TickerItem[]>(
-    POLYGON_TICKERS.map(symbol => ({ symbol, loading: true, price: 'Loading...', change: '', color: 'text-white' }))
+    POLYGON_TICKERS_FOR_SCROLLING_TICKER.map(symbol => ({ symbol, loading: true, price: 'Loading...', change: '', color: 'text-white' }))
   );
   const [isLoading, setIsLoading] = React.useState(true);
 
   const loadAllTickerData = React.useCallback(async () => {
     if (!process.env.NEXT_PUBLIC_POLYGON_API_KEY) {
-      setTickerDataItems(POLYGON_TICKERS.map(symbol => ({ symbol, error: true, price: 'API Key Missing', change: '', color: 'text-red-400' })));
+      setTickerDataItems(POLYGON_TICKERS_FOR_SCROLLING_TICKER.map(symbol => ({ symbol, error: true, price: 'API Key Missing', change: '', color: 'text-red-400' })));
       setIsLoading(false);
       return;
     }
     setIsLoading(true);
-    const results = await Promise.allSettled(POLYGON_TICKERS.map(fetchPolygonTickerData));
+    const results = await Promise.allSettled(POLYGON_TICKERS_FOR_SCROLLING_TICKER.map(fetchPolygonTickerDataForScroll));
     const newData = results.map((result, index) => {
       if (result.status === 'fulfilled') {
         return result.value;
       } else {
-        // console.error(`[Polygon Ticker] Failed to fetch ${POLYGON_TICKERS[index]}:`, result.reason);
-        return { symbol: POLYGON_TICKERS[index], error: true, price: 'Fetch Error', change: '', color: 'text-red-400' };
+        return { symbol: POLYGON_TICKERS_FOR_SCROLLING_TICKER[index], error: true, price: 'Fetch Error', change: '', color: 'text-red-400' };
       }
     });
     setTickerDataItems(newData);
@@ -115,13 +120,12 @@ function TickerContent() {
 
   React.useEffect(() => {
     loadAllTickerData();
-    // Increased interval to 5 minutes
-    const intervalId = setInterval(loadAllTickerData, 300000); 
+    const intervalId = setInterval(loadAllTickerData, 900000); // Increased to 15 minutes
     return () => clearInterval(intervalId);
   }, [loadAllTickerData]);
 
   if (tickerMessage) {
-    const repeatedMessage = Array(15).fill(tickerMessage).join("  •••  ");
+    const repeatedMessage = Array(15).fill(tickerMessage).join("  •••  "); // Increased repetition for very short messages
     return (
       <div className="animate-ticker whitespace-nowrap flex items-center text-sm font-mono">
         <span className="text-white px-3">{repeatedMessage}</span>
@@ -134,38 +138,40 @@ function TickerContent() {
     return <div className="text-sm font-mono text-center text-muted-foreground py-0.5">Loading ticker data...</div>;
   }
   
-  const itemsToRender = tickerDataItems.filter(item => !item.error || item.price !== 'API Key Missing'); // Don't render if API key is missing globally
+  const itemsToRender = tickerDataItems.filter(item => !item.error || (item.error && item.price !== 'API Key Missing' && item.price !== 'Rate Limit'));
   if (itemsToRender.length === 0 && !isLoading) {
      return <div className="text-sm font-mono text-center text-muted-foreground py-0.5">Ticker data unavailable. Check API Key or Polygon.io subscription.</div>;
   }
   
-  // Duplicate the items to ensure a seamless scrolling effect
-  const duplicatedTickerItems = [...itemsToRender, ...itemsToRender, ...itemsToRender]; 
+  const duplicatedTickerItems = [...itemsToRender, ...itemsToRender, ...itemsToRender, ...itemsToRender, ...itemsToRender]; // Further duplication for smoother scroll with fewer items
 
   return (
     <div className="animate-ticker whitespace-nowrap flex items-center text-sm font-mono">
       {duplicatedTickerItems.map((item, index) => (
-        <span key={`${item.symbol}-${index}`} className="text-white px-3">
-          {item.symbol}: <span className={item.color || 'text-white'}>{item.price} {item.change}</span>
+        <span key={`${item.symbol}-${index}`} className="text-white px-4"> {/* Increased padding slightly */}
+          {item.symbol}: <span className={item.color || 'text-white'}>{item.price} {item.change} {item.changePercent}</span>
         </span>
       ))}
     </div>
   );
 }
 
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+
   return (
     <html lang="en" className="dark">
-      <body className={`${inter.variable} ${robotoMono.variable} antialiased`}>
+      <body className={`${inter.variable} ${robotoMono.variable} antialiased flex flex-col h-screen`}>
         <AuthProvider>
           <TickerProvider>
             <div className="w-full overflow-hidden bg-black/90 border-b border-gray-700 py-2 fixed top-0 z-50">
               <TickerContent />
             </div>
+            {/* This div handles the main layout below the ticker */}
             <div className="flex flex-1 h-screen pt-10"> {/* pt-10 to offset for fixed ticker */}
               <TooltipProvider delayDuration={0}>
                 <Sidebar />
