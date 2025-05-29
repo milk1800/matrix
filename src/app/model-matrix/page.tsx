@@ -1,4 +1,3 @@
-
 // src/app/model-matrix/page.tsx
 "use client";
 
@@ -227,6 +226,40 @@ interface MonteCarloSummary {
   p95EndValue: number;
 }
 
+const initialColumnVisibility: Record<string, boolean> = {
+  aum: true,
+  feePercent: true,
+  style: true,
+  ytdReturn: true,
+  ytdBenchmark: true,
+  oneYearReturn: true,
+  oneYearBenchmark: true,
+  threeYearReturn: true,
+  threeYearBenchmark: true,
+  fiveYearReturn: true,
+  fiveYearBenchmark: true,
+  sharpeRatio: true,
+  irr: true,
+  beta: true,
+};
+
+const columnLabels: Record<string, string> = {
+  aum: "AUM",
+  feePercent: "Fee %",
+  style: "Style",
+  ytdReturn: "YTD Ret",
+  ytdBenchmark: "YTD Bench",
+  oneYearReturn: "1Y Ret",
+  oneYearBenchmark: "1Y Bench",
+  threeYearReturn: "3Y Ret",
+  threeYearBenchmark: "3Y Bench",
+  fiveYearReturn: "5Y Ret",
+  fiveYearBenchmark: "5Y Bench",
+  sharpeRatio: "Sharpe",
+  irr: "IRR",
+  beta: "Beta",
+};
+
 export default function ModelMatrixPage() {
   const [selectedManagerNames, setSelectedManagerNames] = React.useState<string[]>([]);
   const [sandboxManagerWeights, setSandboxManagerWeights] = React.useState<Record<string, number>>(() => {
@@ -242,6 +275,31 @@ export default function ModelMatrixPage() {
   const [monteCarloData, setMonteCarloData] = React.useState<MonteCarloChartDataPoint[] | null>(null);
   const [monteCarloSummary, setMonteCarloSummary] = React.useState<MonteCarloSummary | null>(null);
   const [isMonteCarloRunning, setIsMonteCarloRunning] = React.useState(false);
+
+  const [columnVisibility, setColumnVisibility] = React.useState<Record<string, boolean>>(initialColumnVisibility);
+
+  React.useEffect(() => {
+    const storedVisibility = localStorage.getItem("modelMatrixColumnVisibility");
+    if (storedVisibility) {
+      try {
+        const parsedVisibility = JSON.parse(storedVisibility);
+        // Ensure all keys from initialColumnVisibility are present, even if not in localStorage
+        const mergedVisibility = { ...initialColumnVisibility, ...parsedVisibility };
+        setColumnVisibility(mergedVisibility);
+      } catch (e) {
+        console.error("Failed to parse column visibility from localStorage", e);
+        setColumnVisibility(initialColumnVisibility); // Fallback to default
+      }
+    }
+  }, []);
+
+  React.useEffect(() => {
+    localStorage.setItem("modelMatrixColumnVisibility", JSON.stringify(columnVisibility));
+  }, [columnVisibility]);
+
+  const handleColumnVisibilityChange = (columnKey: string, checked: boolean) => {
+    setColumnVisibility(prev => ({ ...prev, [columnKey]: checked }));
+  };
 
 
   const availableManagers = React.useMemo(() => {
@@ -403,50 +461,49 @@ export default function ModelMatrixPage() {
     setIsMonteCarloRunning(false);
   }, [blendedMetrics]);
 
-  // const handleDownloadMonteCarloReport = async () => {
-  //   // This function is commented out because jspdf and html2canvas are not installed.
-  //   // To enable, install the packages: npm install jspdf html2canvas
-  //   // Then, uncomment this function and the corresponding imports.
-  //   // console.warn("PDF Download: jsPDF and html2canvas libraries are required. Please install them.");
-  //   // if (!monteCarloSummary || !monteCarloData) { // Removed: || !jsPDF as it's commented out
-  //   //     alert("Monte Carlo data is not available. Please run a simulation first.");
-  //   //     return;
-  //   // }
-
-  //   // const pdf = new jsPDF("p", "mm", "a4");
-  //   // pdf.setFontSize(18);
-  //   // pdf.text("Monte Carlo Simulation Report", 10, 15);
+  const handleDownloadMonteCarloReport = async () => {
+    // This function is commented out because jspdf and html2canvas are not installed.
+    // To enable, install the packages: npm install jspdf html2canvas
+    // Then, uncomment this function and the corresponding imports.
+    console.warn("PDF Download: jsPDF and html2canvas libraries are required. Please install them to enable this feature.");
+    if (!monteCarloSummary || !monteCarloData /* || !jsPDF || !html2canvas */) {
+        alert("Monte Carlo data is not available, or PDF libraries are missing. Please run a simulation first.");
+        return;
+    }
+    // const pdf = new jsPDF("p", "mm", "a4");
+    // pdf.setFontSize(18);
+    // pdf.text("Monte Carlo Simulation Report", 10, 15);
     
-  //   // pdf.setFontSize(10);
-  //   // pdf.text(`Report Generated: ${new Date().toLocaleString()}`, 10, 22);
+    // pdf.setFontSize(10);
+    // pdf.text(`Report Generated: ${new Date().toLocaleString()}`, 10, 22);
 
-  //   // let yPos = 30;
+    // let yPos = 30;
 
-  //   // const chartElement = document.getElementById("monte-carlo-chart-container");
-  //   // if (chartElement && html2canvas) { // Added: && html2canvas check
-  //   //     try {
-  //   //         const canvas = await html2canvas(chartElement, { scale: 2, backgroundColor: 'hsl(var(--background))' }); 
-  //   //         const imgData = canvas.toDataURL("image/png");
-  //   //         pdf.addImage(imgData, "PNG", 10, yPos, 190, 100); 
-  //   //         yPos += 110;
-  //   //     } catch (error) {
-  //   //         console.error("Error generating chart image for PDF:", error);
-  //   //         pdf.text("Could not generate chart image. (html2canvas may be missing)", 10, yPos);
-  //   //         yPos += 10;
-  //   //     }
-  //   // } else {
-  //   //     pdf.text("Chart image not available (element not found or html2canvas missing).", 10, yPos);
-  //   //     yPos += 10;
-  //   // }
+    // const chartElement = document.getElementById("monte-carlo-chart-container");
+    // if (chartElement /* && html2canvas */) {
+    //     try {
+    //         // const canvas = await html2canvas(chartElement, { scale: 2, backgroundColor: 'hsl(var(--background))' }); 
+    //         // const imgData = canvas.toDataURL("image/png");
+    //         // pdf.addImage(imgData, "PNG", 10, yPos, 190, 100); 
+    //         // yPos += 110;
+    //     } catch (error) {
+    //         console.error("Error generating chart image for PDF:", error);
+    //         pdf.text("Could not generate chart image. (html2canvas may be missing)", 10, yPos);
+    //         yPos += 10;
+    //     }
+    // } else {
+    //     pdf.text("Chart image not available (element not found or html2canvas missing).", 10, yPos);
+    //     yPos += 10;
+    // }
 
-  //   // pdf.setFontSize(12);
-  //   // const simYears = monteCarloData ? monteCarloData[monteCarloData.length -1].year : 'N/A';
-  //   // pdf.text(`Median End Value (${simYears} Years): ${formatCurrency(monteCarloSummary.medianEndValue)}`, 10, yPos);
-  //   // yPos += 10;
-  //   // pdf.text(`5th - 95th Percentile Range: ${formatCurrency(monteCarloSummary.p05EndValue)} – ${formatCurrency(monteCarloSummary.p95EndValue)}`, 10, yPos);
+    // pdf.setFontSize(12);
+    // const simYears = monteCarloData ? monteCarloData[monteCarloData.length -1].year : 'N/A';
+    // pdf.text(`Median End Value (${simYears} Years): ${formatCurrency(monteCarloSummary.medianEndValue)}`, 10, yPos);
+    // yPos += 10;
+    // pdf.text(`5th - 95th Percentile Range: ${formatCurrency(monteCarloSummary.p05EndValue)} – ${formatCurrency(monteCarloSummary.p95EndValue)}`, 10, yPos);
     
-  //   // pdf.save("monte-carlo-report.pdf");
-  // };
+    // pdf.save("monte-carlo-report.pdf");
+  };
 
 
   return (
@@ -509,24 +566,80 @@ export default function ModelMatrixPage() {
         </div>
       </PlaceholderCard>
       
-      <PlaceholderCard title="Model Strategy Performance Matrix (All Strategies)" className="overflow-x-auto mt-8">
+      <PlaceholderCard title="Model Strategy Performance Matrix" className="overflow-x-auto mt-8">
+        <div className="flex justify-end mb-4">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="outline">
+                <ChevronsUpDown className="mr-2 h-4 w-4" /> Columns
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56 bg-popover text-popover-foreground">
+              <DropdownMenuLabel>Toggle Columns</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {Object.entries(columnLabels).map(([key, label]) => (
+                <DropdownMenuCheckboxItem
+                  key={key}
+                  checked={columnVisibility[key]}
+                  onCheckedChange={(checked) => handleColumnVisibilityChange(key, Boolean(checked))}
+                >
+                  {label}
+                </DropdownMenuCheckboxItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
         <Table>
-          <TableHeader><TableRow> <TableHead className="font-bold">Manager</TableHead> <TableHead className="font-bold">Strategy Name</TableHead> <TableHead className="font-bold text-right">AUM</TableHead> <TableHead className="font-bold text-right">Fee %</TableHead> <TableHead className="font-bold text-center">Style</TableHead> <TableHead className="font-bold text-right">YTD Ret</TableHead> <TableHead className="font-bold text-right">YTD Bench</TableHead> <TableHead className="font-bold text-right">1Y Ret</TableHead> <TableHead className="font-bold text-right">1Y Bench</TableHead> <TableHead className="font-bold text-right">3Y Ret</TableHead> <TableHead className="font-bold text-right">3Y Bench</TableHead> <TableHead className="font-bold text-right">5Y Ret</TableHead> <TableHead className="font-bold text-right">5Y Bench</TableHead> <TableHead className="font-bold text-right">Sharpe</TableHead> <TableHead className="font-bold text-right">IRR</TableHead> <TableHead className="font-bold text-right">Beta</TableHead> </TableRow></TableHeader>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="font-bold">Manager</TableHead>
+              <TableHead className="font-bold">Strategy Name</TableHead>
+              {columnVisibility.aum && <TableHead className="font-bold text-right">AUM</TableHead>}
+              {columnVisibility.feePercent && <TableHead className="font-bold text-right">Fee %</TableHead>}
+              {columnVisibility.style && <TableHead className="font-bold text-center">Style</TableHead>}
+              {columnVisibility.ytdReturn && <TableHead className="font-bold text-right">YTD Ret</TableHead>}
+              {columnVisibility.ytdBenchmark && <TableHead className="font-bold text-right">YTD Bench</TableHead>}
+              {columnVisibility.oneYearReturn && <TableHead className="font-bold text-right">1Y Ret</TableHead>}
+              {columnVisibility.oneYearBenchmark && <TableHead className="font-bold text-right">1Y Bench</TableHead>}
+              {columnVisibility.threeYearReturn && <TableHead className="font-bold text-right">3Y Ret</TableHead>}
+              {columnVisibility.threeYearBenchmark && <TableHead className="font-bold text-right">3Y Bench</TableHead>}
+              {columnVisibility.fiveYearReturn && <TableHead className="font-bold text-right">5Y Ret</TableHead>}
+              {columnVisibility.fiveYearBenchmark && <TableHead className="font-bold text-right">5Y Bench</TableHead>}
+              {columnVisibility.sharpeRatio && <TableHead className="font-bold text-right">Sharpe</TableHead>}
+              {columnVisibility.irr && <TableHead className="font-bold text-right">IRR</TableHead>}
+              {columnVisibility.beta && <TableHead className="font-bold text-right">Beta</TableHead>}
+            </TableRow>
+          </TableHeader>
           <TableBody>
             {modelPerformanceData.map((model) => (
               <TableRow key={model.id} className="hover:bg-muted/50">
-                <TableCell className="font-medium whitespace-nowrap">{model.manager}</TableCell> <TableCell className="whitespace-nowrap">{model.strategyName}</TableCell> <TableCell className="text-right whitespace-nowrap">{model.aum}</TableCell> <TableCell className="text-right whitespace-nowrap">{model.feePercent}</TableCell>
-                <TableCell className="text-center whitespace-nowrap"> <Badge variant={model.style === "Growth" ? "default" : model.style === "Value" ? "secondary" : "outline"} className={cn( model.style === "Growth" && "bg-purple-500/70 hover:bg-purple-500/90 border-purple-400", model.style === "Value" && "bg-blue-500/70 hover:bg-blue-500/90 border-blue-400", model.style === "Fixed Income" && "bg-teal-500/70 hover:bg-teal-500/90 border-teal-400", model.style === "Balanced" && "bg-amber-500/70 hover:bg-amber-500/90 border-amber-400", model.style.startsWith("Sector") && "bg-pink-500/70 hover:bg-pink-500/90 border-pink-400", "text-white" )}>{model.style}</Badge></TableCell>
-                <TableCell className={cn("text-right whitespace-nowrap font-semibold", getReturnClass(model.ytdReturn))}>{model.ytdReturn}</TableCell> <TableCell className="text-right whitespace-nowrap text-muted-foreground">{model.ytdBenchmark}</TableCell>
-                <TableCell className={cn("text-right whitespace-nowrap font-semibold", getReturnClass(model.oneYearReturn))}>{model.oneYearReturn}</TableCell> <TableCell className="text-right whitespace-nowrap text-muted-foreground">{model.oneYearBenchmark}</TableCell>
-                <TableCell className={cn("text-right whitespace-nowrap font-semibold", getReturnClass(model.threeYearReturn))}>{model.threeYearReturn}</TableCell> <TableCell className="text-right whitespace-nowrap text-muted-foreground">{model.threeYearBenchmark}</TableCell>
-                <TableCell className={cn("text-right whitespace-nowrap font-semibold", getReturnClass(model.fiveYearReturn))}>{model.fiveYearReturn}</TableCell> <TableCell className="text-right whitespace-nowrap text-muted-foreground">{model.fiveYearBenchmark}</TableCell>
-                <TableCell className="text-right whitespace-nowrap">{model.sharpeRatio}</TableCell> <TableCell className="text-right whitespace-nowrap">{model.irr}</TableCell> <TableCell className="text-right whitespace-nowrap">{model.beta}</TableCell>
+                <TableCell className="font-medium whitespace-nowrap">{model.manager}</TableCell>
+                <TableCell className="whitespace-nowrap">{model.strategyName}</TableCell>
+                {columnVisibility.aum && <TableCell className="text-right whitespace-nowrap">{model.aum}</TableCell>}
+                {columnVisibility.feePercent && <TableCell className="text-right whitespace-nowrap">{model.feePercent}</TableCell>}
+                {columnVisibility.style && (
+                  <TableCell className="text-center whitespace-nowrap">
+                    <Badge variant={model.style === "Growth" ? "default" : model.style === "Value" ? "secondary" : "outline"} className={cn( model.style === "Growth" && "bg-purple-500/70 hover:bg-purple-500/90 border-purple-400", model.style === "Value" && "bg-blue-500/70 hover:bg-blue-500/90 border-blue-400", model.style === "Fixed Income" && "bg-teal-500/70 hover:bg-teal-500/90 border-teal-400", model.style === "Balanced" && "bg-amber-500/70 hover:bg-amber-500/90 border-amber-400", model.style.startsWith("Sector") && "bg-pink-500/70 hover:bg-pink-500/90 border-pink-400", "text-white" )}>{model.style}</Badge>
+                  </TableCell>
+                )}
+                {columnVisibility.ytdReturn && <TableCell className={cn("text-right whitespace-nowrap font-semibold", getReturnClass(model.ytdReturn))}>{model.ytdReturn}</TableCell>}
+                {columnVisibility.ytdBenchmark && <TableCell className="text-right whitespace-nowrap text-muted-foreground">{model.ytdBenchmark}</TableCell>}
+                {columnVisibility.oneYearReturn && <TableCell className={cn("text-right whitespace-nowrap font-semibold", getReturnClass(model.oneYearReturn))}>{model.oneYearReturn}</TableCell>}
+                {columnVisibility.oneYearBenchmark && <TableCell className="text-right whitespace-nowrap text-muted-foreground">{model.oneYearBenchmark}</TableCell>}
+                {columnVisibility.threeYearReturn && <TableCell className={cn("text-right whitespace-nowrap font-semibold", getReturnClass(model.threeYearReturn))}>{model.threeYearReturn}</TableCell>}
+                {columnVisibility.threeYearBenchmark && <TableCell className="text-right whitespace-nowrap text-muted-foreground">{model.threeYearBenchmark}</TableCell>}
+                {columnVisibility.fiveYearReturn && <TableCell className={cn("text-right whitespace-nowrap font-semibold", getReturnClass(model.fiveYearReturn))}>{model.fiveYearReturn}</TableCell>}
+                {columnVisibility.fiveYearBenchmark && <TableCell className="text-right whitespace-nowrap text-muted-foreground">{model.fiveYearBenchmark}</TableCell>}
+                {columnVisibility.sharpeRatio && <TableCell className="text-right whitespace-nowrap">{model.sharpeRatio}</TableCell>}
+                {columnVisibility.irr && <TableCell className="text-right whitespace-nowrap">{model.irr}</TableCell>}
+                {columnVisibility.beta && <TableCell className="text-right whitespace-nowrap">{model.beta}</TableCell>}
               </TableRow>
             ))}
           </TableBody>
         </Table>
-        <div className="flex justify-end mt-6"> <Button variant="outline"> <Download className="mr-2 h-4 w-4" /> Download PDF Summary </Button> </div>
+        <div className="flex justify-end mt-6">
+          <Button variant="outline"> <Download className="mr-2 h-4 w-4" /> Download PDF Summary </Button>
+        </div>
       </PlaceholderCard>
 
       <PlaceholderCard title="Model Rebalancing Sandbox" className="mt-8">
@@ -588,8 +701,8 @@ export default function ModelMatrixPage() {
         <div className="flex justify-end mt-6">
           <Button
             variant="outline"
-            // onClick={handleDownloadMonteCarloReport} // PDF Download functionality commented out as jsPDF/html2canvas may not be installed
-            disabled={true} // Always disabled until PDF libraries are handled
+            onClick={handleDownloadMonteCarloReport}
+            disabled={!monteCarloSummary || isMonteCarloRunning} // Always disabled until PDF libraries are handled
             title="PDF Download requires 'jspdf' and 'html2canvas' libraries. Please install them to enable this feature."
           >
             <FileDown className="mr-2 h-4 w-4" /> Download Scenario PDF (Requires Libraries)
@@ -599,4 +712,3 @@ export default function ModelMatrixPage() {
     </main>
   );
 }
-
