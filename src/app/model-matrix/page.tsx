@@ -21,8 +21,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { boxMullerTransform, getPercentile } from "@/utils/math-helpers";
-// import jsPDF from "jspdf"; // Commented out: 'jspdf' is not installed or not used.
-// import html2canvas from "html2canvas"; // Commented out: 'html2canvas' is not installed or not used.
+import * as XLSX from 'xlsx';
 
 
 interface ModelData {
@@ -57,10 +56,10 @@ const modelPerformanceData: ModelData[] = [
     ytdBenchmark: "+10.2%",
     oneYearReturn: "+22.1%",
     oneYearBenchmark: "+20.5%",
-    threeYearReturn: "+15.3%", // no p.a.
-    threeYearBenchmark: "+14.0%", // no p.a.
-    fiveYearReturn: "+13.8%", // no p.a.
-    fiveYearBenchmark: "+12.5%", // no p.a.
+    threeYearReturn: "+15.3%",
+    threeYearBenchmark: "+14.0%",
+    fiveYearReturn: "+13.8%",
+    fiveYearBenchmark: "+12.5%",
     sharpeRatio: "1.25",
     irr: "18.2%",
     beta: "1.10",
@@ -76,10 +75,10 @@ const modelPerformanceData: ModelData[] = [
     ytdBenchmark: "+1.8%",
     oneYearReturn: "+4.5%",
     oneYearBenchmark: "+4.2%",
-    threeYearReturn: "+3.0%", // no p.a.
-    threeYearBenchmark: "+2.8%", // no p.a.
-    fiveYearReturn: "+2.5%", // no p.a.
-    fiveYearBenchmark: "+2.3%", // no p.a.
+    threeYearReturn: "+3.0%",
+    threeYearBenchmark: "+2.8%",
+    fiveYearReturn: "+2.5%",
+    fiveYearBenchmark: "+2.3%",
     sharpeRatio: "0.95",
     irr: "3.5%",
     beta: "0.65",
@@ -95,10 +94,10 @@ const modelPerformanceData: ModelData[] = [
     ytdBenchmark: "-2.5%",
     oneYearReturn: "+8.0%",
     oneYearBenchmark: "+9.5%",
-    threeYearReturn: "+5.5%", // no p.a.
-    threeYearBenchmark: "+6.0%", // no p.a.
-    fiveYearReturn: "+7.2%", // no p.a.
-    fiveYearBenchmark: "+7.8%", // no p.a.
+    threeYearReturn: "+5.5%",
+    threeYearBenchmark: "+6.0%",
+    fiveYearReturn: "+7.2%",
+    fiveYearBenchmark: "+7.8%",
     sharpeRatio: "0.60",
     irr: "6.8%",
     beta: "1.35",
@@ -114,10 +113,10 @@ const modelPerformanceData: ModelData[] = [
     ytdBenchmark: "+7.0%",
     oneYearReturn: "+14.2%",
     oneYearBenchmark: "+13.5%",
-    threeYearReturn: "+9.1%", // no p.a.
-    threeYearBenchmark: "+8.5%", // no p.a.
-    fiveYearReturn: "+8.5%", // no p.a.
-    fiveYearBenchmark: "+8.0%", // no p.a.
+    threeYearReturn: "+9.1%",
+    threeYearBenchmark: "+8.5%",
+    fiveYearReturn: "+8.5%",
+    fiveYearBenchmark: "+8.0%",
     sharpeRatio: "1.10",
     irr: "10.5%",
     beta: "0.98",
@@ -133,10 +132,10 @@ const modelPerformanceData: ModelData[] = [
     ytdBenchmark: "+16.0%",
     oneYearReturn: "+35.2%",
     oneYearBenchmark: "+30.8%",
-    threeYearReturn: "+22.0%", // no p.a.
-    threeYearBenchmark: "+20.1%", // no p.a.
-    fiveYearReturn: "+20.5%", // no p.a.
-    fiveYearBenchmark: "+18.9%", // no p.a.
+    threeYearReturn: "+22.0%",
+    threeYearBenchmark: "+20.1%",
+    fiveYearReturn: "+20.5%",
+    fiveYearBenchmark: "+18.9%",
     sharpeRatio: "1.40",
     irr: "25.1%",
     beta: "1.20",
@@ -350,11 +349,10 @@ export default function ModelMatrixPage() {
         if (currentTotalWeight > 100) {
             let overage = currentTotalWeight - 100;
             
-            // Reduce from other managers, starting with the largest weighted one NOT being edited
             const otherManagerIdsSortedByWeight = sandboxSelectedManagers
                 .map(m => m.id)
-                .filter(id => id !== managerId && (updatedWeights[id] || 0) > 0) // Exclude the current manager and zero-weight managers
-                .sort((a, b) => (updatedWeights[b] || 0) - (updatedWeights[a] || 0)); // Sort by weight descending
+                .filter(id => id !== managerId && (updatedWeights[id] || 0) > 0) 
+                .sort((a, b) => (updatedWeights[b] || 0) - (updatedWeights[a] || 0)); 
 
             for (const otherId of otherManagerIdsSortedByWeight) {
                 if (overage <= 0) break;
@@ -364,7 +362,6 @@ export default function ModelMatrixPage() {
                 overage -= reduction;
             }
             
-            // If overage still exists (couldn't reduce enough from others), cap the edited manager's weight
             currentTotalWeight = Object.values(updatedWeights).reduce((sum, w) => sum + w, 0);
             if (currentTotalWeight > 100) {
                  updatedWeights[managerId] = Math.max(0, newWeight - (currentTotalWeight - 100));
@@ -377,7 +374,7 @@ export default function ModelMatrixPage() {
 
   React.useEffect(() => {
     const totalCurrentWeight = Object.values(sandboxManagerWeights).reduce((sum, weight) => sum + weight, 0);
-    if (Math.abs(totalCurrentWeight - 100) > 0.1 && sandboxSelectedManagers.length > 0) { // Using 0.1 to handle potential float precision
+    if (Math.abs(totalCurrentWeight - 100) > 0.1 && sandboxSelectedManagers.length > 0) { 
       setWeightError("Total weight must be 100%.");
       setBlendedMetrics(null);
       return;
@@ -411,8 +408,7 @@ export default function ModelMatrixPage() {
   }, [sandboxManagerWeights, sandboxSelectedManagers]);
 
   const runMonteCarloSimulation = React.useCallback(async () => {
-    if (!blendedMetrics || weightError) { // Also check for weightError
-        // console.warn("Cannot run Monte Carlo: Blended metrics not available or weight error present.");
+    if (!blendedMetrics || weightError) { 
         return;
     }
     setIsMonteCarloRunning(true);
@@ -468,17 +464,43 @@ export default function ModelMatrixPage() {
       });
     }
     setIsMonteCarloRunning(false);
-  }, [blendedMetrics, weightError]); // Added weightError as a dependency
+  }, [blendedMetrics, weightError]); 
 
+  const handleDownloadExcelSummary = async () => {
+    const dataForSheet = modelPerformanceData.map(model => {
+      const row: any = {
+        Manager: model.manager,
+        'Strategy Name': model.strategyName,
+      };
+      if (columnVisibility.aum) row.AUM = model.aum;
+      if (columnVisibility.feePercent) row['Fee %'] = model.feePercent;
+      if (columnVisibility.style) row.Style = model.style;
+      if (columnVisibility.ytdReturn) row['YTD Ret'] = model.ytdReturn;
+      if (columnVisibility.ytdBenchmark) row['YTD Bench'] = model.ytdBenchmark;
+      if (columnVisibility.oneYearReturn) row['1Y Ret'] = model.oneYearReturn;
+      if (columnVisibility.oneYearBenchmark) row['1Y Bench'] = model.oneYearBenchmark;
+      if (columnVisibility.threeYearReturn) row['3Y Ret'] = model.threeYearReturn;
+      if (columnVisibility.threeYearBenchmark) row['3Y Bench'] = model.threeYearBenchmark;
+      if (columnVisibility.fiveYearReturn) row['5Y Ret'] = model.fiveYearReturn;
+      if (columnVisibility.fiveYearBenchmark) row['5Y Bench'] = model.fiveYearBenchmark;
+      if (columnVisibility.sharpeRatio) row['Sharpe'] = model.sharpeRatio;
+      if (columnVisibility.irr) row['IRR'] = model.irr;
+      if (columnVisibility.beta) row['Beta'] = model.beta;
+      return row;
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(dataForSheet);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Model Performance");
+    XLSX.writeFile(workbook, "model_performance_summary.xlsx");
+  };
+  
   const handleDownloadMonteCarloReport = async () => {
-    // This function is commented out because jspdf and html2canvas are not installed.
-    // To enable, install the packages: npm install jspdf html2canvas
-    // Then, uncomment this function and the corresponding imports.
-    console.warn("PDF Download: jsPDF and html2canvas libraries are required. Please install them to enable this feature.");
-    if (!monteCarloSummary || !monteCarloData /* || !jsPDF || !html2canvas */) {
-        alert("Monte Carlo data is not available, or PDF libraries are missing. Please run a simulation first.");
-        return;
-    }
+    // console.warn("PDF Download: 'jspdf' and 'html2canvas' libraries are required for full feature. Chart image will be skipped if not available.");
+    // if (!monteCarloSummary || !monteCarloData) {
+    //     alert("Monte Carlo data is not available. Please run a simulation first.");
+    //     return;
+    // }
     
     // const pdf = new jsPDF("p", "mm", "a4");
     // pdf.setFontSize(18);
@@ -490,26 +512,24 @@ export default function ModelMatrixPage() {
     // let yPos = 30;
 
     // const chartElement = document.getElementById("monte-carlo-chart-container");
-    // if (chartElement /* && html2canvas */) { // Check if html2canvas is imported/available
+    // if (chartElement && typeof html2canvas === 'function') { 
     //     try {
-    //         // console.log("Attempting to capture chart with html2canvas...");
-    //         // const canvas = await html2canvas(chartElement, { 
-    //         //     scale: 2, 
-    //         //     backgroundColor: getComputedStyle(document.body).getPropertyValue('--background').trim() || '#000104', // Use actual background
-    //         //     useCORS: true, // If chart uses external images/fonts
-    //         // }); 
-    //         // const imgData = canvas.toDataURL("image/png");
-    //         // pdf.addImage(imgData, "PNG", 10, yPos, 190, 100); 
-    //         // yPos += 110;
-    //         // console.log("Chart image added to PDF.");
+    //         const canvas = await html2canvas(chartElement, { 
+    //             scale: 2, 
+    //             backgroundColor: getComputedStyle(document.body).getPropertyValue('--background').trim() || '#000104',
+    //             useCORS: true,
+    //         }); 
+    //         const imgData = canvas.toDataURL("image/png");
+    //         pdf.addImage(imgData, "PNG", 10, yPos, 190, 100); 
+    //         yPos += 110;
     //     } catch (error) {
-    //         // console.error("Error generating chart image for PDF:", error);
-    //         // pdf.text("Could not generate chart image. (html2canvas error)", 10, yPos);
-    //         // yPos += 10;
+    //         console.error("Error generating chart image for PDF:", error);
+    //         pdf.text("Could not generate chart image. (html2canvas error)", 10, yPos);
+    //         yPos += 10;
     //     }
     // } else {
-    //     // pdf.text("Chart image not available (element 'monte-carlo-chart-container' not found or html2canvas missing).", 10, yPos);
-    //     // yPos += 10;
+    //     pdf.text("Chart image not available (element 'monte-carlo-chart-container' not found or html2canvas missing).", 10, yPos);
+    //     yPos += 10;
     // }
 
     // pdf.setFontSize(12);
@@ -519,6 +539,7 @@ export default function ModelMatrixPage() {
     // pdf.text(`5th - 95th Percentile Range: ${formatCurrency(monteCarloSummary.p05EndValue)} – ${formatCurrency(monteCarloSummary.p95EndValue)}`, 10, yPos);
     
     // pdf.save("monte-carlo-report.pdf");
+    alert("PDF Download functionality is currently disabled because 'jspdf' or 'html2canvas' may not be installed. Please check console for details or install these libraries.");
   };
 
   return (
@@ -598,7 +619,7 @@ export default function ModelMatrixPage() {
                   key={key}
                   checked={columnVisibility[key]}
                   onCheckedChange={(checked) => handleColumnVisibilityChange(key, Boolean(checked))}
-                  onSelect={(event) => event.preventDefault()} // Keep dropdown open
+                  onSelect={(event) => event.preventDefault()}
                 >
                   {label}
                 </DropdownMenuCheckboxItem>
@@ -651,7 +672,11 @@ export default function ModelMatrixPage() {
             ))}
           </TableBody>
         </Table>
-        <div className="flex justify-end mt-6"> <Button variant="outline"> <Download className="mr-2 h-4 w-4" /> Download PDF Summary </Button> </div>
+        <div className="flex justify-end mt-6">
+          <Button variant="outline" onClick={handleDownloadExcelSummary}>
+            <Download className="mr-2 h-4 w-4" /> Download Excel Summary
+          </Button>
+        </div>
       </PlaceholderCard>
 
       <PlaceholderCard title="Model Rebalancing Sandbox" className="mt-8">
@@ -714,7 +739,7 @@ export default function ModelMatrixPage() {
           <Button
             variant="outline"
             onClick={handleDownloadMonteCarloReport}
-            disabled={true} // Always disabled until jspdf/html2canvas are properly handled/installed
+            disabled={true} 
             title="PDF Download requires 'jspdf' and 'html2canvas' libraries. Please install them to enable this feature."
           >
             <FileDown className="mr-2 h-4 w-4" /> Download Scenario PDF (Requires Libraries)
