@@ -50,6 +50,16 @@ export function TickerPriceChart({ data }: TickerPriceChartProps) {
     fullDate: formatDateFns(parseISO(point.date), "MMM dd, yyyy"),
   }));
 
+  const getDynamicDomainWithBuffer = (dataMin: number, dataMax: number) => {
+    if (dataMin === dataMax) {
+      // Handle flat line or single point
+      const buffer = Math.max(Math.abs(dataMin * 0.01), 0.1); // 1% buffer or at least 0.1
+      return [dataMin - buffer, dataMax + buffer];
+    }
+    const range = dataMax - dataMin;
+    const padding = range * 0.05; // 5% padding
+    return [dataMin - padding, dataMax + padding];
+  };
 
   return (
     <ChartContainer config={chartConfig} className="h-full w-full">
@@ -60,18 +70,18 @@ export function TickerPriceChart({ data }: TickerPriceChartProps) {
             top: 10,
             right: 20,
             left: 0,
-            bottom: 0, // Removed bottom margin to eliminate space for X-axis labels/ticks
+            bottom: 0, 
           }}
         >
           <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border)/0.5)" vertical={false} />
           <XAxis
-            dataKey="displayDate" // Still need dataKey for data mapping
+            dataKey="displayDate" 
             stroke="hsl(var(--muted-foreground))"
             fontSize={10}
-            tickLine={false} // Hide tick lines
-            axisLine={false} // Hide axis line
-            tickFormatter={() => ''} // Hide labels by returning empty string
-            height={0} // Attempt to completely remove space taken by X-axis
+            tickLine={false} 
+            axisLine={false} 
+            tickFormatter={() => ''} 
+            height={0} 
             tickMargin={0}
           />
           <YAxis
@@ -81,7 +91,8 @@ export function TickerPriceChart({ data }: TickerPriceChartProps) {
             axisLine={false}
             tickMargin={5}
             tickFormatter={(value) => `$${value.toFixed(0)}`} 
-            domain={['dataMin - 5', 'dataMax + 5']} 
+            domain={([dataMin, dataMax]) => getDynamicDomainWithBuffer(dataMin, dataMax)}
+            allowDataOverflow={false}
           />
           <ChartTooltip
             cursor={{ stroke: "hsl(var(--primary)/0.3)", strokeWidth: 1 }}
@@ -113,4 +124,3 @@ export function TickerPriceChart({ data }: TickerPriceChartProps) {
     </ChartContainer>
   );
 }
-
