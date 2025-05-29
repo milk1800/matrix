@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Inter, Roboto_Mono } from 'next/font/google';
@@ -10,7 +11,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/auth-context";
 import { TickerProvider, useTicker } from "@/contexts/ticker-context";
 import { cn } from '@/lib/utils';
-import { Brain, ChevronLeft, ChevronRight, MessageSquare, Send, X } from 'lucide-react'; // Added Brain, Chevron icons
+import { Brain, ChevronLeft, ChevronRight, MessageSquare, Send, X } from 'lucide-react'; 
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -26,114 +27,39 @@ const robotoMono = Roboto_Mono({
   subsets: ['latin'],
 });
 
-interface TickerItem {
+interface StaticTickerItem {
   symbol: string;
-  price?: string;
-  change?: string;
-  changePercent?: string;
-  color?: string;
-  error?: boolean;
-  loading?: boolean;
+  price: string;
+  change: string;
+  changePercent: string;
+  color: string;
 }
 
-// Reduced tickers and increased interval to avoid rate limits
-const POLYGON_TICKERS_FOR_SCROLLING_TICKER = ['SPY', 'QQQ']; 
-
-async function fetchPolygonTickerDataForScroll(symbol: string): Promise<TickerItem> {
-  const apiKey = process.env.NEXT_PUBLIC_POLYGON_API_KEY;
-  if (!apiKey) {
-    // console.warn(`[Polygon API] Ticker: NEXT_PUBLIC_POLYGON_API_KEY is not defined. Cannot fetch ${symbol}.`);
-    return { symbol, error: true, price: 'Key Missing', change: '', color: 'text-red-400' };
-  }
-
-  try {
-    const response = await fetch(`https://api.polygon.io/v2/aggs/ticker/${symbol}/prev?adjusted=true&apiKey=${apiKey}`);
-    if (!response.ok) {
-      let errorMessage = `Error ${response.status}`;
-       if (response.status === 429) {
-        errorMessage = 'Rate Limit';
-      } else {
-        try {
-          const errorData = await response.json();
-          if (errorData && (errorData.message || errorData.error)) {
-            errorMessage = errorData.message || errorData.error;
-          }
-        } catch (e) { /* ignore */ }
-      }
-      // console.warn(`[Polygon API] Ticker: Error fetching ${symbol}: ${errorMessage}`);
-      return { symbol, error: true, price: `API Err: ${response.status}`, change: '', color: 'text-yellow-400' };
-    }
-    const data = await response.json();
-    if (data.results && data.results.length > 0) {
-      const prevClose = data.results[0].c;
-      const prevOpen = data.results[0].o;
-
-      if (typeof prevClose !== 'number' || typeof prevOpen !== 'number') {
-        // console.warn(`[Polygon API] Ticker: Invalid data for ${symbol}. Close: ${prevClose}, Open: ${prevOpen}`);
-        return { symbol, error: true, price: 'Data N/A', change: '', color: 'text-yellow-400' };
-      }
-
-      const changeValue = prevClose - prevOpen;
-      const changePercentNum = prevOpen !== 0 ? (changeValue / prevOpen) * 100 : 0;
-      
-      let color = 'text-white';
-      let arrow = '';
-      if (changePercentNum > 0.005) {
-        color = 'text-green-400';
-        arrow = '▲';
-      } else if (changePercentNum < -0.005) {
-        color = 'text-red-400';
-        arrow = '▼';
-      }
-
-      return {
-        symbol,
-        price: `$${prevClose.toFixed(2)}`,
-        change: `${arrow}${changeValue.toFixed(2)}`,
-        changePercent: `(${arrow}${Math.abs(changePercentNum).toFixed(2)}%)`,
-        color,
-      };
-    }
-    // console.warn(`[Polygon API] Ticker: No data results for ${symbol}.`);
-    return { symbol, error: true, price: 'No Data', change: '', color: 'text-yellow-400' };
-  } catch (error: any) {
-    // console.error(`[Polygon API] Ticker: Fetch error for ${symbol}:`, error.message || error);
-    return { symbol, error: true, price: 'Fetch Err', change: '', color: 'text-red-400' };
-  }
-}
+const STATIC_TICKER_ITEMS: StaticTickerItem[] = [
+  { symbol: 'AAPL', price: '$195.16', change: '▼', changePercent: '0.45%', color: 'text-red-400' },
+  { symbol: 'MSFT', price: '$420.72', change: '▲', changePercent: '1.10%', color: 'text-green-400' },
+  { symbol: 'TSLA', price: '$180.01', change: '▼', changePercent: '2.30%', color: 'text-red-400' },
+  { symbol: 'AMZN', price: '$185.99', change: '▲', changePercent: '0.75%', color: 'text-green-400' },
+  { symbol: 'META', price: '$498.50', change: '▲', changePercent: '1.50%', color: 'text-green-400' },
+  { symbol: 'GOOGL', price: '$175.60', change: '▼', changePercent: '0.20%', color: 'text-red-400' },
+  { symbol: 'NVDA', price: '$120.88', change: '▲', changePercent: '3.10%', color: 'text-green-400' }, // Note: NVDA had a stock split, price is illustrative
+  { symbol: 'JPM', price: '$197.88', change: '▲', changePercent: '0.65%', color: 'text-green-400' },
+  { symbol: 'JNJ', price: '$148.50', change: '▼', changePercent: '0.15%', color: 'text-red-400' },
+  { symbol: 'V', price: '$275.30', change: '▲', changePercent: '0.80%', color: 'text-green-400' },
+  { symbol: 'PG', price: '$167.90', change: '▲', changePercent: '0.40%', color: 'text-green-400' },
+  { symbol: 'UNH', price: '$490.20', change: '▼', changePercent: '0.90%', color: 'text-red-400' },
+  { symbol: 'DIS', price: '$101.75', change: '▲', changePercent: '1.25%', color: 'text-green-400' },
+  { symbol: 'MA', price: '$450.60', change: '▲', changePercent: '0.95%', color: 'text-green-400' },
+  { symbol: 'HD', price: '$330.10', change: '▼', changePercent: '0.55%', color: 'text-red-400' },
+  { symbol: 'BAC', price: '$39.50', change: '▲', changePercent: '1.05%', color: 'text-green-400' },
+  { symbol: 'NFLX', price: '$650.80', change: '▼', changePercent: '1.15%', color: 'text-red-400' },
+  { symbol: 'XOM', price: '$110.25', change: '▲', changePercent: '0.70%', color: 'text-green-400' },
+  { symbol: 'KO', price: '$63.40', change: '▲', changePercent: '0.30%', color: 'text-green-400' },
+  { symbol: 'CSCO', price: '$46.80', change: '▼', changePercent: '0.50%', color: 'text-red-400' },
+];
 
 function TickerContent() {
   const { tickerMessage } = useTicker();
-  const [tickerDataItems, setTickerDataItems] = React.useState<TickerItem[]>(
-    POLYGON_TICKERS_FOR_SCROLLING_TICKER.map(symbol => ({ symbol, loading: true, price: 'Loading...', change: '', color: 'text-white' }))
-  );
-  const [isLoading, setIsLoading] = React.useState(true);
-
-  const loadAllTickerData = React.useCallback(async () => {
-    if (!process.env.NEXT_PUBLIC_POLYGON_API_KEY) {
-      setTickerDataItems(POLYGON_TICKERS_FOR_SCROLLING_TICKER.map(symbol => ({ symbol, error: true, price: 'API Key Missing', change: '', color: 'text-red-400' })));
-      setIsLoading(false);
-      return;
-    }
-    setIsLoading(true);
-    const results = await Promise.allSettled(POLYGON_TICKERS_FOR_SCROLLING_TICKER.map(fetchPolygonTickerDataForScroll));
-    const newData = results.map((result, index) => {
-      if (result.status === 'fulfilled') {
-        return result.value;
-      } else {
-        // console.error(`[Polygon API] Ticker: Promise rejected for ${POLYGON_TICKERS_FOR_SCROLLING_TICKER[index]}:`, result.reason);
-        return { symbol: POLYGON_TICKERS_FOR_SCROLLING_TICKER[index], error: true, price: 'Fetch Error', change: '', color: 'text-red-400' };
-      }
-    });
-    setTickerDataItems(newData);
-    setIsLoading(false);
-  }, []);
-
-  React.useEffect(() => {
-    loadAllTickerData();
-    const intervalId = setInterval(loadAllTickerData, 900000); // Refresh every 15 minutes
-    return () => clearInterval(intervalId);
-  }, [loadAllTickerData]);
 
   if (tickerMessage) {
     const repeatedMessage = Array(15).fill(tickerMessage).join("  •••  ");
@@ -144,25 +70,15 @@ function TickerContent() {
       </div>
     );
   }
-
-  if (isLoading && tickerDataItems.every(item => item.loading)) {
-    return <div className="text-sm font-mono text-center text-muted-foreground py-0.5">Loading ticker data...</div>;
-  }
   
-  const itemsToRender = tickerDataItems.filter(item => !item.error || (item.error && item.price !== 'API Key Missing' && item.price !== 'Rate Limit'));
-  if (itemsToRender.length === 0 && !isLoading) {
-     return <div className="text-sm font-mono text-center text-muted-foreground py-0.5">Ticker data unavailable. Check API Key or Polygon.io subscription.</div>;
-  }
-  
-  // Duplicate the items multiple times to ensure smooth scrolling, especially if the list is short
-  const duplicatedTickerItems = Array(5).fill(itemsToRender).flat();
-
+  // Duplicate the static items multiple times to ensure smooth scrolling
+  const duplicatedTickerItems = Array(3).fill(STATIC_TICKER_ITEMS).flat();
 
   return (
     <div className="animate-ticker whitespace-nowrap flex items-center text-sm font-mono">
       {duplicatedTickerItems.map((item, index) => (
         <span key={`${item.symbol}-${index}`} className="text-white px-4"> 
-          {item.symbol}: <span className={item.color || 'text-white'}>{item.price} {item.change} {item.changePercent}</span>
+          {item.symbol}: <span className={item.color || 'text-white'}>{item.price} {item.change}{item.changePercent}</span>
         </span>
       ))}
     </div>
