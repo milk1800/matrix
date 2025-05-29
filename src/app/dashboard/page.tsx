@@ -40,32 +40,32 @@ interface MarketData {
 
 const initialMarketOverviewData: MarketData[] = [
   {
-    label: 'Apple (AAPL)',
-    polygonTicker: 'AAPL',
+    label: 'S&P 500 (I:SPX)',
+    polygonTicker: 'I:SPX',
     icon: Landmark,
     openTime: '09:30',
     closeTime: '16:00',
     timezone: 'America/New_York',
   },
   {
-    label: 'Microsoft (MSFT)',
-    polygonTicker: 'MSFT',
+    label: 'Dow 30 (I:DJI)',
+    polygonTicker: 'I:DJI',
     icon: Landmark,
     openTime: '09:30',
     closeTime: '16:00',
     timezone: 'America/New_York',
   },
   {
-    label: 'Google (GOOGL)',
-    polygonTicker: 'GOOGL',
+    label: 'Nasdaq (I:IXIC)',
+    polygonTicker: 'I:IXIC',
     icon: Landmark,
     openTime: '09:30',
     closeTime: '16:00',
     timezone: 'America/New_York',
   },
   {
-    label: 'Tesla (TSLA)',
-    polygonTicker: 'TSLA',
+    label: 'Russell 2000 (I:RUT)',
+    polygonTicker: 'I:RUT',
     icon: Landmark,
     openTime: '09:30',
     closeTime: '16:00',
@@ -148,12 +148,13 @@ interface MarketStatusInfo {
   shadowClass: string;
 }
 
+// Function to fetch index data
 const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
   const apiKey = process.env.NEXT_PUBLIC_POLYGON_API_KEY;
   console.log(`[Polygon API] Attempting to use API key ending with: ...${apiKey ? apiKey.slice(-4) : 'UNDEFINED'} for symbol: ${symbol}`);
 
   if (!apiKey) {
-    console.error("[Polygon API] CRITICAL: NEXT_PUBLIC_POLYGON_API_KEY is not defined. Ensure .env.local is set and server restarted.");
+    console.error("Polygon API key (NEXT_PUBLIC_POLYGON_API_KEY) is not set. Please ensure it's in .env.local and the dev server was restarted.");
     return { error: 'API Key Missing. Configure in .env.local & restart server.' };
   }
 
@@ -162,24 +163,23 @@ const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
     
     if (!response.ok) {
       let errorMessage = `API Error: ${response.status}`;
-      let errorDetails = "";
       try {
         const errorData = await response.json();
-        console.log(`[Polygon API Debug] Raw error response for ${symbol}:`, errorData); // Log the raw error data
+        console.log(`[Polygon API Debug] Raw error response for ${symbol}:`, errorData); 
 
         if (Object.keys(errorData).length === 0 && errorData.constructor === Object) {
-            console.warn(`[Polygon API Warn] Received empty JSON error object from Polygon for ${symbol}. Status: ${response.status}.`);
-            errorDetails = "Polygon returned an empty error response. This often means the API key is invalid, lacks permissions, or the requested ticker is unavailable on your plan.";
-             if (response.status === 429) {
-              errorDetails = "Rate limit exceeded. Please wait or upgrade your Polygon.io subscription.";
+            console.warn(`[Polygon API Warn] Received empty JSON error object from Polygon for ${symbol}. Status: ${response.status}. This often means the API key is invalid, lacks permissions, or the requested ticker is unavailable on your plan.`);
+            errorMessage = `API Error: ${response.status} - Polygon returned an empty error response. Check API key, permissions, or ticker availability for your plan.`;
+            if (response.status === 429) {
+              errorMessage = "Rate limit exceeded. Please wait or upgrade your Polygon.io subscription.";
             }
         } else {
-            if (errorData && errorData.message) errorDetails = errorData.message;
-            else if (errorData && errorData.error) errorDetails = errorData.error;
-            else if (errorData && errorData.request_id) errorDetails = `Request ID: ${errorData.request_id}`;
+            if (errorData && errorData.message) errorMessage = `API Error: ${response.status} - ${errorData.message}`;
+            else if (errorData && errorData.error) errorMessage = `API Error: ${response.status} - ${errorData.error}`;
+            else if (errorData && errorData.request_id) errorMessage = `API Error: ${response.status} (Request ID: ${errorData.request_id})`;
+            else errorMessage = `API Error: ${response.status} - ${response.statusText || 'Unknown error'}`;
         }
-        errorMessage = `API Error: ${response.status} - ${errorDetails || response.statusText || 'Unknown error'}`;
-      } catch (e: any) { // Catch parsing error
+      } catch (e: any) { 
           let responseText = "";
           try {
             responseText = await response.text();
@@ -191,7 +191,7 @@ const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
           }
       }
       console.error(`Error fetching ${symbol}: ${errorMessage}`);
-      return { error: errorMessage }; // Return the more detailed message
+      return { error: errorMessage };
     }
     const data = await response.json();
     if (data.results && data.results.length > 0) {
@@ -307,12 +307,12 @@ export default function DashboardPage() {
         console.warn(`[Ticker Lookup] Failed to fetch previous day OHLCV for ${symbol}: ${prevDayRes.status} - ${await prevDayRes.text()}`);
       }
       
-      let priceHistory: PriceHistoryPoint[] = [];
+      let priceHistoryPoints: PriceHistoryPoint[] = [];
       let historyError: string | null = null;
       if (historyRes.ok) {
         const historyData = await historyRes.json();
         if (historyData.results) {
-          priceHistory = historyData.results.map((r: any) => ({
+          priceHistoryPoints = historyData.results.map((r: any) => ({
             date: format(new Date(r.t), 'yyyy-MM-dd'),
             close: r.c,
           }));
@@ -322,7 +322,7 @@ export default function DashboardPage() {
         console.warn(`[Ticker Lookup] Failed to fetch price history for ${symbol}: ${historyRes.status} - ${await historyRes.text()}`);
       }
 
-      if (Object.keys(companyDetails).length === 0 && Object.keys(ohlcvData).length === 0 && priceHistory.length === 0) {
+      if (Object.keys(companyDetails).length === 0 && Object.keys(ohlcvData).length === 0 && priceHistoryPoints.length === 0) {
         let combinedError = "No data found for ticker.";
         if (detailsError || prevDayError || historyError) {
             combinedError += ` API Errors: ${[detailsError, prevDayError, historyError].filter(Boolean).join(', ')}`;
@@ -341,8 +341,8 @@ export default function DashboardPage() {
         companyName: companyDetails.name || `${symbol} (Name N/A)`,
         symbol: companyDetails.ticker || symbol,
         exchange: companyDetails.primary_exchange || "N/A",
-        sector: companyDetails.sic_description || "N/A", // Switched from market_cap_category
-        industry: companyDetails.sic_description || "N/A", // Using sic_description for a broader category
+        sector: companyDetails.sic_description || "N/A", 
+        industry: companyDetails.sic_description || "N/A", 
         logo: companyDetails.branding?.logo_url ? `${companyDetails.branding.logo_url}?apiKey=${apiKey}` : `https://placehold.co/48x48.png?text=${symbol}`,
         marketCap: companyDetails.market_cap ? (companyDetails.market_cap / 1_000_000_000).toFixed(2) + "B" : "N/A",
         currentPrice: typeof currentPrice === 'number' ? currentPrice.toFixed(2) : "N/A",
@@ -360,7 +360,7 @@ export default function DashboardPage() {
         beta: "N/A", 
         nextEarningsDate: "N/A",
         dividendDate: "N/A", 
-        priceHistory: priceHistory,
+        priceHistory: priceHistoryPoints,
         recentNews: [], 
       });
 
@@ -399,8 +399,8 @@ export default function DashboardPage() {
         currentMinuteEST = localNow.getMinutes();
       }
       
-      const todayForLogic = new Date(); // Use a consistent local date for setting hours/minutes
-      todayForLogic.setHours(0,0,0,0); // Reset to midnight locally
+      const todayForLogic = new Date(); 
+      todayForLogic.setHours(0,0,0,0); 
 
 
       initialMarketOverviewData.forEach(market => {
@@ -408,14 +408,12 @@ export default function DashboardPage() {
             const [openHour, openMinute] = market.openTime.split(':').map(Number);
             const [closeHour, closeMinute] = market.closeTime.split(':').map(Number);
 
-            // Create market open/close times based on today's date but with EST hours/minutes
             const marketOpenTimeToday = new Date(todayForLogic);
             marketOpenTimeToday.setHours(openHour, openMinute, 0, 0);
 
             const marketCloseTimeToday = new Date(todayForLogic);
             marketCloseTimeToday.setHours(closeHour, closeMinute, 0, 0);
             
-            // Create current time object based on today's date but with EST hours/minutes for comparison
             const currentTimeWithEstHours = new Date(todayForLogic);
             currentTimeWithEstHours.setHours(currentHourEST, currentMinuteEST, 0, 0);
 
@@ -486,24 +484,28 @@ export default function DashboardPage() {
               changeDisplay = <span className="text-xs text-muted-foreground">Loading...</span>;
             } else if (apiResult?.error) {
                 let displayError = apiResult.error;
-                if (apiResult.error.includes("429")) {
-                    displayError = "Rate Limit";
+                if (apiResult.error.includes("429")) { // Specifically check for rate limit
+                    displayError = "Rate Limit Exceeded";
                 } else if (apiResult.error.includes("401") || apiResult.error.toLowerCase().includes("unknown api key")) {
                     displayError = "Auth Error";
                 } else if (apiResult.error.includes("API Key Missing")) {
                     displayError = "Key Missing";
+                } else if (apiResult.error.includes("No data")) {
+                    displayError = "No Data";
                 }
               valueDisplay = <TooltipProvider><Tooltip><TooltipTrigger asChild><span className="text-sm text-red-400/80 flex items-center truncate"><AlertCircle className="w-4 h-4 mr-1 shrink-0" /> {displayError}</span></TooltipTrigger><TooltipContent><p>{apiResult.error}</p></TooltipContent></Tooltip></TooltipProvider>;
               changeDisplay = "";
             } else if (apiResult?.c !== undefined && apiResult?.o !== undefined) {
               valueDisplay = `$${apiResult.c.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
               const percentChange = calculateChangePercent(apiResult.c, apiResult.o);
+              const pointsChange = apiResult.c - apiResult.o;
+
               if (percentChange !== null) {
                 const changeType = percentChange >= 0 ? 'up' : 'down';
                 changeDisplay = (
                   <span className={cn("text-sm font-semibold", changeType === 'up' ? 'text-green-400' : 'text-red-400')}>
                     {changeType === 'up' ? <TrendingUp className="inline-block w-4 h-4 mr-1" /> : <TrendingDown className="inline-block w-4 h-4 mr-1" />}
-                    {percentChange.toFixed(2)}%
+                    {pointsChange.toFixed(2)} ({percentChange.toFixed(2)}%)
                   </span>
                 );
               } else {
@@ -681,6 +683,3 @@ export default function DashboardPage() {
     </main>
   );
 }
-
-
-    
