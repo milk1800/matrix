@@ -44,7 +44,7 @@ interface MarketData {
 
 const initialMarketOverviewData: MarketData[] = [
   {
-    label: 'S&P 500 (SPX)',
+    label: 'S&P 500 (I:SPX)',
     polygonTicker: 'I:SPX',
     icon: Landmark,
     openTime: '09:30',
@@ -52,7 +52,7 @@ const initialMarketOverviewData: MarketData[] = [
     timezone: 'America/New_York',
   },
   {
-    label: 'Dow 30 (DJI)',
+    label: 'Dow 30 (I:DJI)',
     polygonTicker: 'I:DJI',
     icon: Landmark,
     openTime: '09:30',
@@ -60,7 +60,7 @@ const initialMarketOverviewData: MarketData[] = [
     timezone: 'America/New_York',
   },
   {
-    label: 'Nasdaq (IXIC)',
+    label: 'Nasdaq (I:IXIC)',
     polygonTicker: 'I:IXIC',
     icon: Landmark,
     openTime: '09:30',
@@ -68,7 +68,7 @@ const initialMarketOverviewData: MarketData[] = [
     timezone: 'America/New_York',
   },
   {
-    label: 'Russell 2000 (RUT)',
+    label: 'Russell 2000 (I:RUT)',
     polygonTicker: 'I:RUT',
     icon: Landmark,
     openTime: '09:30',
@@ -172,12 +172,14 @@ const timeRangeLabels: { [key: string]: string } = {
   '1Y': 'Past year'
 };
 
+// Function to fetch index data
 const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
   const apiKey = process.env.NEXT_PUBLIC_POLYGON_API_KEY;
+  // Log to check if the API key is being read, masking most of it for security
   console.log(`[Polygon API] Attempting to use API key ending with: ...${apiKey ? apiKey.slice(-4) : 'UNDEFINED'} for symbol: ${symbol}`);
 
   if (!apiKey) {
-    console.error("[Polygon API Error] API Key (NEXT_PUBLIC_POLYGON_API_KEY) is not defined. Please set it in your .env.local file and restart the development server.");
+    console.error("Polygon API key (NEXT_PUBLIC_POLYGON_API_KEY) is not set. Please ensure it's in .env.local and the dev server was restarted.");
     return { error: 'API Key Missing. Configure in .env.local & restart server.' };
   }
 
@@ -188,43 +190,36 @@ const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
     if (!response.ok) {
       try {
         const errorData = await response.json();
-        console.log(`[Polygon API Debug] Raw error response for ${symbol}:`, errorData); 
-
-        if (Object.keys(errorData).length === 0 && errorData.constructor === Object) {
-          errorMessage = `API Error: ${response.status} - Polygon returned an empty error response. Check API key, permissions, or ticker availability.`;
-          console.warn(`[Polygon API Warn] Polygon returned an empty error response for ${symbol}. Status: ${response.status}.`);
+         console.log(`[Polygon API Error] Full error response for ${symbol}:`, errorData); 
+        if (errorData && Object.keys(errorData).length === 0 && errorData.constructor === Object) {
+          console.warn(`[Polygon API Warn] Polygon returned an empty error object for ${symbol} with status ${response.status}.`);
+          errorMessage += ` - Polygon returned an empty error response. Check API key, permissions, or endpoint validity.`;
         } else if (errorData && errorData.message) {
           errorMessage = `API Error: ${response.status} - ${errorData.message}`;
         } else if (errorData && errorData.error) {
           errorMessage = `API Error: ${response.status} - ${errorData.error}`;
         } else if (errorData && errorData.request_id) {
-           errorMessage = `API Error: ${response.status} (Request ID: ${errorData.request_id}) - Often indicates an issue with the key or subscription for this ticker.`;
+           errorMessage = `API Error: ${response.status} (Request ID: ${errorData.request_id}) - Often indicates an issue with the key or subscription.`;
         } else {
-            const responseText = await response.text();
+            const responseText = await response.text().catch(() => "Failed to read error response text.");
             const snippet = responseText.substring(0, 200) + (responseText.length > 200 ? '...' : '');
-            console.warn(`[Polygon API Warn] Could not parse JSON error response for ${symbol}, but got text. Status: ${response.status}. Response text snippet:`, snippet);
-            errorMessage = `API Error: ${response.status} - ${response.statusText || 'Failed to parse error response.'} Raw: ${snippet.substring(0,50)}...`;
+            console.warn(`[Polygon API Warn] Could not parse JSON error for ${symbol}, but got text. Status: ${response.status}. Snippet:`, snippet);
+            errorMessage += ` - ${response.statusText || 'Failed to parse error response.'} Raw text snippet: ${snippet.substring(0,50)}...`;
         }
-      } catch (e: any) { 
-          try {
-            const responseText = await response.text();
-            const snippet = responseText.substring(0, 200) + (responseText.length > 200 ? '...' : '');
-            console.warn(`[Polygon API Warn] Could not parse JSON or text error response for ${symbol}. Status: ${response.status}. Response text snippet:`, snippet);
-            errorMessage = `API Error: ${response.status} - ${response.statusText || 'Failed to parse error response.'} Snippet: ${snippet.substring(0,50)}...`;
-          } catch (textErr: any) {
-            console.warn(`[Polygon API Warn] Could not parse JSON or text error response for ${symbol}. Status: ${response.status}. Also failed to read response as text: ${textErr.message}`);
-            errorMessage = `API Error: ${response.status} - ${response.statusText || 'Unknown error structure and failed to read response text.'}`;
-          }
-      }
 
-      if (response.status === 401) { 
-        errorMessage = `API Error: 401 - Unknown API Key or insufficient permissions for ${symbol}. Please verify your Polygon.io API key and plan.`;
-      } else if (response.status === 429) {
-        errorMessage = `API Error: 429 - You've exceeded the maximum requests per minute for ${symbol}, please wait or upgrade your subscription to continue. https://polygon.io/pricing`;
+        if (response.status === 401) { 
+            errorMessage = `API Error: 401 - Unknown API Key. Please verify your Polygon.io API key and plan for ${symbol}.`;
+        } else if (response.status === 429) {
+            errorMessage = `API Error: 429 - You've exceeded the maximum requests per minute for ${symbol}, please wait or upgrade your subscription to continue. https://polygon.io/pricing`;
+        }
+
+      } catch (e: any) { 
+          console.warn(`[Polygon API Warn] Failed to parse JSON error response for ${symbol}. Status: ${response.status}. Error:`, e);
+          errorMessage += ` - ${response.statusText || 'Failed to parse error JSON body.'}`;
       }
 
       console.error(`Error fetching ${symbol}: ${errorMessage}`);
-      return { error: errorMessage, loading: false };
+      return { error: errorMessage };
     }
     const data = await response.json();
     if (data.results && data.results.length > 0) {
@@ -267,11 +262,12 @@ export default function DashboardPage() {
   const [isLoadingEvents, setIsLoadingEvents] = React.useState({ ipos: false, holidays: false, dividends: false });
 
 
-  const fetchPolygonData = async (endpoint: string, params: Record<string, string> = {}): Promise<any> => {
+ const fetchPolygonData = React.useCallback(async (endpoint: string, params: Record<string, string> = {}): Promise<any> => {
     const apiKey = process.env.NEXT_PUBLIC_POLYGON_API_KEY;
     if (!apiKey) {
-      console.error("[Polygon Events API] API Key (NEXT_PUBLIC_POLYGON_API_KEY) is not set.");
-      throw new Error('API Key Missing for events');
+      const errorMsg = "[Polygon Events API] API Key (NEXT_PUBLIC_POLYGON_API_KEY) is not set.";
+      console.error(errorMsg);
+      throw new Error(errorMsg);
     }
     const queryString = new URLSearchParams(params).toString();
     const url = `https://api.polygon.io${endpoint}?apiKey=${apiKey}${queryString ? `&${queryString}` : ''}`;
@@ -282,13 +278,33 @@ export default function DashboardPage() {
       let errorMsg = `Failed to fetch ${endpoint}. Status: ${response.status}`;
       try {
         const errorData = await response.json();
-        errorMsg += ` - ${errorData.message || errorData.error || JSON.stringify(errorData)}`;
-      } catch (e) { /* ignore if error body is not json */ }
-      console.error(errorMsg);
+        // Log the full errorData if available
+        console.log(`[Polygon API Error] Full error response for ${endpoint}:`, errorData); 
+        if (errorData && Object.keys(errorData).length === 0 && errorData.constructor === Object) {
+          console.warn(`[Polygon API Warn] Polygon returned an empty error object for ${endpoint} with status ${response.status}.`);
+          errorMsg += ` - Polygon returned an empty error response. Check API key, permissions, or endpoint validity.`;
+        } else if (errorData && errorData.message) {
+          errorMsg += ` - ${errorData.message}`;
+        } else if (errorData && errorData.error) {
+          errorMsg += ` - ${errorData.error}`;
+        } else if (errorData && errorData.request_id) {
+           errorMsg += ` (Request ID: ${errorData.request_id}) - Often indicates an issue with the key or subscription.`;
+        } else {
+            const responseText = await response.text().catch(() => "Failed to read error response text.");
+            const snippet = responseText.substring(0, 200) + (responseText.length > 200 ? '...' : '');
+            console.warn(`[Polygon API Warn] Could not parse JSON error for ${endpoint}, but got text. Status: ${response.status}. Snippet:`, snippet);
+            errorMsg += ` - ${response.statusText || 'Failed to parse error response.'} Raw text snippet: ${snippet.substring(0,50)}...`;
+        }
+      } catch (e) { 
+          console.warn(`[Polygon API Warn] Failed to parse JSON error response for ${endpoint}. Status: ${response.status}. Error:`, e);
+          errorMsg += ` - ${response.statusText || 'Failed to parse error JSON body.'}`;
+      }
+      console.error(errorMsg); // Original location of the error in the stack trace
       throw new Error(errorMsg);
     }
     return response.json();
-  };
+  }, []);
+
 
   const fetchIPOs = React.useCallback(async () => {
     setIsLoadingEvents(prev => ({ ...prev, ipos: true }));
@@ -302,7 +318,7 @@ export default function DashboardPage() {
     } finally {
       setIsLoadingEvents(prev => ({ ...prev, ipos: false }));
     }
-  }, []);
+  }, [fetchPolygonData]);
 
   const fetchMarketHolidays = React.useCallback(async () => {
     setIsLoadingEvents(prev => ({ ...prev, holidays: true }));
@@ -314,7 +330,7 @@ export default function DashboardPage() {
     } finally {
       setIsLoadingEvents(prev => ({ ...prev, holidays: false }));
     }
-  }, []);
+  }, [fetchPolygonData]);
 
   const fetchDividends = React.useCallback(async (ticker: string) => {
     if (!ticker) {
@@ -331,7 +347,7 @@ export default function DashboardPage() {
     } finally {
       setIsLoadingEvents(prev => ({ ...prev, dividends: false }));
     }
-  }, []);
+  }, [fetchPolygonData]);
 
   React.useEffect(() => {
     fetchIPOs();
@@ -473,10 +489,10 @@ export default function DashboardPage() {
     const loadMarketData = async () => {
       const apiKey = process.env.NEXT_PUBLIC_POLYGON_API_KEY;
       if (!apiKey) {
-        console.warn("[Polygon API] CRITICAL: NEXT_PUBLIC_POLYGON_API_KEY is not defined. Market data will not be fetched.");
+        console.warn("[Polygon API] CRITICAL: NEXT_PUBLIC_POLYGON_API_KEY is not defined. Market data will not be fetched. Ensure .env.local is set and server restarted.");
         const errorState: Record<string, FetchedIndexData> = {};
         initialMarketOverviewData.forEach(market => {
-          errorState[market.polygonTicker] = { error: 'API Key Missing.' };
+          errorState[market.polygonTicker] = { error: 'API Key Missing. Check .env.local & restart server.' };
         });
         setMarketApiData(errorState);
         return;
@@ -528,7 +544,7 @@ export default function DashboardPage() {
     return ((currentPrice - openPrice) / openPrice) * 100;
   };
 
-  const getChartDataForRange = (fullHistory: PriceHistoryPoint[], range: string): PriceHistoryPoint[] => {
+  const getChartDataForRange = React.useCallback((fullHistory: PriceHistoryPoint[], range: string): PriceHistoryPoint[] => {
     if (!fullHistory || fullHistory.length === 0) return [];
     const today = endOfDay(new Date()); 
     let startDate: Date;
@@ -537,7 +553,11 @@ export default function DashboardPage() {
       case '1D':
          const lastTradingDay = fullHistory[fullHistory.length -1]?.date;
          if (!lastTradingDay) return [];
-         return fullHistory.filter(point => isSameDay(parseISO(point.date), parseISO(lastTradingDay)));
+         // Find all points for the last trading day.
+         return fullHistory.filter(point => {
+            const pointDate = parseISO(point.date);
+            return isValid(pointDate) && isSameDay(pointDate, parseISO(lastTradingDay));
+         });
       case '1W':
         startDate = startOfDay(subDays(today, 6)); 
         break;
@@ -552,13 +572,16 @@ export default function DashboardPage() {
         break;
       case '1Y':
       default:
+        // For 1Y, we might want to ensure it's exactly 1 year from the latest data point
+        // or just return the whole history if it's already filtered for that.
+        // Assuming fullPriceHistory is already the last year of data.
         return fullHistory; 
     }
     return fullHistory.filter(point => {
       const pointDate = parseISO(point.date);
-      return isValid(pointDate) && pointDate >= startDate;
+      return isValid(pointDate) && pointDate >= startDate && pointDate <= today;
     });
-  };
+  }, []);
 
 
   React.useEffect(() => {
@@ -567,7 +590,7 @@ export default function DashboardPage() {
     } else {
       setChartData([]); 
     }
-  }, [tickerData?.fullPriceHistory, selectedRange]);
+  }, [tickerData?.fullPriceHistory, selectedRange, getChartDataForRange]);
 
 
   const handleTickerLookup = async () => {
@@ -576,8 +599,8 @@ export default function DashboardPage() {
     setTickerData(null);
     setTickerError(null);
     setChartData([]);
-    setSelectedRange('1Y'); 
-    setDividendEvents([]); // Clear previous dividend events
+    //setSelectedRange('1Y'); // Keep current selected range
+    setDividendEvents([]); 
 
     const apiKey = process.env.NEXT_PUBLIC_POLYGON_API_KEY;
     if (!apiKey) {
@@ -653,7 +676,7 @@ export default function DashboardPage() {
         symbol: companyDetails.ticker || symbol,
         exchange: companyDetails.primary_exchange || "N/A",
         sector: companyDetails.sic_description || "N/A",
-        industry: companyDetails.sic_description || "N/A",
+        industry: companyDetails.sic_description || "N/A", // Using SIC description as industry for now
         logo: companyDetails.branding?.logo_url ? `${companyDetails.branding.logo_url}?apiKey=${apiKey}` : `https://placehold.co/48x48.png?text=${symbol.substring(0,3)}`,
         marketCap: companyDetails.market_cap ? (companyDetails.market_cap / 1_000_000_000).toFixed(2) + "B" : "N/A",
         currentPrice: typeof currentPrice === 'number' ? currentPrice.toFixed(2) : "N/A",
@@ -854,7 +877,7 @@ export default function DashboardPage() {
         
         {tickerData && !isLoadingTicker && (
           <div className="w-full space-y-6">
-            {/* Minimal Header */}
+            {/* Minimal Security Header */}
             <div className="w-full text-left mb-4">
               <h3 className="text-2xl font-bold text-foreground mb-1">{tickerData.companyName}</h3>
               <div className="flex items-end gap-3 mb-1">
@@ -949,3 +972,6 @@ export default function DashboardPage() {
     </main>
   );
 }
+
+
+    
