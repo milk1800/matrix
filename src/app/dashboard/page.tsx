@@ -1,7 +1,7 @@
 
 "use client";
 
-import * as React from 'react';
+import * as React from "react";
 import Image from "next/image";
 import { PlaceholderCard } from '@/components/dashboard/placeholder-card';
 import { Button } from '@/components/ui/button';
@@ -14,7 +14,7 @@ import {
   Newspaper, 
   Search, 
   Send,
-  Cpu, 
+  Brain, 
   BarChart4,
   AlertCircle,
   Clock,
@@ -22,8 +22,7 @@ import {
   CalendarDays,
   Loader2,
   ArrowUpRight,
-  ArrowDownRight,
-  Brain
+  ArrowDownRight
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from '@/lib/utils';
@@ -42,7 +41,7 @@ interface MarketData {
 const initialMarketOverviewData: MarketData[] = [
   {
     label: 'S&P 500 (I:SPX)',
-    polygonTicker: 'I:SPX',
+    polygonTicker: 'I:SPX', // Correct Polygon.io ticker for S&P 500 Index
     icon: Landmark,
     openTime: '09:30',
     closeTime: '16:00',
@@ -50,7 +49,7 @@ const initialMarketOverviewData: MarketData[] = [
   },
   {
     label: 'Dow 30 (I:DJI)',
-    polygonTicker: 'I:DJI',
+    polygonTicker: 'I:DJI', // Correct Polygon.io ticker for Dow Jones Industrial Average
     icon: Landmark,
     openTime: '09:30',
     closeTime: '16:00',
@@ -58,7 +57,7 @@ const initialMarketOverviewData: MarketData[] = [
   },
   {
     label: 'Nasdaq (I:IXIC)',
-    polygonTicker: 'I:IXIC',
+    polygonTicker: 'I:IXIC', // Correct Polygon.io ticker for Nasdaq Composite
     icon: Landmark,
     openTime: '09:30',
     closeTime: '16:00',
@@ -66,7 +65,7 @@ const initialMarketOverviewData: MarketData[] = [
   },
   {
     label: 'Russell 2000 (I:RUT)',
-    polygonTicker: 'I:RUT',
+    polygonTicker: 'I:RUT', // Correct Polygon.io ticker for Russell 2000 Index
     icon: Landmark,
     openTime: '09:30',
     closeTime: '16:00',
@@ -125,7 +124,6 @@ interface MarketStatusInfo {
   shadowClass: string;
 }
 
-// Function to fetch index data
 const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
   const apiKey = process.env.NEXT_PUBLIC_POLYGON_API_KEY;
   console.log(`[Polygon API] Attempting to use API key ending with: ...${apiKey ? apiKey.slice(-4) : 'UNDEFINED'} for symbol: ${symbol}`);
@@ -142,7 +140,7 @@ const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
     if (!response.ok) {
       try {
         const errorData = await response.json();
-        console.log(`[Polygon API Error] Full error response for ${symbol}:`, errorData); 
+        console.log(`[Polygon API Debug] Raw error response for ${symbol}:`, errorData); 
         if (Object.keys(errorData).length === 0 && errorData.constructor === Object) {
            console.warn(`[Polygon API Warn] Received empty JSON error object from Polygon for ${symbol}. Status: ${response.status}. This often means the API key is invalid or lacks permissions for ${symbol}.`);
            errorMessage = `API Error: ${response.status} - Polygon returned an empty error response for ${symbol}. Check API key, permissions, or ticker availability.`;
@@ -369,6 +367,8 @@ export default function DashboardPage() {
         let combinedError = `No data found for ticker ${symbol}. `;
         if (detailsRes.status === 404 && prevDayRes.status === 404) {
           combinedError = `Ticker symbol "${symbol}" not found. Please check the symbol and try again.`;
+        } else if (detailsRes.status === 401 || prevDayRes.status === 401 || historyRes.status === 401) {
+          combinedError = `API Error: 401 - Unauthorized. Please check your Polygon API key and plan permissions for ticker ${symbol}.`;
         } else {
             const apiErrors = [detailsError, prevDayError, historyError].filter(Boolean).join('; ');
             if (apiErrors) combinedError += ` API Issues: ${apiErrors}`;
@@ -384,9 +384,8 @@ export default function DashboardPage() {
          return;
       }
 
-
       const currentPrice = ohlcvData.c;
-      const openPrice = ohlcvData.o;
+      const openPrice = ohlcvData.o; // Previous day's open for daily change calc
       const priceChangeAmount = typeof currentPrice === 'number' && typeof openPrice === 'number' ? (currentPrice - openPrice) : null;
       const priceChangePercent = calculateChangePercent(currentPrice, openPrice);
 
@@ -401,20 +400,20 @@ export default function DashboardPage() {
         currentPrice: typeof currentPrice === 'number' ? currentPrice.toFixed(2) : "N/A",
         priceChangeAmount: typeof priceChangeAmount === 'number' ? priceChangeAmount.toFixed(2) : "N/A",
         priceChangePercent: typeof priceChangePercent === 'number' ? priceChangePercent.toFixed(2) : "N/A",
-        previousClose: typeof ohlcvData.c === 'number' ? ohlcvData.c.toFixed(2) : "N/A", 
-        openPrice: typeof ohlcvData.o === 'number' ? ohlcvData.o.toFixed(2) : "N/A", 
-        daysRange: (typeof ohlcvData.l === 'number' && typeof ohlcvData.h === 'number') ? `${ohlcvData.l.toFixed(2)} - ${ohlcvData.h.toFixed(2)}` : "N/A", 
-        fiftyTwoWeekRange: "N/A", 
-        volume: typeof ohlcvData.v === 'number' ? ohlcvData.v.toLocaleString() : "N/A", 
-        avgVolume: "N/A", 
-        peRatio: "N/A", 
-        epsTTM: "N/A", 
-        dividendYield: "N/A", 
-        beta: "N/A", 
-        nextEarningsDate: "N/A", 
-        dividendDate: "N/A", 
+        previousClose: typeof ohlcvData.c === 'number' ? ohlcvData.c.toFixed(2) : "N/A", // Prev close is the 'c' from /prev
+        openPrice: typeof ohlcvData.o === 'number' ? ohlcvData.o.toFixed(2) : "N/A", // Prev open is 'o' from /prev
+        daysRange: (typeof ohlcvData.l === 'number' && typeof ohlcvData.h === 'number') ? `${ohlcvData.l.toFixed(2)} - ${ohlcvData.h.toFixed(2)}` : "N/A", // This is prev day's range
+        fiftyTwoWeekRange: "N/A", // Requires different endpoint or calculation
+        volume: typeof ohlcvData.v === 'number' ? ohlcvData.v.toLocaleString() : "N/A", // Prev day's volume
+        avgVolume: "N/A", // Requires different endpoint
+        peRatio: "N/A", // Requires different endpoint
+        epsTTM: "N/A", // Requires different endpoint
+        dividendYield: "N/A", // Requires different endpoint
+        beta: "N/A", // Requires different endpoint
+        nextEarningsDate: "N/A", // Requires different endpoint
+        dividendDate: "N/A", // Requires different endpoint
         priceHistory: priceHistoryPoints,
-        recentNews: [], 
+        recentNews: [], // Placeholder, news fetch not integrated here
       });
 
     } catch (error: any) {
@@ -517,7 +516,7 @@ export default function DashboardPage() {
 
 
   return (
-    <main className="min-h-screen bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#5b21b6]/10 to-[#000104] flex-1 p-6 space-y-8 md:p-8">
+    <main className="min-h-screen flex-1 p-6 space-y-8 md:p-8">
       <h1 className="text-3xl font-bold tracking-tight text-foreground mb-6">
         Welcome Josh!
       </h1>
@@ -660,7 +659,7 @@ export default function DashboardPage() {
           <Input
             type="text"
             placeholder="Enter stock ticker (e.g., AAPL)"
-            className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary"
+            className="flex-1 bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary"
             value={tickerQuery}
             onChange={(e) => setTickerQuery(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && handleTickerLookup()}
@@ -674,29 +673,21 @@ export default function DashboardPage() {
         
         {tickerData && !isLoadingTicker && (
           <div className="w-full p-4 md:p-0 space-y-6">
-             {/* Top Security Details Section - Centered */}
-            <div className="w-full flex flex-col items-center text-center border-b border-border/30 pb-6 mb-6">
-              <div className="flex items-center gap-4 mb-3">
-                <Image src={tickerData.logo} alt={`${tickerData.companyName} logo`} width={48} height={48} className="rounded-full bg-muted p-1 object-contain" data-ai-hint={`${tickerData.symbol} logo`}/>
-                <h3 className="text-2xl md:text-3xl font-bold text-foreground">{tickerData.companyName}</h3>
-              </div>
-              <p className="text-md text-muted-foreground mb-1">{tickerData.symbol} • {tickerData.exchange}</p>
-              <p className="text-sm text-muted-foreground mb-3">Sector: {tickerData.sector} | Industry: {tickerData.industry}</p>
-              
-              <div className="flex flex-row items-end gap-3 mb-1 justify-center">
+            {/* Simplified Header */}
+            <div className="text-left mb-6">
+              <h3 className="text-2xl font-bold text-foreground mb-1">{tickerData.companyName}</h3>
+              <div className="flex items-end gap-3">
                 <span className="text-4xl font-bold text-foreground">${tickerData.currentPrice}</span>
                 {(tickerData.priceChangeAmount && tickerData.priceChangeAmount !== "N/A" && tickerData.priceChangePercent && tickerData.priceChangePercent !== "N/A") && (
                   <span className={cn(
-                    "text-2xl font-semibold",
+                    "text-xl font-semibold",
                     parseFloat(tickerData.priceChangeAmount) >= 0 ? "text-green-400" : "text-red-400"
                   )}>
-                    {parseFloat(tickerData.priceChangeAmount) >= 0 ? <ArrowUpRight className="inline h-5 w-5 mb-1" /> : <ArrowDownRight className="inline h-5 w-5 mb-1" />}
+                    {parseFloat(tickerData.priceChangeAmount) >= 0 ? <ArrowUpRight className="inline h-5 w-5 mb-0.5" /> : <ArrowDownRight className="inline h-5 w-5 mb-0.5" />}
                     {tickerData.priceChangeAmount} ({tickerData.priceChangePercent}%)
                   </span>
                 )}
-              </div>
-              <div className="text-sm text-muted-foreground">
-                Prev. Close: ${tickerData.previousClose} &nbsp;|&nbsp; Open: ${tickerData.openPrice}
+                 <span className="text-lg text-muted-foreground">Change</span> 
               </div>
             </div>
 
@@ -711,41 +702,11 @@ export default function DashboardPage() {
                 <p className="text-sm text-muted-foreground text-center py-4">Price history not available.</p>
               )}
             </div>
-
-            {/* Valuation & Key Dates (Side-by-Side or Stacked) */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 pt-6 mt-6 border-t border-border/30 text-sm">
-              <div>
-                <h4 className="text-lg font-semibold text-foreground mb-3 text-left">Valuation Metrics</h4>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-left">
-                  <div><strong className="text-muted-foreground block">Market Cap:</strong> {tickerData.marketCap}</div>
-                  <div><strong className="text-muted-foreground block">P/E Ratio (TTM):</strong> {tickerData.peRatio}</div>
-                  <div><strong className="text-muted-foreground block">EPS (TTM):</strong> {tickerData.epsTTM}</div>
-                  <div><strong className="text-muted-foreground block">Div. Yield:</strong> {tickerData.dividendYield}</div>
-                  <div><strong className="text-muted-foreground block">Beta:</strong> {tickerData.beta}</div>
-                </div>
-              </div>
-              <div>
-                <h4 className="text-lg font-semibold text-foreground mb-3 text-left">Key Dates</h4>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-left">
-                  <div><strong className="text-muted-foreground block">Next Earnings:</strong> {tickerData.nextEarningsDate}</div>
-                  <div><strong className="text-muted-foreground block">Dividend Date:</strong> {tickerData.dividendDate}</div>
-                </div>
-              </div>
-            </div>
             
-            {/* Volume Section */}
-             <div className="w-full pt-4 mt-4 border-t border-border/30 text-sm">
-                <h4 className="text-lg font-semibold text-foreground mb-3 text-left">Volume</h4>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-left">
-                    <div><strong className="text-muted-foreground block">Day's Range:</strong> {tickerData.daysRange}</div>
-                    <div><strong className="text-muted-foreground block">52W Range:</strong> {tickerData.fiftyTwoWeekRange}</div>
-                    <div><strong className="text-muted-foreground block">Volume:</strong> {tickerData.volume}</div>
-                    <div><strong className="text-muted-foreground block">Avg. Volume:</strong> {tickerData.avgVolume}</div>
-                </div>
-            </div>
           </div>
         )}
       </PlaceholderCard>
     </main>
   );
 }
+
