@@ -148,7 +148,7 @@
 }
 
 .animate-ticker {
-  animation: ticker 30s linear infinite;
+  animation: ticker 120s linear infinite; /* Increased duration for more items */
 }
 
 /* Due Date Box Styles */
@@ -210,6 +210,12 @@
 .message-bubble {
   animation: fadeIn 0.3s ease-out forwards;
 }
+
+.message-bubble-ai {
+  border: 1px solid hsl(var(--border)/0.4);
+  animation: fadeIn 0.4s ease-out forwards;
+}
+
 
 /* Typing Indicator Dots */
 .typing-dot {

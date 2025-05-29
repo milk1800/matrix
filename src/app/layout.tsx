@@ -5,11 +5,13 @@ import { Inter, Roboto_Mono } from 'next/font/google';
 import * as React from 'react';
 import Image from "next/image";
 import './globals.css';
-import Sidebar from '@/components/Sidebar'; // Updated to use the new Sidebar component
+import Sidebar from '@/components/Sidebar';
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/contexts/auth-context";
-import { TickerProvider, useTicker } from "@/contexts/ticker-context"; // Ensure this path is correct
+import { TickerProvider, useTicker } from "@/contexts/ticker-context";
+import { cn } from '@/lib/utils';
+import { Brain } from 'lucide-react';
 
 const inter = Inter({
   variable: '--font-inter',
@@ -24,13 +26,20 @@ const robotoMono = Roboto_Mono({
 interface TickerItem {
   symbol: string;
   price?: string;
-  change?: string; // e.g., "▲1.2%" or "▼0.4%"
-  color?: string; // e.g., 'text-green-400' or 'text-red-400'
+  change?: string;
+  color?: string;
   error?: boolean;
   loading?: boolean;
 }
 
-const POLYGON_TICKERS = ['VOO', 'SOXX', 'QBTS', 'IONQ', 'RGTI', 'ARQQ', 'QUBT', 'QTUM', 'CIBR', 'QQQM', 'GE', 'ITA', 'AVGO', 'QSI', 'RKLB'];
+const POLYGON_TICKERS = [
+  'IVV', 'AGG', 'IWM', 'EFA', 'EEM', 'LQD', 'IJR', 'IWF', 'IWD', 'TIP', 
+  'HYG', 'QUAL', 'IEFA', 'IEMG', 'ITOT', 'IVW', 'IVE', 'IWB', 'IWN', 
+  'IWO', 'IDV', 'ESGU', 'IJH', 'DVY', 'MBB', 'ICLN', 'TLT', 'SHV', 
+  'SHY', 'IEI', 'IEF', 'USMV', 'ACWI', 'EWT', 'SCZ', 'IYR', 'EWC', 
+  'EWA', 'EWH', 'MTUM', 'PFF', 'EPP', 'EPI', 'IAU', 'ICF', 'IJJ', 
+  'IJT', 'IXN', 'IYF', 'IYT'
+];
 
 async function fetchPolygonTickerData(symbol: string): Promise<TickerItem> {
   const apiKey = process.env.NEXT_PUBLIC_POLYGON_API_KEY;
@@ -49,15 +58,15 @@ async function fetchPolygonTickerData(symbol: string): Promise<TickerItem> {
     if (data.results && data.results.length > 0) {
       const prevClose = data.results[0].c;
       const prevOpen = data.results[0].o;
-      const change = prevClose - prevOpen;
-      const changePercent = prevOpen !== 0 ? (change / prevOpen) * 100 : 0;
+      const changeValue = prevClose - prevOpen;
+      const changePercent = prevOpen !== 0 ? (changeValue / prevOpen) * 100 : 0;
       
       let color = 'text-white';
       let arrow = '';
-      if (changePercent > 0) {
+      if (changePercent > 0.005) { // Use a small threshold to avoid "▲0.00%"
         color = 'text-green-400';
         arrow = '▲';
-      } else if (changePercent < 0) {
+      } else if (changePercent < -0.005) { // Use a small threshold
         color = 'text-red-400';
         arrow = '▼';
       }
@@ -99,8 +108,8 @@ function TickerContent() {
   }, []);
 
   React.useEffect(() => {
-    loadAllTickerData(); // Initial fetch
-    const intervalId = setInterval(loadAllTickerData, 300000); // Refresh every 5 minutes
+    loadAllTickerData();
+    const intervalId = setInterval(loadAllTickerData, 60000); // Refresh every 1 minute
     return () => clearInterval(intervalId);
   }, [loadAllTickerData]);
 
@@ -109,7 +118,7 @@ function TickerContent() {
     return (
       <div className="animate-ticker whitespace-nowrap flex items-center text-sm font-mono">
         <span className="text-white px-3">{repeatedMessage}</span>
-        <span className="text-white px-3">{repeatedMessage}</span> {/* Duplicate for seamless scroll */}
+        <span className="text-white px-3">{repeatedMessage}</span>
       </div>
     );
   }
@@ -118,14 +127,12 @@ function TickerContent() {
     return <div className="text-sm font-mono text-center text-muted-foreground py-0.5">Loading ticker data...</div>;
   }
 
-  const itemsToRender = tickerDataItems.filter(item => !item.error || item.price !== 'N/A'); // Filter out hard errors or items with no price
+  const itemsToRender = tickerDataItems.filter(item => !item.error || item.price !== 'N/A');
   if (itemsToRender.length === 0 && !isLoading) {
-     return <div className="text-sm font-mono text-center text-muted-foreground py-0.5">Ticker data unavailable. Check API key or symbol permissions.</div>;
+     return <div className="text-sm font-mono text-center text-muted-foreground py-0.5">Ticker data unavailable.</div>;
   }
   
-  // Duplicate the items for a smoother scroll effect
-  const duplicatedTickerItems = [...itemsToRender, ...itemsToRender];
-
+  const duplicatedTickerItems = [...itemsToRender, ...itemsToRender, ...itemsToRender]; // Duplicate 3 times for very long ticker
 
   return (
     <div className="animate-ticker whitespace-nowrap flex items-center text-sm font-mono">
