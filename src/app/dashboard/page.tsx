@@ -163,15 +163,16 @@ const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
     
     if (!response.ok) {
       let errorMessage = `API Error: ${response.status}`;
+      let responseText = "";
       try {
         const errorData = await response.json();
         console.log(`[Polygon API Debug] Raw error response for ${symbol}:`, errorData); 
 
         if (Object.keys(errorData).length === 0 && errorData.constructor === Object) {
-            console.warn(`[Polygon API Warn] Received empty JSON error object from Polygon for ${symbol}. Status: ${response.status}. This often means the API key is invalid, lacks permissions, or the requested ticker is unavailable on your plan.`);
-            errorMessage = `API Error: ${response.status} - Polygon returned an empty error response. Check API key, permissions, or ticker availability for your plan.`;
-            if (response.status === 429) {
-              errorMessage = "Rate limit exceeded. Please wait or upgrade your Polygon.io subscription.";
+            console.warn(`[Polygon API Warn] Received empty JSON error object from Polygon for ${symbol}. Status: ${response.status}. This often means the API key is invalid, lacks permissions for ${symbol}, or the requested ticker is unavailable on your plan.`);
+            errorMessage = `API Error: ${response.status} - Polygon returned an empty error response for ${symbol}. Check API key, permissions, or ticker availability.`;
+            if (response.status === 429) { // Explicitly check for 429
+              errorMessage = `API Error: 429 - You've exceeded the maximum requests per minute for ${symbol}, please wait or upgrade your subscription to continue. https://polygon.io/pricing`;
             }
         } else {
             if (errorData && errorData.message) errorMessage = `API Error: ${response.status} - ${errorData.message}`;
@@ -180,7 +181,6 @@ const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
             else errorMessage = `API Error: ${response.status} - ${response.statusText || 'Unknown error'}`;
         }
       } catch (e: any) { 
-          let responseText = "";
           try {
             responseText = await response.text();
             console.warn(`[Polygon API Warn] Could not parse JSON error response for ${symbol}. Status: ${response.status}. Response text snippet:`, responseText.substring(0, 200) + (responseText.length > 200 ? '...' : ''));
@@ -191,7 +191,7 @@ const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
           }
       }
       console.error(`Error fetching ${symbol}: ${errorMessage}`);
-      return { error: errorMessage };
+      return { error: errorMessage }; // Return the more detailed message
     }
     const data = await response.json();
     if (data.results && data.results.length > 0) {
@@ -199,7 +199,7 @@ const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
       return { c, o };
     }
     console.warn(`[Polygon API Warn] No data results found for ${symbol} in Polygon response.`);
-    return { error: 'No data results from Polygon' };
+    return { error: `No data results from Polygon for ${symbol}` };
   } catch (error: any) {
     const networkErrorMsg = `Network/Fetch error for ${symbol}: ${error.message || 'Unknown network error'}`;
     console.error(`[Polygon API Error] ${networkErrorMsg}`);
@@ -248,6 +248,9 @@ export default function DashboardPage() {
           newApiData[result.value.symbol] = result.value.data;
         } else {
           console.error("[Polygon API] Promise rejected unexpectedly in loadMarketData for overview cards:", result.reason);
+          // Potentially set an error state for the specific symbol if result.reason contains it
+          // This part might need adjustment if result.reason is not structured as expected
+          // For now, the fetchIndexData itself handles setting the error for its specific symbol.
         }
       });
       setMarketApiData(prevData => ({ ...prevData, ...newApiData }));
@@ -293,7 +296,7 @@ export default function DashboardPage() {
         const detailsData = await detailsRes.json();
         companyDetails = detailsData.results || {};
       } else {
-        detailsError = `Details: ${detailsRes.status}`;
+        detailsError = `Details: ${detailsRes.statusText || detailsRes.status}`;
         console.warn(`[Ticker Lookup] Failed to fetch details for ${symbol}: ${detailsRes.status} - ${await detailsRes.text()}`);
       }
 
@@ -303,7 +306,7 @@ export default function DashboardPage() {
         const prevDayData = await prevDayRes.json();
         ohlcvData = (prevDayData.results && prevDayData.results.length > 0) ? prevDayData.results[0] : {};
       } else {
-        prevDayError = `Prev. Day: ${prevDayRes.status}`;
+        prevDayError = `Prev. Day: ${prevDayRes.statusText || prevDayRes.status}`;
         console.warn(`[Ticker Lookup] Failed to fetch previous day OHLCV for ${symbol}: ${prevDayRes.status} - ${await prevDayRes.text()}`);
       }
       
@@ -318,14 +321,15 @@ export default function DashboardPage() {
           }));
         }
       } else {
-        historyError = `History: ${historyRes.status}`;
+        historyError = `History: ${historyRes.statusText || historyRes.status}`;
         console.warn(`[Ticker Lookup] Failed to fetch price history for ${symbol}: ${historyRes.status} - ${await historyRes.text()}`);
       }
 
-      if (Object.keys(companyDetails).length === 0 && Object.keys(ohlcvData).length === 0 && priceHistoryPoints.length === 0) {
-        let combinedError = "No data found for ticker.";
-        if (detailsError || prevDayError || historyError) {
-            combinedError += ` API Errors: ${[detailsError, prevDayError, historyError].filter(Boolean).join(', ')}`;
+      if (Object.keys(companyDetails).length === 0 && Object.keys(ohlcvData).length === 0) {
+        let combinedError = `No data found for ticker ${symbol}.`;
+        const apiErrors = [detailsError, prevDayError, historyError].filter(Boolean).join(', ');
+        if (apiErrors) {
+            combinedError += ` API Issues: ${apiErrors}`;
         }
         setTickerError(combinedError);
         setIsLoadingTicker(false);
@@ -348,20 +352,20 @@ export default function DashboardPage() {
         currentPrice: typeof currentPrice === 'number' ? currentPrice.toFixed(2) : "N/A",
         priceChangeAmount: typeof priceChangeAmount === 'number' ? priceChangeAmount.toFixed(2) : "N/A",
         priceChangePercent: typeof priceChangePercent === 'number' ? priceChangePercent.toFixed(2) : "N/A",
-        previousClose: typeof ohlcvData.c === 'number' ? ohlcvData.c.toFixed(2) : "N/A",
-        openPrice: typeof ohlcvData.o === 'number' ? ohlcvData.o.toFixed(2) : "N/A",
-        daysRange: (typeof ohlcvData.l === 'number' && typeof ohlcvData.h === 'number') ? `${ohlcvData.l.toFixed(2)} - ${ohlcvData.h.toFixed(2)}` : "N/A",
-        fiftyTwoWeekRange: "N/A", 
-        volume: typeof ohlcvData.v === 'number' ? ohlcvData.v.toLocaleString() : "N/A",
-        avgVolume: "N/A", 
-        peRatio: "N/A",
-        epsTTM: "N/A", 
-        dividendYield: "N/A",
-        beta: "N/A", 
-        nextEarningsDate: "N/A",
-        dividendDate: "N/A", 
+        previousClose: typeof ohlcvData.c === 'number' ? ohlcvData.c.toFixed(2) : "N/A", // Previous day's close
+        openPrice: typeof ohlcvData.o === 'number' ? ohlcvData.o.toFixed(2) : "N/A", // Previous day's open
+        daysRange: (typeof ohlcvData.l === 'number' && typeof ohlcvData.h === 'number') ? `${ohlcvData.l.toFixed(2)} - ${ohlcvData.h.toFixed(2)}` : "N/A", // Previous day's range
+        fiftyTwoWeekRange: "N/A", // Requires different endpoint or calculation
+        volume: typeof ohlcvData.v === 'number' ? ohlcvData.v.toLocaleString() : "N/A", // Previous day's volume
+        avgVolume: "N/A", // Requires different endpoint or calculation
+        peRatio: "N/A", // Requires different endpoint
+        epsTTM: "N/A", // Requires different endpoint
+        dividendYield: "N/A", // Requires different endpoint
+        beta: "N/A", // Requires different endpoint
+        nextEarningsDate: "N/A", // Requires different endpoint
+        dividendDate: "N/A", // Requires different endpoint
         priceHistory: priceHistoryPoints,
-        recentNews: [], 
+        recentNews: [], // Placeholder, requires news API
       });
 
     } catch (error: any) {
@@ -484,7 +488,7 @@ export default function DashboardPage() {
               changeDisplay = <span className="text-xs text-muted-foreground">Loading...</span>;
             } else if (apiResult?.error) {
                 let displayError = apiResult.error;
-                if (apiResult.error.includes("429")) { // Specifically check for rate limit
+                if (apiResult.error.includes("429")) {
                     displayError = "Rate Limit Exceeded";
                 } else if (apiResult.error.includes("401") || apiResult.error.toLowerCase().includes("unknown api key")) {
                     displayError = "Auth Error";
@@ -574,7 +578,7 @@ export default function DashboardPage() {
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <PlaceholderCard title="Ticker Lookup Tool" icon={Search} className="lg:col-span-3">
+         <PlaceholderCard title="Ticker Lookup Tool" icon={Search} className="lg:col-span-3">
           <div className="flex space-x-2 mb-4">
             <Input
               type="text"
@@ -595,7 +599,7 @@ export default function DashboardPage() {
             <div className="w-full">
               <div className="w-full p-4 md:p-6 flex flex-col items-center text-center">
                 <div className="flex items-center gap-4 mb-3">
-                  <Image src={tickerData.logo} alt={`${tickerData.companyName} logo`} width={48} height={48} className="rounded-md bg-muted p-1 object-contain" data-ai-hint="company logo"/>
+                  <Image src={tickerData.logo} alt={`${tickerData.companyName} logo`} width={48} height={48} className="rounded-md bg-muted p-1 object-contain" data-ai-hint={`${tickerData.symbol} logo`}/>
                   <h3 className="text-2xl font-bold text-foreground">{tickerData.companyName}</h3>
                 </div>
                 <p className="text-lg text-muted-foreground mb-3">
@@ -683,3 +687,6 @@ export default function DashboardPage() {
     </main>
   );
 }
+
+
+    
