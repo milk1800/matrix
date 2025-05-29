@@ -21,8 +21,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { boxMullerTransform, getPercentile } from "@/utils/math-helpers";
-// import jsPDF from "jspdf"; // Commented out: 'jspdf' is not installed.
-// import html2canvas from "html2canvas"; // Commented out: 'html2canvas' is not installed.
+// import jsPDF from "jspdf"; // Commented out: 'jspdf' is not installed or not used.
+// import html2canvas from "html2canvas"; // Commented out: 'html2canvas' is not installed or not used.
 
 
 interface ModelData {
@@ -57,10 +57,10 @@ const modelPerformanceData: ModelData[] = [
     ytdBenchmark: "+10.2%",
     oneYearReturn: "+22.1%",
     oneYearBenchmark: "+20.5%",
-    threeYearReturn: "+15.3%",
-    threeYearBenchmark: "+14.0%",
-    fiveYearReturn: "+13.8%",
-    fiveYearBenchmark: "+12.5%",
+    threeYearReturn: "+15.3%", // no p.a.
+    threeYearBenchmark: "+14.0%", // no p.a.
+    fiveYearReturn: "+13.8%", // no p.a.
+    fiveYearBenchmark: "+12.5%", // no p.a.
     sharpeRatio: "1.25",
     irr: "18.2%",
     beta: "1.10",
@@ -76,10 +76,10 @@ const modelPerformanceData: ModelData[] = [
     ytdBenchmark: "+1.8%",
     oneYearReturn: "+4.5%",
     oneYearBenchmark: "+4.2%",
-    threeYearReturn: "+3.0%",
-    threeYearBenchmark: "+2.8%",
-    fiveYearReturn: "+2.5%",
-    fiveYearBenchmark: "+2.3%",
+    threeYearReturn: "+3.0%", // no p.a.
+    threeYearBenchmark: "+2.8%", // no p.a.
+    fiveYearReturn: "+2.5%", // no p.a.
+    fiveYearBenchmark: "+2.3%", // no p.a.
     sharpeRatio: "0.95",
     irr: "3.5%",
     beta: "0.65",
@@ -95,10 +95,10 @@ const modelPerformanceData: ModelData[] = [
     ytdBenchmark: "-2.5%",
     oneYearReturn: "+8.0%",
     oneYearBenchmark: "+9.5%",
-    threeYearReturn: "+5.5%",
-    threeYearBenchmark: "+6.0%",
-    fiveYearReturn: "+7.2%",
-    fiveYearBenchmark: "+7.8%",
+    threeYearReturn: "+5.5%", // no p.a.
+    threeYearBenchmark: "+6.0%", // no p.a.
+    fiveYearReturn: "+7.2%", // no p.a.
+    fiveYearBenchmark: "+7.8%", // no p.a.
     sharpeRatio: "0.60",
     irr: "6.8%",
     beta: "1.35",
@@ -114,10 +114,10 @@ const modelPerformanceData: ModelData[] = [
     ytdBenchmark: "+7.0%",
     oneYearReturn: "+14.2%",
     oneYearBenchmark: "+13.5%",
-    threeYearReturn: "+9.1%",
-    threeYearBenchmark: "+8.5%",
-    fiveYearReturn: "+8.5%",
-    fiveYearBenchmark: "+8.0%",
+    threeYearReturn: "+9.1%", // no p.a.
+    threeYearBenchmark: "+8.5%", // no p.a.
+    fiveYearReturn: "+8.5%", // no p.a.
+    fiveYearBenchmark: "+8.0%", // no p.a.
     sharpeRatio: "1.10",
     irr: "10.5%",
     beta: "0.98",
@@ -133,10 +133,10 @@ const modelPerformanceData: ModelData[] = [
     ytdBenchmark: "+16.0%",
     oneYearReturn: "+35.2%",
     oneYearBenchmark: "+30.8%",
-    threeYearReturn: "+22.0%",
-    threeYearBenchmark: "+20.1%",
-    fiveYearReturn: "+20.5%",
-    fiveYearBenchmark: "+18.9%",
+    threeYearReturn: "+22.0%", // no p.a.
+    threeYearBenchmark: "+20.1%", // no p.a.
+    fiveYearReturn: "+20.5%", // no p.a.
+    fiveYearBenchmark: "+18.9%", // no p.a.
     sharpeRatio: "1.40",
     irr: "25.1%",
     beta: "1.20",
@@ -147,7 +147,7 @@ const sandboxSelectedManagers = modelPerformanceData
   .filter(m => ["strat1", "strat2", "strat4"].includes(m.id))
   .map((m, index) => ({
     ...m,
-    weight: index === 0 ? 50 : index === 1 ? 30 : 20, // Default weights
+    weight: index === 0 ? 50 : index === 1 ? 30 : 20,
   }));
 
 
@@ -189,7 +189,7 @@ interface ComparisonCardData extends Omit<ModelData, 'aum' | 'id' | 'strategyNam
   totalCostPercent: string;
 }
 
-const PROGRAM_FEE_PERCENT = 0.0020; // 0.20%
+const PROGRAM_FEE_PERCENT = 0.0020;
 
 const parsePercentage = (str: string | null | undefined): number => {
   if (!str || typeof str !== 'string' || str === "N/A") return 0;
@@ -216,8 +216,8 @@ interface MonteCarloSimulationParams {
   simulations: number;
   years: number;
   startValue: number;
-  meanReturn: number; // Annualized
-  stdDev: number;    // Annualized
+  meanReturn: number;
+  stdDev: number;
 }
 
 interface MonteCarloSummary {
@@ -279,28 +279,30 @@ export default function ModelMatrixPage() {
   const [columnVisibility, setColumnVisibility] = React.useState<Record<string, boolean>>(initialColumnVisibility);
 
   React.useEffect(() => {
-    const storedVisibility = localStorage.getItem("modelMatrixColumnVisibility");
-    if (storedVisibility) {
-      try {
-        const parsedVisibility = JSON.parse(storedVisibility);
-        // Ensure all keys from initialColumnVisibility are present, even if not in localStorage
-        const mergedVisibility = { ...initialColumnVisibility, ...parsedVisibility };
-        setColumnVisibility(mergedVisibility);
-      } catch (e) {
-        console.error("Failed to parse column visibility from localStorage", e);
-        setColumnVisibility(initialColumnVisibility); // Fallback to default
+    if (typeof window !== 'undefined') {
+      const storedVisibility = localStorage.getItem("modelMatrixColumnVisibility");
+      if (storedVisibility) {
+        try {
+          const parsedVisibility = JSON.parse(storedVisibility);
+          const mergedVisibility = { ...initialColumnVisibility, ...parsedVisibility };
+          setColumnVisibility(mergedVisibility);
+        } catch (e) {
+          console.error("Failed to parse column visibility from localStorage", e);
+          setColumnVisibility(initialColumnVisibility);
+        }
       }
     }
   }, []);
 
   React.useEffect(() => {
-    localStorage.setItem("modelMatrixColumnVisibility", JSON.stringify(columnVisibility));
+    if (typeof window !== 'undefined') {
+      localStorage.setItem("modelMatrixColumnVisibility", JSON.stringify(columnVisibility));
+    }
   }, [columnVisibility]);
 
   const handleColumnVisibilityChange = (columnKey: string, checked: boolean) => {
     setColumnVisibility(prev => ({ ...prev, [columnKey]: checked }));
   };
-
 
   const availableManagers = React.useMemo(() => {
     const managerNames = new Set(modelPerformanceData.map(model => model.manager));
@@ -338,7 +340,7 @@ export default function ModelMatrixPage() {
     });
   }, [selectedManagerNames]);
 
-  const handleSandboxWeightChange = (managerId: string, newWeightInput: number) => {
+ const handleSandboxWeightChange = (managerId: string, newWeightInput: number) => {
     setSandboxManagerWeights(prevWeights => {
         let newWeight = Math.max(0, Math.min(100, isNaN(newWeightInput) ? 0 : newWeightInput));
         const updatedWeights = { ...prevWeights, [managerId]: newWeight };
@@ -347,10 +349,12 @@ export default function ModelMatrixPage() {
 
         if (currentTotalWeight > 100) {
             let overage = currentTotalWeight - 100;
+            
+            // Reduce from other managers, starting with the largest weighted one NOT being edited
             const otherManagerIdsSortedByWeight = sandboxSelectedManagers
                 .map(m => m.id)
-                .filter(id => id !== managerId && (updatedWeights[id] || 0) > 0)
-                .sort((a, b) => (updatedWeights[b] || 0) - (updatedWeights[a] || 0));
+                .filter(id => id !== managerId && (updatedWeights[id] || 0) > 0) // Exclude the current manager and zero-weight managers
+                .sort((a, b) => (updatedWeights[b] || 0) - (updatedWeights[a] || 0)); // Sort by weight descending
 
             for (const otherId of otherManagerIdsSortedByWeight) {
                 if (overage <= 0) break;
@@ -360,6 +364,7 @@ export default function ModelMatrixPage() {
                 overage -= reduction;
             }
             
+            // If overage still exists (couldn't reduce enough from others), cap the edited manager's weight
             currentTotalWeight = Object.values(updatedWeights).reduce((sum, w) => sum + w, 0);
             if (currentTotalWeight > 100) {
                  updatedWeights[managerId] = Math.max(0, newWeight - (currentTotalWeight - 100));
@@ -369,9 +374,10 @@ export default function ModelMatrixPage() {
     });
   };
 
+
   React.useEffect(() => {
     const totalCurrentWeight = Object.values(sandboxManagerWeights).reduce((sum, weight) => sum + weight, 0);
-    if (Math.abs(totalCurrentWeight - 100) > 0.1 && sandboxSelectedManagers.length > 0) {
+    if (Math.abs(totalCurrentWeight - 100) > 0.1 && sandboxSelectedManagers.length > 0) { // Using 0.1 to handle potential float precision
       setWeightError("Total weight must be 100%.");
       setBlendedMetrics(null);
       return;
@@ -405,7 +411,10 @@ export default function ModelMatrixPage() {
   }, [sandboxManagerWeights, sandboxSelectedManagers]);
 
   const runMonteCarloSimulation = React.useCallback(async () => {
-    if (!blendedMetrics) return;
+    if (!blendedMetrics || weightError) { // Also check for weightError
+        // console.warn("Cannot run Monte Carlo: Blended metrics not available or weight error present.");
+        return;
+    }
     setIsMonteCarloRunning(true);
     setMonteCarloData(null);
     setMonteCarloSummary(null);
@@ -459,7 +468,7 @@ export default function ModelMatrixPage() {
       });
     }
     setIsMonteCarloRunning(false);
-  }, [blendedMetrics]);
+  }, [blendedMetrics, weightError]); // Added weightError as a dependency
 
   const handleDownloadMonteCarloReport = async () => {
     // This function is commented out because jspdf and html2canvas are not installed.
@@ -470,6 +479,7 @@ export default function ModelMatrixPage() {
         alert("Monte Carlo data is not available, or PDF libraries are missing. Please run a simulation first.");
         return;
     }
+    
     // const pdf = new jsPDF("p", "mm", "a4");
     // pdf.setFontSize(18);
     // pdf.text("Monte Carlo Simulation Report", 10, 15);
@@ -480,31 +490,36 @@ export default function ModelMatrixPage() {
     // let yPos = 30;
 
     // const chartElement = document.getElementById("monte-carlo-chart-container");
-    // if (chartElement /* && html2canvas */) {
+    // if (chartElement /* && html2canvas */) { // Check if html2canvas is imported/available
     //     try {
-    //         // const canvas = await html2canvas(chartElement, { scale: 2, backgroundColor: 'hsl(var(--background))' }); 
+    //         // console.log("Attempting to capture chart with html2canvas...");
+    //         // const canvas = await html2canvas(chartElement, { 
+    //         //     scale: 2, 
+    //         //     backgroundColor: getComputedStyle(document.body).getPropertyValue('--background').trim() || '#000104', // Use actual background
+    //         //     useCORS: true, // If chart uses external images/fonts
+    //         // }); 
     //         // const imgData = canvas.toDataURL("image/png");
     //         // pdf.addImage(imgData, "PNG", 10, yPos, 190, 100); 
     //         // yPos += 110;
+    //         // console.log("Chart image added to PDF.");
     //     } catch (error) {
-    //         console.error("Error generating chart image for PDF:", error);
-    //         pdf.text("Could not generate chart image. (html2canvas may be missing)", 10, yPos);
-    //         yPos += 10;
+    //         // console.error("Error generating chart image for PDF:", error);
+    //         // pdf.text("Could not generate chart image. (html2canvas error)", 10, yPos);
+    //         // yPos += 10;
     //     }
     // } else {
-    //     pdf.text("Chart image not available (element not found or html2canvas missing).", 10, yPos);
-    //     yPos += 10;
+    //     // pdf.text("Chart image not available (element 'monte-carlo-chart-container' not found or html2canvas missing).", 10, yPos);
+    //     // yPos += 10;
     // }
 
     // pdf.setFontSize(12);
-    // const simYears = monteCarloData ? monteCarloData[monteCarloData.length -1].year : 'N/A';
+    // const simYears = monteCarloData && monteCarloData.length > 0 ? monteCarloData[monteCarloData.length -1].year : 'N/A';
     // pdf.text(`Median End Value (${simYears} Years): ${formatCurrency(monteCarloSummary.medianEndValue)}`, 10, yPos);
     // yPos += 10;
     // pdf.text(`5th - 95th Percentile Range: ${formatCurrency(monteCarloSummary.p05EndValue)} – ${formatCurrency(monteCarloSummary.p95EndValue)}`, 10, yPos);
     
     // pdf.save("monte-carlo-report.pdf");
   };
-
 
   return (
     <main className="min-h-screen bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#5b21b6]/10 to-[#000104] flex-1 p-6 space-y-8 md:p-8">
@@ -527,6 +542,7 @@ export default function ModelMatrixPage() {
                   key={managerName} checked={selectedManagerNames.includes(managerName)}
                   onCheckedChange={() => handleManagerSelect(managerName)}
                   disabled={!selectedManagerNames.includes(managerName) && selectedManagerNames.length >= 3}
+                  onSelect={(event) => event.preventDefault()}
                 > {managerName} </DropdownMenuCheckboxItem>
               ))}
             </DropdownMenuContent>
@@ -582,6 +598,7 @@ export default function ModelMatrixPage() {
                   key={key}
                   checked={columnVisibility[key]}
                   onCheckedChange={(checked) => handleColumnVisibilityChange(key, Boolean(checked))}
+                  onSelect={(event) => event.preventDefault()} // Keep dropdown open
                 >
                   {label}
                 </DropdownMenuCheckboxItem>
@@ -613,14 +630,11 @@ export default function ModelMatrixPage() {
           <TableBody>
             {modelPerformanceData.map((model) => (
               <TableRow key={model.id} className="hover:bg-muted/50">
-                <TableCell className="font-medium whitespace-nowrap">{model.manager}</TableCell>
-                <TableCell className="whitespace-nowrap">{model.strategyName}</TableCell>
+                <TableCell className="font-medium whitespace-nowrap">{model.manager}</TableCell> <TableCell className="whitespace-nowrap">{model.strategyName}</TableCell>
                 {columnVisibility.aum && <TableCell className="text-right whitespace-nowrap">{model.aum}</TableCell>}
                 {columnVisibility.feePercent && <TableCell className="text-right whitespace-nowrap">{model.feePercent}</TableCell>}
                 {columnVisibility.style && (
-                  <TableCell className="text-center whitespace-nowrap">
-                    <Badge variant={model.style === "Growth" ? "default" : model.style === "Value" ? "secondary" : "outline"} className={cn( model.style === "Growth" && "bg-purple-500/70 hover:bg-purple-500/90 border-purple-400", model.style === "Value" && "bg-blue-500/70 hover:bg-blue-500/90 border-blue-400", model.style === "Fixed Income" && "bg-teal-500/70 hover:bg-teal-500/90 border-teal-400", model.style === "Balanced" && "bg-amber-500/70 hover:bg-amber-500/90 border-amber-400", model.style.startsWith("Sector") && "bg-pink-500/70 hover:bg-pink-500/90 border-pink-400", "text-white" )}>{model.style}</Badge>
-                  </TableCell>
+                  <TableCell className="text-center whitespace-nowrap"> <Badge variant={model.style === "Growth" ? "default" : model.style === "Value" ? "secondary" : "outline"} className={cn( model.style === "Growth" && "bg-purple-500/70 hover:bg-purple-500/90 border-purple-400", model.style === "Value" && "bg-blue-500/70 hover:bg-blue-500/90 border-blue-400", model.style === "Fixed Income" && "bg-teal-500/70 hover:bg-teal-500/90 border-teal-400", model.style === "Balanced" && "bg-amber-500/70 hover:bg-amber-500/90 border-amber-400", model.style.startsWith("Sector") && "bg-pink-500/70 hover:bg-pink-500/90 border-pink-400", "text-white" )}>{model.style}</Badge></TableCell>
                 )}
                 {columnVisibility.ytdReturn && <TableCell className={cn("text-right whitespace-nowrap font-semibold", getReturnClass(model.ytdReturn))}>{model.ytdReturn}</TableCell>}
                 {columnVisibility.ytdBenchmark && <TableCell className="text-right whitespace-nowrap text-muted-foreground">{model.ytdBenchmark}</TableCell>}
@@ -637,9 +651,7 @@ export default function ModelMatrixPage() {
             ))}
           </TableBody>
         </Table>
-        <div className="flex justify-end mt-6">
-          <Button variant="outline"> <Download className="mr-2 h-4 w-4" /> Download PDF Summary </Button>
-        </div>
+        <div className="flex justify-end mt-6"> <Button variant="outline"> <Download className="mr-2 h-4 w-4" /> Download PDF Summary </Button> </div>
       </PlaceholderCard>
 
       <PlaceholderCard title="Model Rebalancing Sandbox" className="mt-8">
@@ -702,7 +714,7 @@ export default function ModelMatrixPage() {
           <Button
             variant="outline"
             onClick={handleDownloadMonteCarloReport}
-            disabled={!monteCarloSummary || isMonteCarloRunning} // Always disabled until PDF libraries are handled
+            disabled={true} // Always disabled until jspdf/html2canvas are properly handled/installed
             title="PDF Download requires 'jspdf' and 'html2canvas' libraries. Please install them to enable this feature."
           >
             <FileDown className="mr-2 h-4 w-4" /> Download Scenario PDF (Requires Libraries)
