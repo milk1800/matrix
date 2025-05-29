@@ -41,7 +41,7 @@ interface MarketData {
 
 const initialMarketOverviewData: MarketData[] = [
   {
-    label: 'S&P 500 (SPX)',
+    label: 'S&P 500 (I:SPX)',
     polygonTicker: 'I:SPX',
     icon: Landmark,
     openTime: '09:30',
@@ -49,7 +49,7 @@ const initialMarketOverviewData: MarketData[] = [
     timezone: 'America/New_York',
   },
   {
-    label: 'Dow 30 (DJI)',
+    label: 'Dow 30 (I:DJI)',
     polygonTicker: 'I:DJI',
     icon: Landmark,
     openTime: '09:30',
@@ -57,7 +57,7 @@ const initialMarketOverviewData: MarketData[] = [
     timezone: 'America/New_York',
   },
   {
-    label: 'Nasdaq (IXIC)',
+    label: 'Nasdaq (I:IXIC)',
     polygonTicker: 'I:IXIC',
     icon: Landmark,
     openTime: '09:30',
@@ -65,7 +65,7 @@ const initialMarketOverviewData: MarketData[] = [
     timezone: 'America/New_York',
   },
   {
-    label: 'Russell 2000 (RUT)',
+    label: 'Russell 2000 (I:RUT)',
     polygonTicker: 'I:RUT',
     icon: Landmark,
     openTime: '09:30',
@@ -73,7 +73,6 @@ const initialMarketOverviewData: MarketData[] = [
     timezone: 'America/New_York',
   },
 ];
-
 
 const getNewsSentimentBadgeClass = (sentiment?: string) => {
   switch (sentiment?.toLowerCase()) {
@@ -129,7 +128,6 @@ interface MarketStatusInfo {
 // Function to fetch index data
 const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
   const apiKey = process.env.NEXT_PUBLIC_POLYGON_API_KEY;
-  // Log to check if the API key is being read, masking most of it for security
   console.log(`[Polygon API] Attempting to use API key ending with: ...${apiKey ? apiKey.slice(-4) : 'UNDEFINED'} for symbol: ${symbol}`);
 
   if (!apiKey) {
@@ -139,27 +137,32 @@ const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
 
   try {
     const response = await fetch(`https://api.polygon.io/v2/aggs/ticker/${symbol}/prev?adjusted=true&apiKey=${apiKey}`);
+    let errorMessage = `API Error: ${response.status}`;
+
     if (!response.ok) {
-      let errorMessage = `API Error: ${response.status}`;
-      let responseText = "";
       try {
         const errorData = await response.json();
-        // Log the full errorData if available, useful for debugging
+        console.log(`[Polygon API Error] Full error response for ${symbol}:`, errorData); 
         if (Object.keys(errorData).length === 0 && errorData.constructor === Object) {
-          console.warn(`[Polygon API Warn] Received empty JSON error object from Polygon for ${symbol}. Status: ${response.status}. This often means the API key is invalid or lacks permissions for ${symbol}.`);
-          errorMessage = `API Error: ${response.status} - Polygon returned an empty error response for ${symbol}. Check API key, permissions, or ticker availability.`;
-           if (response.status === 429) { // Explicitly check for 429
+           console.warn(`[Polygon API Warn] Received empty JSON error object from Polygon for ${symbol}. Status: ${response.status}. This often means the API key is invalid or lacks permissions for ${symbol}.`);
+           errorMessage = `API Error: ${response.status} - Polygon returned an empty error response for ${symbol}. Check API key, permissions, or ticker availability.`;
+           if (response.status === 429) { 
               errorMessage = `API Error: 429 - You've exceeded the maximum requests per minute for ${symbol}, please wait or upgrade your subscription to continue. https://polygon.io/pricing`;
            }
+        } else if (errorData && errorData.message) {
+          errorMessage = `API Error: ${response.status} - ${errorData.message}`;
+        } else if (errorData && errorData.error) {
+          errorMessage = `API Error: ${response.status} - ${errorData.error}`;
+        } else if (errorData && errorData.request_id) {
+          errorMessage = `API Error: ${response.status} (Request ID: ${errorData.request_id})`;
         } else {
-            if (errorData && errorData.message) errorMessage = `API Error: ${response.status} - ${errorData.message}`;
-            else if (errorData && errorData.error) errorMessage = `API Error: ${response.status} - ${errorData.error}`;
-            else if (errorData && errorData.request_id) errorMessage = `API Error: ${response.status} (Request ID: ${errorData.request_id})`;
-            else errorMessage = `API Error: ${response.status} - ${response.statusText || 'Unknown error from Polygon.'}`;
+            const responseText = await response.text();
+            console.warn(`[Polygon API Warn] Could not parse JSON error response for ${symbol}, but got text. Status: ${response.status}. Response text snippet:`, responseText.substring(0, 200) + (responseText.length > 200 ? '...' : ''));
+            errorMessage = `API Error: ${response.status} - ${response.statusText || 'Failed to parse error response.'} Raw response snippet: ${responseText.substring(0,50)}...`;
         }
       } catch (e: any) { 
           try {
-            responseText = await response.text();
+            const responseText = await response.text();
             console.warn(`[Polygon API Warn] Could not parse JSON error response for ${symbol}. Status: ${response.status}. Response text snippet:`, responseText.substring(0, 200) + (responseText.length > 200 ? '...' : ''));
             errorMessage = `API Error: ${response.status} - ${response.statusText || 'Failed to parse error response.'} Raw response snippet: ${responseText.substring(0,50)}...`;
           } catch (textErr: any) {
@@ -188,11 +191,11 @@ const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
 const fetchNewsData = async (): Promise<any[]> => {
   const apiKey = process.env.NEXT_PUBLIC_POLYGON_API_KEY;
   if (!apiKey) {
-    console.error("Polygon API key for news is not set.");
-    throw new Error("API Key for news missing.");
+    console.error("[Polygon API] News: API key (NEXT_PUBLIC_POLYGON_API_KEY) is not set. News will not be fetched.");
+    throw new Error("API Key for news missing. Configure in .env.local.");
   }
   const url = `https://api.polygon.io/v2/reference/news?order=desc&limit=5&sort=published_utc&apiKey=${apiKey}`;
-  console.log(`Fetching news from: ${url.replace(apiKey, '******' + apiKey.slice(-4))}`);
+  console.log(`[Polygon API] Fetching news from: ${url.replace(apiKey, '******' + apiKey.slice(-4))}`);
 
   try {
     const response = await fetch(url);
@@ -219,7 +222,7 @@ const fetchNewsData = async (): Promise<any[]> => {
     return data.results || [];
   } catch (error: any) {
     console.error("Failed to fetch news data:", error.message);
-    throw error; // Re-throw to be caught by calling useEffect
+    throw error; 
   }
 };
 
@@ -330,8 +333,9 @@ export default function DashboardPage() {
         const detailsData = await detailsRes.json();
         companyDetails = detailsData.results || {};
       } else {
-        detailsError = `Details: ${detailsRes.statusText || detailsRes.status}`;
-        console.warn(`[Ticker Lookup] Failed to fetch details for ${symbol}: ${detailsRes.status} - ${await detailsRes.text()}`);
+        const errorText = await detailsRes.text();
+        detailsError = `Details: ${detailsRes.statusText || detailsRes.status} - ${errorText.substring(0,100)}`;
+        console.warn(`[Ticker Lookup] Failed to fetch details for ${symbol}: ${detailsRes.status} - ${errorText}`);
       }
 
       let ohlcvData: any = {};
@@ -340,8 +344,9 @@ export default function DashboardPage() {
         const prevDayData = await prevDayRes.json();
         ohlcvData = (prevDayData.results && prevDayData.results.length > 0) ? prevDayData.results[0] : {};
       } else {
-        prevDayError = `Prev. Day: ${prevDayRes.statusText || prevDayRes.status}`;
-        console.warn(`[Ticker Lookup] Failed to fetch previous day OHLCV for ${symbol}: ${prevDayRes.status} - ${await prevDayRes.text()}`);
+        const errorText = await prevDayRes.text();
+        prevDayError = `Prev. Day: ${prevDayRes.statusText || prevDayRes.status} - ${errorText.substring(0,100)}`;
+        console.warn(`[Ticker Lookup] Failed to fetch previous day OHLCV for ${symbol}: ${prevDayRes.status} - ${errorText}`);
       }
       
       let priceHistoryPoints: PriceHistoryPoint[] = [];
@@ -355,22 +360,30 @@ export default function DashboardPage() {
           }));
         }
       } else {
-        historyError = `History: ${historyRes.statusText || historyRes.status}`;
-        console.warn(`[Ticker Lookup] Failed to fetch price history for ${symbol}: ${historyRes.status} - ${await historyRes.text()}`);
+        const errorText = await historyRes.text();
+        historyError = `History: ${historyRes.statusText || historyRes.status} - ${errorText.substring(0,100)}`;
+        console.warn(`[Ticker Lookup] Failed to fetch price history for ${symbol}: ${historyRes.status} - ${errorText}`);
       }
 
-      if (Object.keys(companyDetails).length === 0 && Object.keys(ohlcvData).length === 0) {
+      if (!detailsRes.ok && !prevDayRes.ok && !historyRes.ok) {
         let combinedError = `No data found for ticker ${symbol}. `;
         if (detailsRes.status === 404 && prevDayRes.status === 404) {
           combinedError = `Ticker symbol "${symbol}" not found. Please check the symbol and try again.`;
         } else {
-            const apiErrors = [detailsError, prevDayError, historyError].filter(Boolean).join(', ');
+            const apiErrors = [detailsError, prevDayError, historyError].filter(Boolean).join('; ');
             if (apiErrors) combinedError += ` API Issues: ${apiErrors}`;
         }
         setTickerError(combinedError);
         setIsLoadingTicker(false);
         return;
       }
+      
+      if (Object.keys(companyDetails).length === 0 && Object.keys(ohlcvData).length === 0) {
+         setTickerError(`No detailed data or price data found for ticker ${symbol}. It might be an invalid symbol or not covered by the API.`);
+         setIsLoadingTicker(false);
+         return;
+      }
+
 
       const currentPrice = ohlcvData.c;
       const openPrice = ohlcvData.o;
@@ -505,7 +518,7 @@ export default function DashboardPage() {
 
   return (
     <main className="min-h-screen bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#5b21b6]/10 to-[#000104] flex-1 p-6 space-y-8 md:p-8">
-      <h1 className="text-3xl font-bold tracking-tight text-foreground">
+      <h1 className="text-3xl font-bold tracking-tight text-foreground mb-6">
         Welcome Josh!
       </h1>
 
@@ -524,7 +537,7 @@ export default function DashboardPage() {
               changeDisplay = <span className="text-xs text-muted-foreground">Loading...</span>;
             } else if (apiResult?.error) {
                 let displayError = apiResult.error;
-                if (apiResult.error.includes("429")) {
+                 if (apiResult.error.includes("429")) {
                     displayError = "Rate Limit Exceeded";
                 } else if (apiResult.error.includes("401") || apiResult.error.toLowerCase().includes("unknown api key")) {
                     displayError = "Auth Error";
@@ -590,7 +603,7 @@ export default function DashboardPage() {
       </section>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <PlaceholderCard title="Why the Market Moved" icon={Cpu} className="lg:col-span-1 h-full">
+        <PlaceholderCard title="Why the Market Moved" icon={Brain} className="lg:col-span-1 h-full">
           <p className="text-sm text-muted-foreground leading-relaxed font-serif mt-2">
             Market sentiment turned positive following the release of favorable inflation data, suggesting that price pressures may be easing. This led to a broad rally across major indices, particularly in growth-oriented sectors like technology and consumer discretionary. Investors are now keenly awaiting upcoming corporate earnings reports for further direction.
           </p>
@@ -611,7 +624,7 @@ export default function DashboardPage() {
             <p className="text-muted-foreground text-center py-4">No news available.</p>
           )}
           {!isLoadingNews && !newsError && newsData.length > 0 && (
-            <ul className="space-y-4">
+            <ul className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
               {newsData.map((item) => (
                 <li key={item.id || item.article_url} className="pb-3 border-b border-border/30 last:border-b-0 last:pb-0">
                   <div className="flex items-center justify-between mb-1">
@@ -642,118 +655,97 @@ export default function DashboardPage() {
         </PlaceholderCard>
       </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-         <PlaceholderCard title="Ticker Lookup Tool" icon={Search} className="lg:col-span-3">
-          <div className="flex space-x-2 mb-4">
-            <Input
-              type="text"
-              placeholder="Enter stock ticker (e.g., AAPL)"
-              className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary"
-              value={tickerQuery}
-              onChange={(e) => setTickerQuery(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleTickerLookup()}
-            />
-            <Button onClick={handleTickerLookup} disabled={isLoadingTicker}>
-              {isLoadingTicker ? <Loader2 className="animate-spin h-4 w-4" /> : <Send className="h-4 w-4" />}
-            </Button>
-          </div>
-          {isLoadingTicker && <div className="text-center py-4"><Loader2 className="animate-spin h-6 w-6 text-primary mx-auto" /></div>}
-          {tickerError && <p className="text-sm text-red-400 text-center p-2 bg-red-500/10 rounded-md">{tickerError}</p>}
-          
-          {tickerData && !isLoadingTicker && (
-            <div className="w-full">
-              {/* Primary Ticker Info - Centered */}
-              <div className="w-full p-4 md:p-6 flex flex-col items-center text-center">
-                <div className="flex items-center gap-4 mb-3">
-                  <Image src={tickerData.logo} alt={`${tickerData.companyName} logo`} width={48} height={48} className="rounded-full bg-muted p-1 object-contain" data-ai-hint={`${tickerData.symbol} logo`}/>
-                  <h3 className="text-2xl font-bold text-foreground">{tickerData.companyName}</h3>
-                </div>
-                <p className="text-lg text-muted-foreground mb-3">
-                  {tickerData.symbol} • {tickerData.exchange}
-                </p>
-                 <div className="flex flex-row items-end gap-3 mb-3 justify-center">
-                  <p className="text-4xl font-bold text-foreground">${tickerData.currentPrice}</p>
-                  {(tickerData.priceChangeAmount && tickerData.priceChangeAmount !== "N/A" && tickerData.priceChangePercent && tickerData.priceChangePercent !== "N/A") && (
-                     <p className={cn(
-                      "text-2xl font-semibold",
-                      parseFloat(tickerData.priceChangeAmount) >= 0 ? "text-green-400" : "text-red-400"
-                    )}>
-                      {parseFloat(tickerData.priceChangeAmount) >= 0 ? <ArrowUpRight className="inline h-5 w-5 mb-1" /> : <ArrowDownRight className="inline h-5 w-5 mb-1" />}
-                      {tickerData.priceChangeAmount} ({tickerData.priceChangePercent}%)
-                    </p>
-                  )}
-                </div>
-                <div className="text-sm text-muted-foreground">
-                  Prev. Close: ${tickerData.previousClose} &nbsp;|&nbsp; Open: ${tickerData.openPrice}
-                </div>
+      <PlaceholderCard title="Ticker Lookup Tool" icon={Search} className="lg:col-span-3">
+        <div className="flex space-x-2 mb-6">
+          <Input
+            type="text"
+            placeholder="Enter stock ticker (e.g., AAPL)"
+            className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary"
+            value={tickerQuery}
+            onChange={(e) => setTickerQuery(e.target.value)}
+            onKeyPress={(e) => e.key === 'Enter' && handleTickerLookup()}
+          />
+          <Button onClick={handleTickerLookup} disabled={isLoadingTicker}>
+            {isLoadingTicker ? <Loader2 className="animate-spin h-4 w-4" /> : <Send className="h-4 w-4" />}
+          </Button>
+        </div>
+        {isLoadingTicker && <div className="text-center py-4"><Loader2 className="animate-spin h-6 w-6 text-primary mx-auto" /></div>}
+        {tickerError && <p className="text-sm text-red-400 text-center p-2 bg-red-500/10 rounded-md">{tickerError}</p>}
+        
+        {tickerData && !isLoadingTicker && (
+          <div className="w-full p-4 md:p-0 space-y-6">
+             {/* Top Security Details Section - Centered */}
+            <div className="w-full flex flex-col items-center text-center border-b border-border/30 pb-6 mb-6">
+              <div className="flex items-center gap-4 mb-3">
+                <Image src={tickerData.logo} alt={`${tickerData.companyName} logo`} width={48} height={48} className="rounded-full bg-muted p-1 object-contain" data-ai-hint={`${tickerData.symbol} logo`}/>
+                <h3 className="text-2xl md:text-3xl font-bold text-foreground">{tickerData.companyName}</h3>
               </div>
+              <p className="text-md text-muted-foreground mb-1">{tickerData.symbol} • {tickerData.exchange}</p>
+              <p className="text-sm text-muted-foreground mb-3">Sector: {tickerData.sector} | Industry: {tickerData.industry}</p>
+              
+              <div className="flex flex-row items-end gap-3 mb-1 justify-center">
+                <span className="text-4xl font-bold text-foreground">${tickerData.currentPrice}</span>
+                {(tickerData.priceChangeAmount && tickerData.priceChangeAmount !== "N/A" && tickerData.priceChangePercent && tickerData.priceChangePercent !== "N/A") && (
+                  <span className={cn(
+                    "text-2xl font-semibold",
+                    parseFloat(tickerData.priceChangeAmount) >= 0 ? "text-green-400" : "text-red-400"
+                  )}>
+                    {parseFloat(tickerData.priceChangeAmount) >= 0 ? <ArrowUpRight className="inline h-5 w-5 mb-1" /> : <ArrowDownRight className="inline h-5 w-5 mb-1" />}
+                    {tickerData.priceChangeAmount} ({tickerData.priceChangePercent}%)
+                  </span>
+                )}
+              </div>
+              <div className="text-sm text-muted-foreground">
+                Prev. Close: ${tickerData.previousClose} &nbsp;|&nbsp; Open: ${tickerData.openPrice}
+              </div>
+            </div>
 
-              {/* Valuation Metrics */}
-              <div className="w-full pt-4 mt-4 border-t border-border/30">
-                 <h4 className="text-md font-semibold text-foreground mb-2 text-center">Valuation Metrics</h4>
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2 text-xs text-center md:text-left">
+            {/* Price History Chart (Full Width) */}
+            <div className="w-full">
+              <h4 className="text-lg font-semibold text-foreground mb-3 text-left">Price History (1 Year)</h4>
+              {tickerData.priceHistory && tickerData.priceHistory.length > 0 ? (
+                <div className="h-[400px] w-full bg-muted/10 rounded-md p-2" data-ai-hint="stock line chart">
+                   <TickerPriceChart data={tickerData.priceHistory} />
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground text-center py-4">Price history not available.</p>
+              )}
+            </div>
+
+            {/* Valuation & Key Dates (Side-by-Side or Stacked) */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 pt-6 mt-6 border-t border-border/30 text-sm">
+              <div>
+                <h4 className="text-lg font-semibold text-foreground mb-3 text-left">Valuation Metrics</h4>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-left">
                   <div><strong className="text-muted-foreground block">Market Cap:</strong> {tickerData.marketCap}</div>
-                  <div><strong className="text-muted-foreground block">Day's Range:</strong> {tickerData.daysRange}</div>
-                  <div><strong className="text-muted-foreground block">52W Range:</strong> {tickerData.fiftyTwoWeekRange}</div>
-                  <div><strong className="text-muted-foreground block">Volume:</strong> {tickerData.volume}</div>
-                  <div><strong className="text-muted-foreground block">Avg. Volume:</strong> {tickerData.avgVolume}</div>
                   <div><strong className="text-muted-foreground block">P/E Ratio (TTM):</strong> {tickerData.peRatio}</div>
                   <div><strong className="text-muted-foreground block">EPS (TTM):</strong> {tickerData.epsTTM}</div>
                   <div><strong className="text-muted-foreground block">Div. Yield:</strong> {tickerData.dividendYield}</div>
                   <div><strong className="text-muted-foreground block">Beta:</strong> {tickerData.beta}</div>
                 </div>
               </div>
-
-              {/* Key Dates */}
-              <div className="w-full pt-4 mt-4 border-t border-border/30">
-                <h4 className="text-md font-semibold text-foreground mb-2 text-center">Key Dates</h4>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-center md:text-left">
+              <div>
+                <h4 className="text-lg font-semibold text-foreground mb-3 text-left">Key Dates</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 text-left">
                   <div><strong className="text-muted-foreground block">Next Earnings:</strong> {tickerData.nextEarningsDate}</div>
                   <div><strong className="text-muted-foreground block">Dividend Date:</strong> {tickerData.dividendDate}</div>
                 </div>
               </div>
-              
-              {/* Price History Chart */}
-              <div className="w-full pt-4 mt-4 border-t border-border/30">
-                <h4 className="text-md font-semibold text-foreground mb-2 text-center">Price History (1 Year)</h4>
-                {tickerData.priceHistory && tickerData.priceHistory.length > 0 ? (
-                  <div className="h-[400px] w-full bg-muted/10 rounded-md p-2" data-ai-hint="stock line chart">
-                     <TickerPriceChart data={tickerData.priceHistory} />
-                  </div>
-                ) : (
-                  <p className="text-xs text-muted-foreground text-center py-4">Price history not available.</p>
-                )}
-              </div>
-
-              {/* Recent News (Placeholder) */}
-              <div className="w-full pt-4 mt-4 border-t border-border/30">
-                <h4 className="text-md font-semibold text-foreground mb-2 text-center">Recent News</h4>
-                {tickerData.recentNews && tickerData.recentNews.length > 0 ? (
-                  <ul className="space-y-2 text-xs">
-                    {tickerData.recentNews.map((newsItem: any, index: number) => (
-                      <li key={index} className="pb-1 border-b border-border/20 last:border-b-0">
-                        <a href={newsItem.article_url || '#'} target="_blank" rel="noopener noreferrer" className="text-foreground hover:text-primary cursor-pointer">
-                          {newsItem.title || 'Untitled News'}
-                        </a>
-                        <p className={cn(
-                          "text-xs",
-                           newsItem.sentiment === 'positive' ? 'text-green-400' :
-                           newsItem.sentiment === 'negative' ? 'text-red-400' :
-                           'text-muted-foreground'
-                        )}>
-                          {newsItem.publisher?.name || 'Unknown Source'} - {newsItem.sentiment || 'Neutral'}
-                        </p>
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                   <p className="text-xs text-muted-foreground text-center py-4">No recent news available for this ticker.</p>
-                )}
-              </div>
             </div>
-          )}
-        </PlaceholderCard>
-      </div>
+            
+            {/* Volume Section */}
+             <div className="w-full pt-4 mt-4 border-t border-border/30 text-sm">
+                <h4 className="text-lg font-semibold text-foreground mb-3 text-left">Volume</h4>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-left">
+                    <div><strong className="text-muted-foreground block">Day's Range:</strong> {tickerData.daysRange}</div>
+                    <div><strong className="text-muted-foreground block">52W Range:</strong> {tickerData.fiftyTwoWeekRange}</div>
+                    <div><strong className="text-muted-foreground block">Volume:</strong> {tickerData.volume}</div>
+                    <div><strong className="text-muted-foreground block">Avg. Volume:</strong> {tickerData.avgVolume}</div>
+                </div>
+            </div>
+          </div>
+        )}
+      </PlaceholderCard>
     </main>
   );
 }
