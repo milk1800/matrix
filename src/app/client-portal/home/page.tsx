@@ -7,7 +7,7 @@ import 'react-quill/dist/quill.snow.css'; // Import Quill styles
 import { PlaceholderCard } from '@/components/dashboard/placeholder-card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -49,7 +49,6 @@ import {
   Strikethrough,
 } from "lucide-react";
 
-// Dynamically import ReactQuill to avoid SSR issues and provide a loading fallback
 const ReactQuill = dynamic(() => import('react-quill'), { 
   ssr: false,
   loading: () => <p className="text-muted-foreground p-3 min-h-[calc(120px+theme(spacing.8))]">Loading editor...</p> 
@@ -355,7 +354,7 @@ export default function ClientPortalHomePage() {
                     </div>
                   </div>
                   <div className="space-y-3">
-                    <Label>Date &amp; Time</Label>
+                    <Label>Date & Time</Label>
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-x-3 gap-y-2 items-center">
                       <div className="md:col-span-2"> <Input type="text" placeholder="Start Date" aria-label="Start Date" className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary" /> </div>
                       <div className="sm:col-span-1"> <Input type="text" placeholder="Start Time" aria-label="Start Time" className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary" /> </div>
