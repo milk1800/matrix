@@ -22,7 +22,8 @@ import {
   CalendarDays,
   Loader2,
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
+  Cpu, // Added for AI/Market Narrative
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from '@/lib/utils';
@@ -40,32 +41,32 @@ interface MarketData {
 
 const initialMarketOverviewData: MarketData[] = [
   {
-    label: 'S&P 500 (I:SPX)',
-    polygonTicker: 'I:SPX', // Correct Polygon.io ticker for S&P 500 Index
+    label: 'S&P 500 (SPX)',
+    polygonTicker: 'I:SPX',
     icon: Landmark,
     openTime: '09:30',
     closeTime: '16:00',
     timezone: 'America/New_York',
   },
   {
-    label: 'Dow 30 (I:DJI)',
-    polygonTicker: 'I:DJI', // Correct Polygon.io ticker for Dow Jones Industrial Average
+    label: 'Dow 30 (DJI)',
+    polygonTicker: 'I:DJI',
     icon: Landmark,
     openTime: '09:30',
     closeTime: '16:00',
     timezone: 'America/New_York',
   },
   {
-    label: 'Nasdaq (I:IXIC)',
-    polygonTicker: 'I:IXIC', // Correct Polygon.io ticker for Nasdaq Composite
+    label: 'Nasdaq (IXIC)',
+    polygonTicker: 'I:IXIC',
     icon: Landmark,
     openTime: '09:30',
     closeTime: '16:00',
     timezone: 'America/New_York',
   },
   {
-    label: 'Russell 2000 (I:RUT)',
-    polygonTicker: 'I:RUT', // Correct Polygon.io ticker for Russell 2000 Index
+    label: 'Russell 2000 (RUT)',
+    polygonTicker: 'I:RUT',
     icon: Landmark,
     openTime: '09:30',
     closeTime: '16:00',
@@ -115,7 +116,6 @@ interface TickerFullData {
   nextEarningsDate: string;
   dividendDate: string;
   priceHistory: PriceHistoryPoint[]; 
-  recentNews: any[]; 
 }
 
 interface MarketStatusInfo {
@@ -142,8 +142,9 @@ const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
         const errorData = await response.json();
         console.log(`[Polygon API Debug] Raw error response for ${symbol}:`, errorData); 
         if (Object.keys(errorData).length === 0 && errorData.constructor === Object) {
-           console.warn(`[Polygon API Warn] Received empty JSON error object from Polygon for ${symbol}. Status: ${response.status}. This often means the API key is invalid or lacks permissions for ${symbol}.`);
-           errorMessage = `API Error: ${response.status} - Polygon returned an empty error response for ${symbol}. Check API key, permissions, or ticker availability.`;
+           const specificMessage = `Polygon returned an empty error response for ${symbol}. Check API key, permissions, or ticker availability.`;
+           console.warn(`[Polygon API Warn] ${specificMessage} Status: ${response.status}.`);
+           errorMessage = `API Error: ${response.status} - ${specificMessage}`;
            if (response.status === 429) { 
               errorMessage = `API Error: 429 - You've exceeded the maximum requests per minute for ${symbol}, please wait or upgrade your subscription to continue. https://polygon.io/pricing`;
            }
@@ -152,17 +153,19 @@ const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
         } else if (errorData && errorData.error) {
           errorMessage = `API Error: ${response.status} - ${errorData.error}`;
         } else if (errorData && errorData.request_id) {
-          errorMessage = `API Error: ${response.status} (Request ID: ${errorData.request_id})`;
+           errorMessage = `API Error: ${response.status} (Request ID: ${errorData.request_id})`;
         } else {
             const responseText = await response.text();
-            console.warn(`[Polygon API Warn] Could not parse JSON error response for ${symbol}, but got text. Status: ${response.status}. Response text snippet:`, responseText.substring(0, 200) + (responseText.length > 200 ? '...' : ''));
-            errorMessage = `API Error: ${response.status} - ${response.statusText || 'Failed to parse error response.'} Raw response snippet: ${responseText.substring(0,50)}...`;
+            const snippet = responseText.substring(0, 200) + (responseText.length > 200 ? '...' : '');
+            console.warn(`[Polygon API Warn] Could not parse JSON error response for ${symbol}, but got text. Status: ${response.status}. Response text snippet:`, snippet);
+            errorMessage = `API Error: ${response.status} - ${response.statusText || 'Failed to parse error response.'} Raw response snippet: ${snippet.substring(0,50)}...`;
         }
       } catch (e: any) { 
           try {
             const responseText = await response.text();
-            console.warn(`[Polygon API Warn] Could not parse JSON error response for ${symbol}. Status: ${response.status}. Response text snippet:`, responseText.substring(0, 200) + (responseText.length > 200 ? '...' : ''));
-            errorMessage = `API Error: ${response.status} - ${response.statusText || 'Failed to parse error response.'} Raw response snippet: ${responseText.substring(0,50)}...`;
+            const snippet = responseText.substring(0, 200) + (responseText.length > 200 ? '...' : '');
+            console.warn(`[Polygon API Warn] Could not parse JSON error response for ${symbol}. Status: ${response.status}. Response text snippet:`, snippet);
+            errorMessage = `API Error: ${response.status} - ${response.statusText || 'Failed to parse error response.'} Raw response snippet: ${snippet.substring(0,50)}...`;
           } catch (textErr: any) {
             console.warn(`[Polygon API Warn] Could not parse JSON or text error response for ${symbol}. Status: ${response.status}. Also failed to read response as text: ${textErr.message}`);
             errorMessage = `API Error: ${response.status} - ${response.statusText || 'Unknown error structure and failed to read response text.'}`;
@@ -185,7 +188,6 @@ const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
   }
 };
 
-// Function to fetch news data
 const fetchNewsData = async (): Promise<any[]> => {
   const apiKey = process.env.NEXT_PUBLIC_POLYGON_API_KEY;
   if (!apiKey) {
@@ -193,7 +195,7 @@ const fetchNewsData = async (): Promise<any[]> => {
     throw new Error("API Key for news missing. Configure in .env.local.");
   }
   const url = `https://api.polygon.io/v2/reference/news?order=desc&limit=5&sort=published_utc&apiKey=${apiKey}`;
-  console.log(`[Polygon API] Fetching news from: ${url.replace(apiKey, '******' + apiKey.slice(-4))}`);
+  // console.log(`[Polygon API] Fetching news from: ${url.replace(apiKey, '******' + apiKey.slice(-4))}`);
 
   try {
     const response = await fetch(url);
@@ -243,7 +245,7 @@ export default function DashboardPage() {
     const loadMarketData = async () => {
       const apiKey = process.env.NEXT_PUBLIC_POLYGON_API_KEY;
       if (!apiKey) {
-        console.warn("[Polygon API] CRITICAL: NEXT_PUBLIC_POLYGON_API_KEY is not defined in the environment. Market data will not be fetched. Ensure .env.local is set and the dev server was restarted.");
+        console.warn("[Polygon API] CRITICAL: NEXT_PUBLIC_POLYGON_API_KEY is not defined. Market data will not be fetched. Ensure .env.local is set & server restarted.");
         const errorState: Record<string, FetchedIndexData> = {};
         initialMarketOverviewData.forEach(market => {
           errorState[market.polygonTicker] = { error: 'API Key Missing. Check .env.local & restart server.' };
@@ -251,7 +253,7 @@ export default function DashboardPage() {
         setMarketApiData(errorState);
         return;
       }
-      console.log("[Polygon API] Initiating market data fetch for overview cards.");
+      // console.log("[Polygon API] Initiating market data fetch for overview cards.");
 
       const initialApiDataState: Record<string, FetchedIndexData> = {};
       initialMarketOverviewData.forEach(market => {
@@ -353,7 +355,7 @@ export default function DashboardPage() {
         const historyData = await historyRes.json();
         if (historyData.results) {
           priceHistoryPoints = historyData.results.map((r: any) => ({
-            date: format(new Date(r.t), 'yyyy-MM-dd'),
+            date: format(new Date(r.t), 'yyyy-MM-dd'), // Ensure date is just YYYY-MM-DD string
             close: r.c,
           }));
         }
@@ -385,9 +387,9 @@ export default function DashboardPage() {
       }
 
       const currentPrice = ohlcvData.c;
-      const openPrice = ohlcvData.o; // Previous day's open for daily change calc
-      const priceChangeAmount = typeof currentPrice === 'number' && typeof openPrice === 'number' ? (currentPrice - openPrice) : null;
-      const priceChangePercent = calculateChangePercent(currentPrice, openPrice);
+      const openPriceForChange = ohlcvData.o; 
+      const priceChangeAmount = typeof currentPrice === 'number' && typeof openPriceForChange === 'number' ? (currentPrice - openPriceForChange) : null;
+      const priceChangePercent = calculateChangePercent(currentPrice, openPriceForChange);
 
       setTickerData({
         companyName: companyDetails.name || `${symbol} (Name N/A)`,
@@ -403,17 +405,16 @@ export default function DashboardPage() {
         previousClose: typeof ohlcvData.c === 'number' ? ohlcvData.c.toFixed(2) : "N/A", // Prev close is the 'c' from /prev
         openPrice: typeof ohlcvData.o === 'number' ? ohlcvData.o.toFixed(2) : "N/A", // Prev open is 'o' from /prev
         daysRange: (typeof ohlcvData.l === 'number' && typeof ohlcvData.h === 'number') ? `${ohlcvData.l.toFixed(2)} - ${ohlcvData.h.toFixed(2)}` : "N/A", // This is prev day's range
-        fiftyTwoWeekRange: "N/A", // Requires different endpoint or calculation
-        volume: typeof ohlcvData.v === 'number' ? ohlcvData.v.toLocaleString() : "N/A", // Prev day's volume
-        avgVolume: "N/A", // Requires different endpoint
-        peRatio: "N/A", // Requires different endpoint
-        epsTTM: "N/A", // Requires different endpoint
-        dividendYield: "N/A", // Requires different endpoint
-        beta: "N/A", // Requires different endpoint
-        nextEarningsDate: "N/A", // Requires different endpoint
-        dividendDate: "N/A", // Requires different endpoint
+        fiftyTwoWeekRange: "N/A", 
+        volume: typeof ohlcvData.v === 'number' ? ohlcvData.v.toLocaleString() : "N/A", 
+        avgVolume: "N/A",
+        peRatio: "N/A", 
+        epsTTM: "N/A",
+        dividendYield: "N/A", 
+        beta: "N/A", 
+        nextEarningsDate: "N/A",
+        dividendDate: "N/A",
         priceHistory: priceHistoryPoints,
-        recentNews: [], // Placeholder, news fetch not integrated here
       });
 
     } catch (error: any) {
@@ -516,7 +517,7 @@ export default function DashboardPage() {
 
 
   return (
-    <main className="min-h-screen flex-1 p-6 space-y-8 md:p-8">
+    <main className="min-h-screen flex-1 p-6 space-y-8 md:p-8 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#5b21b6]/10 to-[#000104]">
       <h1 className="text-3xl font-bold tracking-tight text-foreground mb-6">
         Welcome Josh!
       </h1>
@@ -602,7 +603,7 @@ export default function DashboardPage() {
       </section>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <PlaceholderCard title="Why the Market Moved" icon={Brain} className="lg:col-span-1 h-full">
+        <PlaceholderCard title="Why the Market Moved" icon={Cpu} className="lg:col-span-1 h-full">
           <p className="text-sm text-muted-foreground leading-relaxed font-serif mt-2">
             Market sentiment turned positive following the release of favorable inflation data, suggesting that price pressures may be easing. This led to a broad rally across major indices, particularly in growth-oriented sectors like technology and consumer discretionary. Investors are now keenly awaiting upcoming corporate earnings reports for further direction.
           </p>
@@ -623,7 +624,7 @@ export default function DashboardPage() {
             <p className="text-muted-foreground text-center py-4">No news available.</p>
           )}
           {!isLoadingNews && !newsError && newsData.length > 0 && (
-            <ul className="space-y-4 max-h-[400px] overflow-y-auto pr-2">
+            <ul className="space-y-4 max-h-[400px] overflow-y-auto pr-2 no-visual-scrollbar">
               {newsData.map((item) => (
                 <li key={item.id || item.article_url} className="pb-3 border-b border-border/30 last:border-b-0 last:pb-0">
                   <div className="flex items-center justify-between mb-1">
@@ -668,31 +669,41 @@ export default function DashboardPage() {
             {isLoadingTicker ? <Loader2 className="animate-spin h-4 w-4" /> : <Send className="h-4 w-4" />}
           </Button>
         </div>
+
         {isLoadingTicker && <div className="text-center py-4"><Loader2 className="animate-spin h-6 w-6 text-primary mx-auto" /></div>}
         {tickerError && <p className="text-sm text-red-400 text-center p-2 bg-red-500/10 rounded-md">{tickerError}</p>}
         
         {tickerData && !isLoadingTicker && (
-          <div className="w-full p-4 md:p-0 space-y-6">
-            {/* Simplified Header */}
-            <div className="text-left mb-6">
-              <h3 className="text-2xl font-bold text-foreground mb-1">{tickerData.companyName}</h3>
-              <div className="flex items-end gap-3">
+           <div className="w-full p-0 space-y-6"> {/* Removed p-4 md:p-0 */}
+            {/* Primary Ticker Info */}
+            <div className="w-full text-left mb-6"> {/* Ensure this block is left-aligned */}
+              <div className="flex items-center gap-4 mb-3">
+                <Image src={tickerData.logo} alt={`${tickerData.companyName} logo`} width={48} height={48} className="rounded-md bg-muted/30 p-1" data-ai-hint={`${tickerData.symbol} logo`}/>
+                <div>
+                  <h3 className="text-2xl font-bold text-foreground">{tickerData.companyName}</h3>
+                  <p className="text-md text-muted-foreground">{tickerData.symbol} • {tickerData.exchange}</p>
+                </div>
+              </div>
+              <div className="flex flex-wrap items-end gap-x-4 gap-y-1 mb-2">
                 <span className="text-4xl font-bold text-foreground">${tickerData.currentPrice}</span>
                 {(tickerData.priceChangeAmount && tickerData.priceChangeAmount !== "N/A" && tickerData.priceChangePercent && tickerData.priceChangePercent !== "N/A") && (
                   <span className={cn(
-                    "text-xl font-semibold",
+                    "text-2xl font-semibold",
                     parseFloat(tickerData.priceChangeAmount) >= 0 ? "text-green-400" : "text-red-400"
                   )}>
                     {parseFloat(tickerData.priceChangeAmount) >= 0 ? <ArrowUpRight className="inline h-5 w-5 mb-0.5" /> : <ArrowDownRight className="inline h-5 w-5 mb-0.5" />}
                     {tickerData.priceChangeAmount} ({tickerData.priceChangePercent}%)
                   </span>
                 )}
-                 <span className="text-lg text-muted-foreground">Change</span> 
+                <span className="text-md text-muted-foreground">Change</span> 
+              </div>
+              <div className="text-sm text-muted-foreground">
+                Prev. Close: ${tickerData.previousClose} &nbsp;|&nbsp; Open: ${tickerData.openPrice}
               </div>
             </div>
 
-            {/* Price History Chart (Full Width) */}
-            <div className="w-full">
+            {/* Price History Chart */}
+            <div className="w-full pt-6 border-t border-border/30">
               <h4 className="text-lg font-semibold text-foreground mb-3 text-left">Price History (1 Year)</h4>
               {tickerData.priceHistory && tickerData.priceHistory.length > 0 ? (
                 <div className="h-[400px] w-full bg-muted/10 rounded-md p-2" data-ai-hint="stock line chart">
@@ -702,7 +713,37 @@ export default function DashboardPage() {
                 <p className="text-sm text-muted-foreground text-center py-4">Price history not available.</p>
               )}
             </div>
-            
+
+            {/* Valuation & Key Dates in a Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6 pt-6 mt-6 border-t border-border/30">
+              <div>
+                <h4 className="text-lg font-semibold text-foreground mb-3 text-left">Valuation Metrics</h4>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                  <div><strong className="text-muted-foreground block">Market Cap:</strong> {tickerData.marketCap}</div>
+                  <div><strong className="text-muted-foreground block">P/E Ratio (TTM):</strong> {tickerData.peRatio}</div>
+                  <div><strong className="text-muted-foreground block">EPS (TTM):</strong> {tickerData.epsTTM}</div>
+                  <div><strong className="text-muted-foreground block">Div. Yield:</strong> {tickerData.dividendYield}</div>
+                  <div><strong className="text-muted-foreground block">Beta:</strong> {tickerData.beta}</div>
+                </div>
+              </div>
+              <div>
+                <h4 className="text-lg font-semibold text-foreground mb-3 text-left">Key Dates</h4>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                  <div><strong className="text-muted-foreground block">Next Earnings:</strong> {tickerData.nextEarningsDate}</div>
+                  <div><strong className="text-muted-foreground block">Dividend Date:</strong> {tickerData.dividendDate}</div>
+                </div>
+              </div>
+            </div>
+             {/* Volume Section */}
+             <div className="w-full pt-6 mt-6 border-t border-border/30">
+              <h4 className="text-lg font-semibold text-foreground mb-3 text-left">Volume</h4>
+              <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+                <div><strong className="text-muted-foreground block">Volume:</strong> {tickerData.volume}</div>
+                <div><strong className="text-muted-foreground block">Avg. Volume:</strong> {tickerData.avgVolume}</div>
+                <div><strong className="text-muted-foreground block">Day's Range:</strong> {tickerData.daysRange}</div>
+                <div><strong className="text-muted-foreground block">52W Range:</strong> {tickerData.fiftyTwoWeekRange}</div>
+              </div>
+            </div>
           </div>
         )}
       </PlaceholderCard>
