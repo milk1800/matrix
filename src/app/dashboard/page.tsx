@@ -150,10 +150,10 @@ interface MarketStatusInfo {
 
 const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
   const apiKey = process.env.NEXT_PUBLIC_POLYGON_API_KEY;
-  // console.log(`[Polygon API] Attempting to use API key ending with: ...${apiKey ? apiKey.slice(-4) : 'UNDEFINED'} for symbol: ${symbol}`);
+  console.log(`[Polygon API] Attempting to use API key ending with: ...${apiKey ? apiKey.slice(-4) : 'UNDEFINED'} for symbol: ${symbol}`);
 
   if (!apiKey) {
-    // console.error("[Polygon API] CRITICAL: NEXT_PUBLIC_POLYGON_API_KEY is not defined. Ensure .env.local is set and server restarted.");
+    console.error("[Polygon API] CRITICAL: NEXT_PUBLIC_POLYGON_API_KEY is not defined. Ensure .env.local is set and server restarted.");
     return { error: 'API Key Missing. Configure in .env.local & restart server.' };
   }
 
@@ -165,11 +165,12 @@ const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
       let errorDetails = "";
       try {
         const errorData = await response.json();
-        // console.log(`[Polygon API Debug] Raw error response for ${symbol}:`, JSON.stringify(errorData, null, 2));
+        console.log(`[Polygon API Debug] Raw error response for ${symbol}:`, errorData); // Log the raw error data
+
         if (Object.keys(errorData).length === 0 && errorData.constructor === Object) {
-            // console.warn(`[Polygon API Warn] Received empty JSON error object from Polygon for ${symbol}. Status: ${response.status}.`);
-            errorDetails = "Polygon returned an empty error response. This often means the API key is invalid or lacks permissions for this symbol/endpoint.";
-            if (response.status === 429) {
+            console.warn(`[Polygon API Warn] Received empty JSON error object from Polygon for ${symbol}. Status: ${response.status}.`);
+            errorDetails = "Polygon returned an empty error response. This often means the API key is invalid, lacks permissions, or the requested ticker is unavailable on your plan.";
+             if (response.status === 429) {
               errorDetails = "Rate limit exceeded. Please wait or upgrade your Polygon.io subscription.";
             }
         } else {
@@ -178,29 +179,30 @@ const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
             else if (errorData && errorData.request_id) errorDetails = `Request ID: ${errorData.request_id}`;
         }
         errorMessage = `API Error: ${response.status} - ${errorDetails || response.statusText || 'Unknown error'}`;
-      } catch (e) {
-        try {
-            const textError = await response.text();
-            // console.warn(`[Polygon API Warn] Could not parse JSON error response for ${symbol}. Status: ${response.status}. Response text snippet:`, textError.substring(0, 200) + (textError.length > 200 ? '...' : ''));
-            errorMessage = `API Error: ${response.status} - ${response.statusText || 'Failed to parse error response.'} Raw: ${textError.substring(0,50)}...`;
-        } catch (textE) {
-            // console.warn(`[Polygon API Warn] Could not parse JSON or text error response for ${symbol}. Status: ${response.status}.`);
+      } catch (e: any) { // Catch parsing error
+          let responseText = "";
+          try {
+            responseText = await response.text();
+            console.warn(`[Polygon API Warn] Could not parse JSON error response for ${symbol}. Status: ${response.status}. Response text snippet:`, responseText.substring(0, 200) + (responseText.length > 200 ? '...' : ''));
+            errorMessage = `API Error: ${response.status} - ${response.statusText || 'Failed to parse error response.'} Raw response snippet: ${responseText.substring(0,50)}...`;
+          } catch (textErr: any) {
+            console.warn(`[Polygon API Warn] Could not parse JSON or text error response for ${symbol}. Status: ${response.status}. Also failed to read response as text: ${textErr.message}`);
             errorMessage = `API Error: ${response.status} - ${response.statusText || 'Unknown error structure and failed to read response text.'}`;
-        }
+          }
       }
       console.error(`Error fetching ${symbol}: ${errorMessage}`);
-      return { error: errorMessage };
+      return { error: errorMessage }; // Return the more detailed message
     }
     const data = await response.json();
     if (data.results && data.results.length > 0) {
       const { c, o } = data.results[0];
       return { c, o };
     }
-    // console.warn(`[Polygon API Warn] No data results found for ${symbol} in Polygon response.`);
+    console.warn(`[Polygon API Warn] No data results found for ${symbol} in Polygon response.`);
     return { error: 'No data results from Polygon' };
   } catch (error: any) {
     const networkErrorMsg = `Network/Fetch error for ${symbol}: ${error.message || 'Unknown network error'}`;
-    // console.error(`[Polygon API Error] ${networkErrorMsg}`);
+    console.error(`[Polygon API Error] ${networkErrorMsg}`);
     return { error: networkErrorMsg };
   }
 };
@@ -218,7 +220,7 @@ export default function DashboardPage() {
     const loadMarketData = async () => {
       const apiKey = process.env.NEXT_PUBLIC_POLYGON_API_KEY;
       if (!apiKey) {
-        // console.warn("[Polygon API] CRITICAL: NEXT_PUBLIC_POLYGON_API_KEY is not defined in the environment. Market data will not be fetched. Ensure .env.local is set and the dev server was restarted.");
+        console.warn("[Polygon API] CRITICAL: NEXT_PUBLIC_POLYGON_API_KEY is not defined in the environment. Market data will not be fetched. Ensure .env.local is set and the dev server was restarted.");
         const errorState: Record<string, FetchedIndexData> = {};
         initialMarketOverviewData.forEach(market => {
           errorState[market.polygonTicker] = { error: 'API Key Missing. Configure in .env.local & restart server.' };
@@ -226,7 +228,7 @@ export default function DashboardPage() {
         setMarketApiData(errorState);
         return;
       }
-      // console.log("[Polygon API] Initiating market data fetch for overview cards.");
+      console.log("[Polygon API] Initiating market data fetch for overview cards.");
 
       const initialApiDataState: Record<string, FetchedIndexData> = {};
       initialMarketOverviewData.forEach(market => {
@@ -245,7 +247,7 @@ export default function DashboardPage() {
         if (result.status === 'fulfilled') {
           newApiData[result.value.symbol] = result.value.data;
         } else {
-          // console.error("[Polygon API] Promise rejected unexpectedly in loadMarketData for overview cards:", result.reason);
+          console.error("[Polygon API] Promise rejected unexpectedly in loadMarketData for overview cards:", result.reason);
         }
       });
       setMarketApiData(prevData => ({ ...prevData, ...newApiData }));
@@ -278,6 +280,7 @@ export default function DashboardPage() {
     const fromDate = format(subYears(new Date(), 1), 'yyyy-MM-dd');
 
     try {
+      console.log(`[Ticker Lookup] Fetching details for ${symbol} using API key: ******${apiKey.slice(-4)}`);
       const [detailsRes, prevDayRes, historyRes] = await Promise.all([
         fetch(`https://api.polygon.io/v3/reference/tickers/${symbol}?apiKey=${apiKey}`),
         fetch(`https://api.polygon.io/v2/aggs/ticker/${symbol}/prev?adjusted=true&apiKey=${apiKey}`),
@@ -291,7 +294,7 @@ export default function DashboardPage() {
         companyDetails = detailsData.results || {};
       } else {
         detailsError = `Details: ${detailsRes.status}`;
-        console.warn(`Failed to fetch details for ${symbol}: ${detailsRes.status} - ${await detailsRes.text()}`);
+        console.warn(`[Ticker Lookup] Failed to fetch details for ${symbol}: ${detailsRes.status} - ${await detailsRes.text()}`);
       }
 
       let ohlcvData: any = {};
@@ -301,7 +304,7 @@ export default function DashboardPage() {
         ohlcvData = (prevDayData.results && prevDayData.results.length > 0) ? prevDayData.results[0] : {};
       } else {
         prevDayError = `Prev. Day: ${prevDayRes.status}`;
-        console.warn(`Failed to fetch previous day OHLCV for ${symbol}: ${prevDayRes.status} - ${await prevDayRes.text()}`);
+        console.warn(`[Ticker Lookup] Failed to fetch previous day OHLCV for ${symbol}: ${prevDayRes.status} - ${await prevDayRes.text()}`);
       }
       
       let priceHistory: PriceHistoryPoint[] = [];
@@ -316,7 +319,7 @@ export default function DashboardPage() {
         }
       } else {
         historyError = `History: ${historyRes.status}`;
-        console.warn(`Failed to fetch price history for ${symbol}: ${historyRes.status} - ${await historyRes.text()}`);
+        console.warn(`[Ticker Lookup] Failed to fetch price history for ${symbol}: ${historyRes.status} - ${await historyRes.text()}`);
       }
 
       if (Object.keys(companyDetails).length === 0 && Object.keys(ohlcvData).length === 0 && priceHistory.length === 0) {
@@ -338,8 +341,8 @@ export default function DashboardPage() {
         companyName: companyDetails.name || `${symbol} (Name N/A)`,
         symbol: companyDetails.ticker || symbol,
         exchange: companyDetails.primary_exchange || "N/A",
-        sector: companyDetails.market_cap_category || companyDetails.market || "N/A",
-        industry: companyDetails.sic_description || "N/A",
+        sector: companyDetails.sic_description || "N/A", // Switched from market_cap_category
+        industry: companyDetails.sic_description || "N/A", // Using sic_description for a broader category
         logo: companyDetails.branding?.logo_url ? `${companyDetails.branding.logo_url}?apiKey=${apiKey}` : `https://placehold.co/48x48.png?text=${symbol}`,
         marketCap: companyDetails.market_cap ? (companyDetails.market_cap / 1_000_000_000).toFixed(2) + "B" : "N/A",
         currentPrice: typeof currentPrice === 'number' ? currentPrice.toFixed(2) : "N/A",
@@ -362,8 +365,8 @@ export default function DashboardPage() {
       });
 
     } catch (error: any) {
-      console.error("Error in handleTickerLookup:", error);
-      setTickerError(`Failed to fetch data for ${symbol}. ${error.message}`);
+      console.error("[Ticker Lookup] Error in handleTickerLookup:", error);
+      setTickerError(`Failed to fetch data for ${symbol}. ${error.message || 'Unknown error'}`);
     } finally {
       setIsLoadingTicker(false);
     }
@@ -390,14 +393,14 @@ export default function DashboardPage() {
           if (part.type === 'minute') currentMinuteEST = parseInt(part.value);
         });
       } catch (e) {
-        // console.error("Error formatting EST time, defaulting to local time for logic:", e);
+        console.warn("Error formatting EST time for market status, defaulting to local time for logic:", e);
         const localNow = new Date();
         currentHourEST = localNow.getHours();
         currentMinuteEST = localNow.getMinutes();
       }
       
-      const todayForLogic = new Date(now.toLocaleString('en-US', {timeZone: 'America/New_York'}));
-      todayForLogic.setHours(0,0,0,0);
+      const todayForLogic = new Date(); // Use a consistent local date for setting hours/minutes
+      todayForLogic.setHours(0,0,0,0); // Reset to midnight locally
 
 
       initialMarketOverviewData.forEach(market => {
@@ -405,21 +408,22 @@ export default function DashboardPage() {
             const [openHour, openMinute] = market.openTime.split(':').map(Number);
             const [closeHour, closeMinute] = market.closeTime.split(':').map(Number);
 
-            const marketOpenTime = new Date(todayForLogic);
-            marketOpenTime.setHours(openHour, openMinute, 0, 0);
+            // Create market open/close times based on today's date but with EST hours/minutes
+            const marketOpenTimeToday = new Date(todayForLogic);
+            marketOpenTimeToday.setHours(openHour, openMinute, 0, 0);
 
-            const marketCloseTime = new Date(todayForLogic);
-            marketCloseTime.setHours(closeHour, closeMinute, 0, 0);
+            const marketCloseTimeToday = new Date(todayForLogic);
+            marketCloseTimeToday.setHours(closeHour, closeMinute, 0, 0);
             
-            const nowInEstEquivalentForLogic = new Date(todayForLogic);
-            nowInEstEquivalentForLogic.setHours(currentHourEST, currentMinuteEST, 0, 0);
-
+            // Create current time object based on today's date but with EST hours/minutes for comparison
+            const currentTimeWithEstHours = new Date(todayForLogic);
+            currentTimeWithEstHours.setHours(currentHourEST, currentMinuteEST, 0, 0);
 
             const isCurrentlyOpen =
-                nowInEstEquivalentForLogic >= marketOpenTime &&
-                nowInEstEquivalentForLogic < marketCloseTime;
+                currentTimeWithEstHours >= marketOpenTimeToday &&
+                currentTimeWithEstHours < marketCloseTimeToday;
 
-            const timeToCloseMs = marketCloseTime.getTime() - nowInEstEquivalentForLogic.getTime();
+            const timeToCloseMs = marketCloseTimeToday.getTime() - currentTimeWithEstHours.getTime();
             const isClosingSoon = isCurrentlyOpen && timeToCloseMs > 0 && timeToCloseMs <= 60 * 60 * 1000; // 1 hour
 
             let statusText = "🔴 Market Closed";
@@ -483,9 +487,11 @@ export default function DashboardPage() {
             } else if (apiResult?.error) {
                 let displayError = apiResult.error;
                 if (apiResult.error.includes("429")) {
-                    displayError = "Rate Limit Reached";
-                } else if (apiResult.error.includes("401")) {
+                    displayError = "Rate Limit";
+                } else if (apiResult.error.includes("401") || apiResult.error.toLowerCase().includes("unknown api key")) {
                     displayError = "Auth Error";
+                } else if (apiResult.error.includes("API Key Missing")) {
+                    displayError = "Key Missing";
                 }
               valueDisplay = <TooltipProvider><Tooltip><TooltipTrigger asChild><span className="text-sm text-red-400/80 flex items-center truncate"><AlertCircle className="w-4 h-4 mr-1 shrink-0" /> {displayError}</span></TooltipTrigger><TooltipContent><p>{apiResult.error}</p></TooltipContent></Tooltip></TooltipProvider>;
               changeDisplay = "";
@@ -566,8 +572,7 @@ export default function DashboardPage() {
       </div>
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-         <div className="lg:col-span-1 hidden lg:block"> {/* Spacer */} </div>
-         <PlaceholderCard title="Ticker Lookup Tool" icon={Search} className="lg:col-span-2">
+        <PlaceholderCard title="Ticker Lookup Tool" icon={Search} className="lg:col-span-3">
           <div className="flex space-x-2 mb-4">
             <Input
               type="text"
@@ -583,78 +588,70 @@ export default function DashboardPage() {
           </div>
           {isLoadingTicker && <div className="text-center py-4"><Loader2 className="animate-spin h-6 w-6 text-primary mx-auto" /></div>}
           {tickerError && <p className="text-sm text-red-400 text-center p-2 bg-red-500/10 rounded-md">{tickerError}</p>}
+          
           {tickerData && !isLoadingTicker && (
-            <div className="space-y-6 text-sm">
-              <div className="pb-4 border-b border-border/30">
-                <div className="flex items-start space-x-4 mb-3">
+            <div className="w-full">
+              <div className="w-full p-4 md:p-6 flex flex-col items-center text-center">
+                <div className="flex items-center gap-4 mb-3">
                   <Image src={tickerData.logo} alt={`${tickerData.companyName} logo`} width={48} height={48} className="rounded-md bg-muted p-1 object-contain" data-ai-hint="company logo"/>
-                  <div>
-                    <h3 className="text-xl font-bold text-foreground">{tickerData.companyName}</h3>
-                    <p className="text-muted-foreground">
-                      {tickerData.symbol} • {tickerData.exchange}
-                    </p>
-                    <p className="text-xs text-muted-foreground/80">
-                      {tickerData.sector} • {tickerData.industry}
-                    </p>
-                  </div>
+                  <h3 className="text-2xl font-bold text-foreground">{tickerData.companyName}</h3>
                 </div>
-              </div>
-
-              <div className="pb-4 border-b border-border/30">
-                <div className="flex items-baseline space-x-2 mb-2">
+                <p className="text-lg text-muted-foreground mb-3">
+                  {tickerData.symbol} • {tickerData.exchange}
+                </p>
+                 <div className="flex flex-row items-end gap-3 mb-3 justify-center">
                   <p className="text-4xl font-bold text-foreground">${tickerData.currentPrice}</p>
-                  {(tickerData.priceChangeAmount !== "N/A" && tickerData.priceChangePercent !== "N/A") && (
+                  {(tickerData.priceChangeAmount && tickerData.priceChangeAmount !== "N/A" && tickerData.priceChangePercent && tickerData.priceChangePercent !== "N/A") && (
                      <p className={cn(
-                      "text-lg font-semibold",
-                      parseFloat(tickerData.priceChangeAmount || "0") >= 0 ? "text-green-400" : "text-red-400"
+                      "text-2xl font-semibold",
+                      parseFloat(tickerData.priceChangeAmount) >= 0 ? "text-green-400" : "text-red-400"
                     )}>
-                      {parseFloat(tickerData.priceChangeAmount || "0") >= 0 ? <ArrowUpRight className="inline h-4 w-4 mb-1" /> : <ArrowDownRight className="inline h-4 w-4 mb-1" />}
+                      {parseFloat(tickerData.priceChangeAmount) >= 0 ? <ArrowUpRight className="inline h-5 w-5 mb-1" /> : <ArrowDownRight className="inline h-5 w-5 mb-1" />}
                       {tickerData.priceChangeAmount} ({tickerData.priceChangePercent}%)
                     </p>
                   )}
                 </div>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
-                  <div><strong className="text-muted-foreground">Prev. Close:</strong> ${tickerData.previousClose}</div>
-                  <div><strong className="text-muted-foreground">Open:</strong> ${tickerData.openPrice}</div>
-                  <div><strong className="text-muted-foreground">Day's Range:</strong> {tickerData.daysRange}</div>
-                  <div><strong className="text-muted-foreground">52W Range:</strong> {tickerData.fiftyTwoWeekRange}</div>
-                  <div><strong className="text-muted-foreground">Volume:</strong> {tickerData.volume}</div>
-                  <div><strong className="text-muted-foreground">Avg. Volume:</strong> {tickerData.avgVolume}</div>
+                <div className="text-sm text-muted-foreground">
+                  Prev. Close: ${tickerData.previousClose} &nbsp;|&nbsp; Open: ${tickerData.openPrice}
                 </div>
               </div>
 
-              <div className="pb-4 border-b border-border/30">
-                <h4 className="text-md font-semibold text-foreground mb-2">Valuation Metrics</h4>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
-                  <div><strong className="text-muted-foreground">Market Cap:</strong> {tickerData.marketCap}</div>
-                  <div><strong className="text-muted-foreground">P/E Ratio (TTM):</strong> {tickerData.peRatio}</div>
-                  <div><strong className="text-muted-foreground">EPS (TTM):</strong> {tickerData.epsTTM}</div>
-                  <div><strong className="text-muted-foreground">Div. Yield:</strong> {tickerData.dividendYield}</div>
-                  <div><strong className="text-muted-foreground">Beta:</strong> {tickerData.beta}</div>
+              <div className="w-full pt-4 mt-4 border-t border-border/30">
+                 <h4 className="text-md font-semibold text-foreground mb-2 text-center">Valuation Metrics</h4>
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-2 text-xs text-center md:text-left">
+                  <div><strong className="text-muted-foreground block">Market Cap:</strong> {tickerData.marketCap}</div>
+                  <div><strong className="text-muted-foreground block">Day's Range:</strong> {tickerData.daysRange}</div>
+                  <div><strong className="text-muted-foreground block">52W Range:</strong> {tickerData.fiftyTwoWeekRange}</div>
+                  <div><strong className="text-muted-foreground block">Volume:</strong> {tickerData.volume}</div>
+                  <div><strong className="text-muted-foreground block">Avg. Volume:</strong> {tickerData.avgVolume}</div>
+                  <div><strong className="text-muted-foreground block">P/E Ratio (TTM):</strong> {tickerData.peRatio}</div>
+                  <div><strong className="text-muted-foreground block">EPS (TTM):</strong> {tickerData.epsTTM}</div>
+                  <div><strong className="text-muted-foreground block">Div. Yield:</strong> {tickerData.dividendYield}</div>
+                  <div><strong className="text-muted-foreground block">Beta:</strong> {tickerData.beta}</div>
                 </div>
               </div>
 
-              <div className="pb-4 border-b border-border/30">
-                <h4 className="text-md font-semibold text-foreground mb-2">Key Dates</h4>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs">
-                  <div><strong className="text-muted-foreground">Next Earnings:</strong> {tickerData.nextEarningsDate}</div>
-                  <div><strong className="text-muted-foreground">Dividend Date:</strong> {tickerData.dividendDate}</div>
+              <div className="w-full pt-4 mt-4 border-t border-border/30">
+                <h4 className="text-md font-semibold text-foreground mb-2 text-center">Key Dates</h4>
+                <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs text-center md:text-left">
+                  <div><strong className="text-muted-foreground block">Next Earnings:</strong> {tickerData.nextEarningsDate}</div>
+                  <div><strong className="text-muted-foreground block">Dividend Date:</strong> {tickerData.dividendDate}</div>
                 </div>
               </div>
               
-              <div className="pb-4">
-                <h4 className="text-md font-semibold text-foreground mb-2">Price History (1 Year)</h4>
+              <div className="w-full pt-4 mt-4 border-t border-border/30">
+                <h4 className="text-md font-semibold text-foreground mb-2 text-center">Price History (1 Year)</h4>
                 {tickerData.priceHistory && tickerData.priceHistory.length > 0 ? (
-                  <div className="h-[400px] w-full bg-muted/30 rounded-md p-2" data-ai-hint="stock line chart">
+                  <div className="h-[400px] w-full bg-muted/10 rounded-md p-2" data-ai-hint="stock line chart">
                      <TickerPriceChart data={tickerData.priceHistory} />
                   </div>
                 ) : (
-                  <p className="text-xs text-muted-foreground">Price history not available.</p>
+                  <p className="text-xs text-muted-foreground text-center py-4">Price history not available.</p>
                 )}
               </div>
 
-              <div>
-                <h4 className="text-md font-semibold text-foreground mb-2">Recent News</h4>
+              <div className="w-full pt-4 mt-4 border-t border-border/30">
+                <h4 className="text-md font-semibold text-foreground mb-2 text-center">Recent News</h4>
                 {tickerData.recentNews && tickerData.recentNews.length > 0 ? (
                   <ul className="space-y-2 text-xs">
                     {tickerData.recentNews.map((newsItem: any, index: number) => (
@@ -674,7 +671,7 @@ export default function DashboardPage() {
                     ))}
                   </ul>
                 ) : (
-                   <p className="text-xs text-muted-foreground">No recent news available for this ticker.</p>
+                   <p className="text-xs text-muted-foreground text-center py-4">No recent news available for this ticker.</p>
                 )}
               </div>
             </div>
@@ -684,3 +681,6 @@ export default function DashboardPage() {
     </main>
   );
 }
+
+
+    

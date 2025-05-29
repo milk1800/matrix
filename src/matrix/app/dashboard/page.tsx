@@ -392,8 +392,7 @@ export default function DashboardPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1 hidden lg:block"> {/* Spacer */} </div>
-        <PlaceholderCard title="Ticker Lookup Tool" icon={Search} className="lg:col-span-2">
+        <PlaceholderCard title="Ticker Lookup Tool" icon={Search} className="lg:col-span-3">
           <div className="flex space-x-2 mb-4">
             <Input 
               type="text" 
@@ -410,27 +409,37 @@ export default function DashboardPage() {
           {isLoadingTicker && <p className="text-sm text-muted-foreground text-center">Fetching data...</p>}
           {tickerData && !isLoadingTicker && (
             <div className="mt-4 space-y-3 text-sm">
-              <div className="flex items-center space-x-3 mb-3">
+              {/* Ticker Result Section */}
+              <div className="w-full space-y-3"> {/* Full width container */}
+                {/* Company Info (Logo & Name) - Centered/Justified */}
+                <div className="flex flex-col items-center justify-center space-y-2 mb-3">
                 <img src={tickerData.logo} alt={`${tickerData.name} logo`} className="w-10 h-10 rounded-md bg-muted p-1" data-ai-hint="company logo" />
                 <h4 className="text-lg font-semibold text-foreground">{tickerData.name}</h4>
               </div>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                <div><strong className="text-muted-foreground">Market Cap:</strong> {tickerData.marketCap}</div>
-                <div><strong className="text-muted-foreground">P/E Ratio:</strong> {tickerData.peRatio}</div>
-                <div><strong className="text-muted-foreground">Dividend Yield:</strong> {tickerData.dividendYield}</div>
-                <div><strong className="text-muted-foreground">52W High:</strong> {tickerData.fiftyTwoWeekHigh}</div>
-                <div><strong className="text-muted-foreground">52W Low:</strong> {tickerData.fiftyTwoWeekLow}</div>
+
+                {/* Key Metrics - Centered/Justified, Responsive */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-4 gap-y-2 text-center">
+                  <div><strong className="text-muted-foreground block">Market Cap:</strong> {tickerData.marketCap}</div>
+                  <div><strong className="text-muted-foreground block">P/E Ratio:</strong> {tickerData.peRatio}</div>
+                  <div><strong className="text-muted-foreground block">Dividend Yield:</strong> {tickerData.dividendYield}</div>
+                  <div><strong className="text-muted-foreground block">52W High:</strong> {tickerData.fiftyTwoWeekHigh}</div>
+                  <div><strong className="text-muted-foreground block">52W Low:</strong> {tickerData.fiftyTwoWeekLow}</div>
+                </div>
+
+                {/* Performance - Centered/Justified */}
+                <div className="pt-3 border-t border-border/30 text-center">
+                    <strong className="text-muted-foreground block mb-1">Performance:</strong>
+                    <div className="space-y-1">
+                        <span>YTD: <span className={cn(tickerData.ytdReturn.startsWith('+') ? "text-green-400" : "text-red-400")}>{tickerData.ytdReturn}</span></span>
+                        <br/> {/* Add line break for stacking on smaller screens */}
+                        <span>1Y: <span className={cn(tickerData.oneYearReturn.startsWith('+') ? "text-green-400" : "text-red-400")}>{tickerData.oneYearReturn}</span></span>
+                    </div>
+                </div>
               </div>
-              <div className="pt-3 border-t border-border/30">
-                  <strong className="text-muted-foreground block mb-1">Performance:</strong>
-                  <div className="flex justify-between"><span>YTD: <span className={cn(tickerData.ytdReturn.startsWith('+') ? "text-green-400" : "text-red-400")}>{tickerData.ytdReturn}</span></span></div>
-                  <div className="flex justify-between"><span>1Y: <span className={cn(tickerData.oneYearReturn.startsWith('+') ? "text-green-400" : "text-red-400")}>{tickerData.oneYearReturn}</span></span></div>
-              </div>
+
             </div>
           )}
         </PlaceholderCard>
       </div>
     </main>
   );
-}
-
