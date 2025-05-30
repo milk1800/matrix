@@ -50,7 +50,7 @@ import {
   Strikethrough,
 } from "lucide-react";
 
-const ReactQuill = dynamic(() => import('react-quill'), { 
+const ReactQuill = dynamic(() => import('react-quill').then(mod => mod.default || mod), { 
   ssr: false,
   loading: () => <p className="text-muted-foreground p-3 min-h-[calc(120px+theme(spacing.8))]">Loading editor...</p> 
 });
@@ -64,22 +64,27 @@ export default function ClientPortalHomePage() {
     setIsClient(true);
   }, []);
 
-  const quillModules = {
-    toolbar: [
-      [{ 'header': [1, 2, 3, false] }],
-      ['bold', 'italic', 'underline', 'strike'],
-      [{'list': 'ordered'}, {'list': 'bullet'}],
-      ['link', 'image'], 
-      ['clean']
-    ],
-  };
+  // Diagnostic step: Use empty modules and formats
+  const quillModules = {};
+  const quillFormats: string[] = [];
 
-  const quillFormats = [
-    'header',
-    'bold', 'italic', 'underline', 'strike',
-    'list', 'bullet',
-    'link', 'image'
-  ];
+  // Original modules and formats (commented out for diagnosis)
+  // const quillModules = {
+  //   toolbar: [
+  //     [{ 'header': [1, 2, 3, false] }],
+  //     ['bold', 'italic', 'underline', 'strike'],
+  //     [{'list': 'ordered'}, {'list': 'bullet'}],
+  //     ['link', 'image'], 
+  //     ['clean']
+  //   ],
+  // };
+
+  // const quillFormats = [
+  //   'header',
+  //   'bold', 'italic', 'underline', 'strike',
+  //   'list', 'bullet',
+  //   'link', 'image'
+  // ];
 
 
   return (
