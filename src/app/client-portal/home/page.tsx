@@ -4,6 +4,7 @@
 import * as React from 'react';
 import dynamic from 'next/dynamic';
 import 'react-quill/dist/quill.snow.css'; // Import Quill styles
+import type ReactQuillDefault from 'react-quill'; // Import type for ReactQuill
 import { PlaceholderCard } from '@/components/dashboard/placeholder-card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -57,7 +58,7 @@ const ReactQuill = dynamic(() => import('react-quill'), {
 export default function ClientPortalHomePage() {
   const [isClient, setIsClient] = React.useState(false);
   const [updatePostText, setUpdatePostText] = React.useState("");
-  const quillRef = React.useRef<any>(null); // Using 'any' for now, or InstanceType<typeof ReactQuill> if ReactQuill type is precisely known and exported
+  const quillRef = React.useRef<ReactQuillDefault>(null);
 
   React.useEffect(() => {
     setIsClient(true);
@@ -489,4 +490,5 @@ export default function ClientPortalHomePage() {
 }
 
     
+
 
