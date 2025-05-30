@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from '@/lib/utils';
-import { format, subYears, formatDistanceToNowStrict, parseISO, startOfMonth, isSameDay, isValid, addMonths, isToday } from 'date-fns';
+import { format, subYears, formatDistanceToNowStrict, parseISO, startOfYear, isSameDay, isValid, addMonths, isToday, startOfMonth } from 'date-fns';
 import { TickerPriceChart, type PriceHistoryPoint } from '@/components/charts/TickerPriceChart';
 import { Calendar } from "@/components/ui/calendar";
 import type { DayContentProps, DayPicker } from "react-day-picker";
@@ -83,6 +83,23 @@ interface FetchedIndexData {
   o?: number; 
   error?: string;
   loading?: boolean;
+}
+
+interface TickerCompanyDetails {
+  name?: string;
+  ticker?: string;
+  primary_exchange?: string;
+  sic_description?: string; 
+  branding?: { logo_url?: string };
+  market_cap?: number;
+}
+
+interface TickerPrevDayData {
+  c?: number; // close
+  o?: number; // open
+  l?: number; // low
+  h?: number; // high
+  v?: number; // volume
 }
 
 export interface TickerFullData {
@@ -309,7 +326,7 @@ export default function DashboardPage() {
     try {
       const toDate = format(addMonths(new Date(), 3), 'yyyy-MM-dd'); 
       const fromDate = format(new Date(), 'yyyy-MM-dd');
-      const data = await fetchPolygonData('/v3/reference/ipos', { from: fromDate, to: toDate, limit: '50' });
+      const data = await fetchPolygonData('/v3/reference/ipos', { 'expected_pricing_date.gte': fromDate, 'expected_pricing_date.lte': toDate, limit: '50' });
       if (data.error) {
         console.error("Error in fetchIPOs:", data.error);
         setIpoEvents([]);
@@ -542,7 +559,7 @@ export default function DashboardPage() {
 
     loadMarketData();
     fetchNewsData();
-  }, [fetchNewsData]); // Added fetchNewsData to dependency array
+  }, [fetchNewsData]);
 
   const calculateChangePercent = (currentPrice?: number, openPrice?: number) => {
     if (typeof currentPrice !== 'number' || typeof openPrice !== 'number' || openPrice === 0 || isNaN(currentPrice) || isNaN(openPrice)) {
@@ -568,17 +585,29 @@ export default function DashboardPage() {
             return isValid(pointDate) && isSameDay(pointDate, lastTradingDay);
          });
       case '1W':
-        startDate = subYears(today, 1); // Default to 1 year for weekly to have enough data points
+        startDate = subYears(today, 1); 
         const oneWeekAgo = subYears(new Date(),1); oneWeekAgo.setDate(oneWeekAgo.getDate() -7);
-        return fullHistory.filter(point => parseISO(point.date) >= oneWeekAgo);
+        return fullHistory.filter(point => {
+            if(!point.date) return false;
+            const pointDate = parseISO(point.date);
+            return isValid(pointDate) && pointDate >= oneWeekAgo;
+        });
       case '1M':
-        startDate = subYears(today, 1); // Default to 1 year
+        startDate = subYears(today, 1); 
         const oneMonthAgo = subYears(new Date(),1); oneMonthAgo.setMonth(oneMonthAgo.getMonth() -1);
-        return fullHistory.filter(point => parseISO(point.date) >= oneMonthAgo);
+        return fullHistory.filter(point => {
+           if(!point.date) return false;
+           const pointDate = parseISO(point.date);
+           return isValid(pointDate) && pointDate >= oneMonthAgo;
+        });
       case '3M':
-        startDate = subYears(today, 1); // Default to 1 year
+        startDate = subYears(today, 1); 
         const threeMonthsAgo = subYears(new Date(),1); threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() -3);
-        return fullHistory.filter(point => parseISO(point.date) >= threeMonthsAgo);
+        return fullHistory.filter(point => {
+            if(!point.date) return false;
+            const pointDate = parseISO(point.date);
+            return isValid(pointDate) && pointDate >= threeMonthsAgo;
+        });
       case 'YTD':
         startDate = startOfYear(today);
         break;
@@ -923,7 +952,7 @@ export default function DashboardPage() {
       </PlaceholderCard>
 
       <PlaceholderCard title="Upcoming Market & Company Events" icon={CalendarDays} className="lg:col-span-3 mt-8">
-        <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-6 items-start min-h-[400px]"> {/* Added min-height */}
+        <div className="grid grid-cols-1 md:grid-cols-[1fr_auto] gap-6 items-start min-h-[400px]"> 
           <div>
             <Calendar
               mode="single"
@@ -932,10 +961,10 @@ export default function DashboardPage() {
               month={calendarMonth}
               onMonthChange={setCalendarMonth}
               onDayClick={handleEventDayClick}
-              className="rounded-md border border-border/30 bg-card/50 p-0 w-full" // Made calendar width full of its container
+              className="rounded-md border border-border/30 bg-card/50 p-0 w-full" 
               classNames={{
                 caption_label: "text-lg",
-                head_cell: "text-muted-foreground w-full sm:w-10", // Responsive head cell width
+                head_cell: "text-muted-foreground w-full sm:w-10", 
                 cell: "h-10 w-full sm:w-10 text-center text-sm p-0 relative first:[&:has([aria-selected])]:rounded-l-md last:[&:has([aria-selected])]:rounded-r-md focus-within:relative focus-within:z-20",
                 day: "h-10 w-full sm:w-10 p-0 font-normal aria-selected:opacity-100 hover:bg-accent/50 rounded-md",
                 day_selected: "bg-primary text-primary-foreground hover:bg-primary hover:text-primary-foreground focus:bg-primary focus:text-primary-foreground rounded-md",
@@ -946,7 +975,7 @@ export default function DashboardPage() {
               components={{ DayContent: CustomDayContent }}
             />
           </div>
-          <div className="mt-4 md:mt-0 md:w-80 lg:w-96"> {/* Fixed width for event list on larger screens */}
+          <div className="mt-4 md:mt-0 md:w-80 lg:w-96"> 
             <h4 className="font-semibold text-foreground mb-3">
               Events for {selectedEventDate ? format(selectedEventDate, "MMMM d, yyyy") : "selected date"}:
             </h4>
@@ -983,5 +1012,7 @@ export default function DashboardPage() {
     </main>
   );
 }
+
+
 
     
