@@ -3,8 +3,8 @@
 
 import * as React from 'react';
 import dynamic from 'next/dynamic';
-import 'react-quill/dist/quill.snow.css'; // Import Quill styles
-import type ReactQuillDefault from 'react-quill'; // Import type for ReactQuill
+// import 'react-quill/dist/quill.snow.css'; // No longer needed for Textarea
+// import type ReactQuillType from 'react-quill'; // No longer needed
 import { PlaceholderCard } from '@/components/dashboard/placeholder-card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from '@/components/ui/checkbox';
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Textarea } from '@/components/ui/textarea';
+import { Textarea } from '@/components/ui/textarea'; // Use existing Textarea
 
 import {
   MessageSquare,
@@ -42,49 +42,32 @@ import {
   Bold,
   Italic,
   Underline,
-  Link2, 
-  Table as TableIcon, 
-  Smile, 
+  Link2,
+  Table as TableIcon,
+  Smile,
   Mic,
   ListOrdered,
   Strikethrough,
 } from "lucide-react";
 
-const ReactQuill = dynamic(() => import('react-quill').then(mod => mod.default || mod), { 
-  ssr: false,
-  loading: () => <p className="text-muted-foreground p-3 min-h-[calc(120px+theme(spacing.8))]">Loading editor...</p> 
-});
+// ReactQuill is no longer used due to runtime errors
+// const ReactQuill = dynamic(() => import('react-quill').then(mod => mod.default || mod), {
+//   ssr: false,
+//   loading: () => <p className="text-muted-foreground p-3 min-h-[calc(120px+theme(spacing.8))]">Loading editor...</p>
+// });
 
 export default function ClientPortalHomePage() {
   const [isClient, setIsClient] = React.useState(false);
   const [updatePostText, setUpdatePostText] = React.useState("");
-  const quillRef = React.useRef<ReactQuillDefault>(null);
+  // const quillRef = React.useRef<ReactQuillType>(null); // No longer needed
 
   React.useEffect(() => {
     setIsClient(true);
   }, []);
 
-  // Diagnostic step: Use empty modules and formats
-  const quillModules = {};
-  const quillFormats: string[] = [];
-
-  // Original modules and formats (commented out for diagnosis)
-  // const quillModules = {
-  //   toolbar: [
-  //     [{ 'header': [1, 2, 3, false] }],
-  //     ['bold', 'italic', 'underline', 'strike'],
-  //     [{'list': 'ordered'}, {'list': 'bullet'}],
-  //     ['link', 'image'], 
-  //     ['clean']
-  //   ],
-  // };
-
-  // const quillFormats = [
-  //   'header',
-  //   'bold', 'italic', 'underline', 'strike',
-  //   'list', 'bullet',
-  //   'link', 'image'
-  // ];
+  // Quill modules and formats are no longer needed
+  // const quillModules = {};
+  // const quillFormats: string[] = [];
 
 
   return (
@@ -123,22 +106,21 @@ export default function ClientPortalHomePage() {
                     </Avatar>
                   </div>
                   <div className="flex-1 space-y-4">
-                    {isClient ? ( 
-                        <ReactQuill
-                        ref={quillRef}
-                        theme="snow"
-                        value={updatePostText}
-                        onChange={setUpdatePostText}
-                        modules={quillModules}
-                        formats={quillFormats}
-                        placeholder="Share an update..."
-                        className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary rounded-md [&_.ql-editor]:min-h-[120px]"
+                    {isClient ? (
+                        <Textarea
+                          value={updatePostText}
+                          onChange={(e) => setUpdatePostText(e.target.value)}
+                          placeholder="Share an update... (Rich text editor temporarily unavailable)"
+                          className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary rounded-md min-h-[160px]"
+                          rows={6}
                         />
                     ) : (
-                      <p className="text-muted-foreground p-3 min-h-[calc(120px+theme(spacing.8))]">Loading editor...</p> 
+                      <div className="bg-input border-border/50 rounded-md min-h-[160px] flex items-center justify-center">
+                        <p className="text-muted-foreground p-3">Loading editor...</p>
+                      </div>
                     )}
                     <div className="flex items-center justify-end">
-                      <Button onClick={() => console.log("Post content (HTML):", updatePostText)} className="bg-primary hover:bg-primary/90 text-primary-foreground px-6">Post</Button>
+                      <Button onClick={() => console.log("Post content (Text):", updatePostText)} className="bg-primary hover:bg-primary/90 text-primary-foreground px-6">Post</Button>
                     </div>
                     <div>
                       <Input
@@ -495,5 +477,3 @@ export default function ClientPortalHomePage() {
 }
 
     
-
-
