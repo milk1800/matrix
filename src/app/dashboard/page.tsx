@@ -30,7 +30,7 @@ import {
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from '@/lib/utils';
-import { format, subYears, formatDistanceToNowStrict, parseISO, startOfYear, isSameDay, isValid, addMonths, startOfMonth, isToday } from 'date-fns';
+import { format, subYears, formatDistanceToNowStrict, parseISO, startOfYear, isSameDay, isValid, addMonths, startOfMonth, isToday as dateFnsIsToday } from 'date-fns';
 import { TickerPriceChart, type PriceHistoryPoint } from '@/components/charts/TickerPriceChart';
 import { Calendar } from "@/components/ui/calendar";
 import type { DayContentProps } from "react-day-picker"; 
@@ -179,65 +179,77 @@ const timeRangeLabels: { [key: string]: string } = {
   '1Y': 'Past year'
 };
 
-// Function to fetch index data for Market Overview
+const mockStaticNewsData = [
+  {
+    id: 'news1',
+    title: "Tech Stocks Continue Upward Trend",
+    description: "Major technology companies reported strong earnings, leading to a sector-wide rally.",
+    publisher: { name: "Market Watchers Daily" },
+    article_url: "#",
+    published_utc: subYears(new Date(), 0).toISOString(), // Example: Today
+    sentiment: "positive",
+  },
+  {
+    id: 'news2',
+    title: "Federal Reserve Signals Steady Interest Rates",
+    description: "The central bank indicated no immediate changes to interest rates, citing stable economic indicators.",
+    publisher: { name: "Economic Times" },
+    article_url: "#",
+    published_utc: subYears(new Date(), 0).toISOString(),
+    sentiment: "neutral",
+  },
+  {
+    id: 'news3',
+    title: "Oil Prices Dip on Increased Supply News",
+    description: "Unexpected announcements of increased global oil production led to a slight decrease in crude oil prices.",
+    publisher: { name: "Global Energy Report" },
+    article_url: "#",
+    published_utc: subYears(new Date(), 0).toISOString(),
+    sentiment: "negative",
+  },
+  {
+    id: 'news4',
+    title: "Retail Sector Shows Mixed Results",
+    description: "Some retailers exceed expectations while others struggle, painting a complex picture of consumer spending.",
+    publisher: { name: "Commerce Today" },
+    article_url: "#",
+    published_utc: subYears(new Date(), 0).toISOString(),
+    sentiment: "neutral",
+  },
+  {
+    id: 'news5',
+    title: "Green Energy Investments Surge",
+    description: "Significant capital flows into renewable energy projects highlight growing investor interest in sustainability.",
+    publisher: { name: "Future Finance News" },
+    article_url: "#",
+    published_utc: subYears(new Date(), 0).toISOString(),
+    sentiment: "positive",
+  },
+];
+
+const mockStaticEvents: CombinedEvent[] = [
+    { id: 'ipo-mock1', date: format(addMonths(new Date(), 1), 'yyyy-MM-dd'), type: 'IPO', title: 'FutureTech Inc. IPO', icon: Briefcase, color: 'bg-blue-500' },
+    { id: 'div-mock-aapl', date: format(addMonths(new Date(), 0), 'yyyy-MM-dd'), type: 'Dividend', title: 'AAPL Ex-Div: $0.25', icon: DividendIcon, color: 'bg-green-500' },
+    { id: 'hol-mock1', date: format(addMonths(new Date(), 2), 'yyyy-MM-dd'), type: 'Holiday', title: 'Market Holiday: Independence Day', icon: CalendarOff, color: 'bg-red-500' },
+];
+
+
+// Function to fetch index data for Market Overview - NOW STATIC
 const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
-  const apiKey = process.env.NEXT_PUBLIC_POLYGON_API_KEY;
-  // console.log(`[Polygon API] Attempting to use API key for Market Overview ${symbol}: ${apiKey ? '******' + apiKey.slice(-4) : 'UNDEFINED'}`);
+  // Simulate API call delay
+  await new Promise(resolve => setTimeout(resolve, 100 + Math.random() * 200));
+  
+  const staticData: Record<string, {c: number, o: number}> = {
+    'AAPL': { c: 195.16, o: 194.50 },
+    'MSFT': { c: 420.72, o: 418.50 },
+    'GOOGL': { c: 175.60, o: 176.00 },
+    'TSLA': { c: 180.01, o: 182.50 },
+  };
 
-  if (!apiKey || apiKey.startsWith("YOUR_") || apiKey.includes("PLACEHOLDER") || apiKey.length < 20) {
-    const errorMsg = `[Polygon API Error] Invalid or placeholder API Key for ${symbol}. Configure NEXT_PUBLIC_POLYGON_API_KEY in .env.local & restart server.`;
-    console.error(errorMsg);
-    return { error: errorMsg };
+  if (staticData[symbol]) {
+    return { ...staticData[symbol], loading: false };
   }
-
-  try {
-    const response = await fetch(`https://api.polygon.io/v2/aggs/ticker/${symbol}/prev?adjusted=true&apiKey=${apiKey}`);
-    let errorMessage = `API Error: ${response.status}`;
-
-    if (!response.ok) {
-      try {
-        const errorData = await response.json();
-        // console.log(`[Polygon API Error] Full error response for ${symbol}:`, errorData); 
-        if (errorData && Object.keys(errorData).length === 0 && errorData.constructor === Object) {
-          //  console.warn(`[Polygon API Warn] Polygon returned an empty error object for ${symbol} with status ${response.status}.`);
-           errorMessage += ` - Polygon returned an empty error response. Check API key, permissions, or endpoint validity.`;
-        } else if (errorData && errorData.message) {
-          errorMessage = `API Error: ${response.status} - ${errorData.message}`;
-        } else if (errorData && errorData.error) {
-          errorMessage = `API Error: ${response.status} - ${errorData.error}`;
-        } else if (errorData && errorData.request_id) {
-           errorMessage = `API Error: ${response.status} (Request ID: ${errorData.request_id}) - Often indicates an issue with the key or subscription.`;
-        } else if (response.status === 429) {
-          errorMessage = `API Error: 429 - You've exceeded the maximum requests per minute for ${symbol}, please wait or upgrade your subscription. https://polygon.io/pricing`;
-        } else {
-            const responseText = await response.text().catch(() => "Failed to read error response text.");
-            const snippet = responseText.substring(0, 200) + (responseText.length > 200 ? '...' : '');
-            // console.warn(`[Polygon API Warn] Could not parse JSON error for ${symbol}, but got text. Status: ${response.status}. Snippet:`, snippet);
-            errorMessage += ` - ${response.statusText || 'Failed to parse error response.'} Raw text snippet: ${snippet.substring(0,50)}...`;
-        }
-        
-        if (response.status === 401) { 
-            errorMessage = `API Error: 401 - Unknown API Key. Please verify your Polygon.io API key and plan for ${symbol}.`;
-        }
-      } catch (e) { 
-          // console.warn(`[Polygon API Warn] Failed to parse JSON error response for ${symbol}. Status: ${response.status}. Error:`, e);
-          errorMessage += ` - ${response.statusText || 'Failed to parse error JSON body.'}`;
-      }
-      console.error(`Error fetching ${symbol}: ${errorMessage}`);
-      return { error: errorMessage };
-    }
-    const data = await response.json();
-    if (data.results && data.results.length > 0) {
-      const { c, o } = data.results[0];
-      return { c, o, loading: false };
-    }
-    // console.warn(`[Polygon API Warn] No data results found for ${symbol} in Polygon response.`);
-    return { error: `No data results from Polygon for ${symbol}`, loading: false };
-  } catch (error: any) {
-    const networkErrorMsg = `Network/Fetch error for ${symbol}: ${error.message || 'Unknown network error'}`;
-    console.error(`[Polygon API Error] ${networkErrorMsg}`);
-    return { error: networkErrorMsg, loading: false };
-  }
+  return { error: `No static data for ${symbol}`, loading: false };
 };
 
 
@@ -250,8 +262,8 @@ export default function DashboardPage() {
   const [marketStatuses, setMarketStatuses] = React.useState<Record<string, MarketStatusInfo>>({});
   const [currentTimeEST, setCurrentTimeEST] = React.useState<string>('Loading...');
   
-  const [newsData, setNewsData] = React.useState<any[]>([]);
-  const [isLoadingNews, setIsLoadingNews] = React.useState(true);
+  const [newsData, setNewsData] = React.useState<any[]>(mockStaticNewsData); // Use static news
+  const [isLoadingNews, setIsLoadingNews] = React.useState(false); // No longer loading from API
   const [newsError, setNewsError] = React.useState<string | null>(null);
 
   const [selectedRange, setSelectedRange] = React.useState<string>('1Y');
@@ -269,130 +281,78 @@ export default function DashboardPage() {
   const [eventsForSelectedDay, setEventsForSelectedDay] = React.useState<CombinedEvent[]>([]);
   const [isLoadingEvents, setIsLoadingEvents] = React.useState({ ipos: false, holidays: false, dividends: false });
 
+
+  // This function is no longer making actual API calls for this page's purpose
   const fetchPolygonData = React.useCallback(async (endpoint: string, params: Record<string, string> = {}): Promise<any> => {
-    const apiKey = process.env.NEXT_PUBLIC_POLYGON_API_KEY;
-    // console.log(`[Polygon Events API] Attempting to use API key for ${endpoint}: ${apiKey ? '******' + apiKey.slice(-4) : 'UNDEFINED'}`);
+    console.log(`[STATIC MODE] Mock fetchPolygonData called for ${endpoint} with params:`, params);
+    // Simulate a small delay
+    await new Promise(resolve => setTimeout(resolve, 50));
 
-    if (!apiKey || apiKey.startsWith("YOUR_") || apiKey.includes("PLACEHOLDER") || apiKey.length < 20) {
-      const errorMsg = `[Polygon Events API] Invalid or placeholder API Key (NEXT_PUBLIC_POLYGON_API_KEY). Please configure it. Endpoint: ${endpoint}.`;
-      console.error(errorMsg);
-      return { error: errorMsg, results: [] }; 
+    if (endpoint.includes('/v3/reference/ipos')) {
+      return { results: [{ name: 'Mock IPO Inc.', expected_pricing_date: format(addMonths(new Date(), 1), 'yyyy-MM-dd') }] };
     }
-
-    const queryString = new URLSearchParams(params).toString();
-    const url = `https://api.polygon.io${endpoint}?apiKey=${apiKey}${queryString ? `&${queryString}` : ''}`;
-    
-    try {
-      const response = await fetch(url);
-      if (!response.ok) {
-        let errorMsg = `Failed to fetch ${endpoint}. Status: ${response.status}`;
-        try {
-          const errorData = await response.json();
-          // console.log(`[Polygon API Error - Events] Full error response for ${endpoint}:`, errorData); 
-          if (errorData && Object.keys(errorData).length === 0 && errorData.constructor === Object) {
-            //  console.warn(`[Polygon API Warn - Events] Polygon returned an empty error object for ${endpoint} with status ${response.status}.`);
-             errorMsg += ` - Polygon returned an empty error response.`;
-          } else if (errorData && errorData.message) {
-            errorMsg += ` - ${errorData.message}`;
-          } else if (errorData && errorData.error) {
-            errorMsg += ` - ${errorData.error}`;
-          } else if (errorData && errorData.request_id) {
-             errorMsg += ` (Request ID: ${errorData.request_id})`;
-          } else if (response.status === 429) {
-            errorMsg = `API Error: 429 - Rate limit exceeded for ${endpoint}. Please wait or upgrade your subscription.`;
-          } else {
-            const responseText = await response.text().catch(() => "Failed to read error response text.");
-            const snippet = responseText.substring(0, 200) + (responseText.length > 200 ? '...' : '');
-            // console.warn(`[Polygon API Warn - Events] Could not parse JSON error for ${endpoint}, but got text. Status: ${response.status}. Snippet:`, snippet);
-            errorMsg += ` - ${response.statusText || 'Failed to parse error response.'} Raw text snippet: ${snippet.substring(0,50)}...`;
-          }
-        } catch (e) { 
-            // console.warn(`[Polygon API Warn - Events] Failed to parse JSON error response for ${endpoint}. Status: ${response.status}. Error:`, e);
-            errorMsg += ` - ${response.statusText || 'Failed to parse error JSON body.'}`; 
+    if (endpoint.includes('/v1/marketstatus/upcoming')) {
+      return [{ exchange: 'NASDAQ', name: 'Mock Market Holiday', date: format(addMonths(new Date(), 2), 'yyyy-MM-dd'), status: 'closed' }];
+    }
+    if (endpoint.includes('/v3/reference/dividends') && params.ticker) {
+      return { results: [{ ticker: params.ticker, ex_dividend_date: format(new Date(), 'yyyy-MM-dd'), cash_amount: 0.25 }] };
+    }
+    if (endpoint.includes('/v2/reference/news')) {
+        return { results: mockStaticNewsData.slice(0,5) };
+    }
+    if (endpoint.includes('/v3/reference/tickers/')) { // For ticker details
+        const ticker = endpoint.split('/').pop() || "MOCK";
+        return { 
+            results: { 
+                name: `${ticker} Company (Static)`, 
+                ticker: ticker, 
+                primary_exchange: 'STATICX', 
+                sic_description: 'Static Industry',
+                branding: { logo_url: '' },
+                market_cap: Math.random() * 1e12,
+            }
+        };
+    }
+    if (endpoint.includes('/v2/aggs/ticker/') && endpoint.includes('/prev')) { // For prev day
+        return { results: [{ c: 100 + Math.random()*10, o: 98 + Math.random()*10, l: 95 + Math.random()*5, h: 102 + Math.random()*5, v: 1000000 + Math.random()*500000 }] };
+    }
+    if (endpoint.includes('/v2/aggs/ticker/') && endpoint.includes('/range/')) { // For history
+        const history: PriceHistoryPoint[] = [];
+        let currentDate = subYears(new Date(), 1);
+        for(let i=0; i<252; i++){ // ~1 year of trading days
+            history.push({ date: format(currentDate, 'yyyy-MM-dd'), close: 100 + Math.sin(i/20) * 10 + Math.random()*5 });
+            currentDate.setDate(currentDate.getDate() + 1);
         }
-        console.error(errorMsg); 
-        return { error: errorMsg, results: [] };
-      }
-      return response.json();
-    } catch (error: any) {
-        const networkErrorMsg = `Network/Fetch error for ${endpoint}: ${error.message || 'Unknown network error'}`;
-        console.error(`[Polygon Events API Error] ${networkErrorMsg}`);
-        return { error: networkErrorMsg, results: [] };
+        return { results: history.map(p => ({ t: parseISO(p.date).getTime(), c: p.close})) };
     }
+
+    return { results: [], error: `Static mode: No mock data for ${endpoint}` };
   }, []);
 
 
   const fetchIPOs = React.useCallback(async () => {
     setIsLoadingEvents(prev => ({ ...prev, ipos: true }));
     setIpoError(null);
-    try {
-      const toDate = format(addMonths(new Date(), 3), 'yyyy-MM-dd'); 
-      const fromDate = format(new Date(), 'yyyy-MM-dd');
-      const data = await fetchPolygonData('/v3/reference/ipos', { 'expected_pricing_date.gte': fromDate, 'expected_pricing_date.lte': toDate, limit: '50' });
-      if (data.error) {
-        // console.error("Error in fetchIPOs:", data.error); // Already logged by fetchPolygonData
-        setIpoEvents([]);
-        setIpoError(data.error);
-      } else {
-        setIpoEvents(data.results || []);
-      }
-    } catch (error: any) { 
-      const msg = error.message || "Unknown error fetching IPOs";
-      console.error("Failed to fetch IPOs (catch block):", msg);
-      setIpoEvents([]);
-      setIpoError(msg);
-    } finally {
-      setIsLoadingEvents(prev => ({ ...prev, ipos: false }));
-    }
+    const data = await fetchPolygonData('/v3/reference/ipos'); // Will use static mock
+    if (data.error) setIpoError(data.error); else setIpoEvents(data.results || []);
+    setIsLoadingEvents(prev => ({ ...prev, ipos: false }));
   }, [fetchPolygonData]);
 
   const fetchMarketHolidays = React.useCallback(async () => {
     setIsLoadingEvents(prev => ({ ...prev, holidays: true }));
     setHolidayError(null);
-    try {
-      const data = await fetchPolygonData('/v1/marketstatus/upcoming');
-      if (data.error) {
-        // console.error("Error in fetchMarketHolidays:", data.error); // Already logged
-        setMarketHolidays([]);
-        setHolidayError(data.error);
-      } else {
-        setMarketHolidays(data || []); 
-      }
-    } catch (error: any) {
-      const msg = error.message || "Unknown error fetching market holidays";
-      console.error("Failed to fetch market holidays (catch block):", msg);
-      setMarketHolidays([]);
-      setHolidayError(msg);
-    } finally {
-      setIsLoadingEvents(prev => ({ ...prev, holidays: false }));
-    }
+    const data = await fetchPolygonData('/v1/marketstatus/upcoming'); // Will use static mock
+    if (data.error) setHolidayError(data.error); else setMarketHolidays(data || []);
+    setIsLoadingEvents(prev => ({ ...prev, holidays: false }));
   }, [fetchPolygonData]);
 
   const fetchDividends = React.useCallback(async (ticker: string) => {
-    if (!ticker) {
-      setDividendEvents([]);
-      setDividendError(null);
-      return;
-    }
+    if (!ticker) { setDividendEvents([]); setDividendError(null); return; }
     setIsLoadingEvents(prev => ({ ...prev, dividends: true }));
     setDividendError(null);
-    try {
-      const data = await fetchPolygonData(`/v3/reference/dividends`, { ticker: ticker, limit: '50', order: 'desc' });
-      if (data.error) {
-        // console.error(`Error in fetchDividends for ${ticker}:`, data.error); // Already logged
-        setDividendEvents([]);
-        setDividendError(data.error);
-      } else {
-        setDividendEvents(data.results || []);
-      }
-    } catch (error: any) { 
-      const msg = error.message || `Unknown error fetching dividends for ${ticker}`;
-      console.error(`Failed to fetch dividends for ${ticker} (catch block):`, msg);
-      setDividendEvents([]); 
-      setDividendError(msg);
-    } finally {
-      setIsLoadingEvents(prev => ({ ...prev, dividends: false }));
-    }
+    const data = await fetchPolygonData('/v3/reference/dividends', { ticker }); // Will use static mock
+    if (data.error) setDividendError(data.error); else setDividendEvents(data.results || []);
+    setIsLoadingEvents(prev => ({ ...prev, dividends: false }));
   }, [fetchPolygonData]);
 
   React.useEffect(() => {
@@ -410,55 +370,9 @@ export default function DashboardPage() {
   }, [tickerData?.symbol, fetchDividends]);
 
   const allEventsForCalendar = React.useMemo((): CombinedEvent[] => {
-    const combined: CombinedEvent[] = [];
-    ipoEvents.forEach(ipo => {
-      if (ipo.expected_pricing_date) {
-        combined.push({
-          id: `ipo-${ipo.name}-${ipo.expected_pricing_date}`,
-          date: ipo.expected_pricing_date,
-          type: 'IPO',
-          title: ipo.name || 'Unnamed IPO',
-          icon: Briefcase,
-          color: 'bg-blue-500',
-        });
-      }
-    });
-    dividendEvents.forEach(div => {
-      if (div.ex_dividend_date) {
-        combined.push({
-          id: `div-${div.ticker}-${div.ex_dividend_date}`,
-          date: div.ex_dividend_date,
-          type: 'Dividend',
-          title: `${div.ticker} Ex-Div: $${div.cash_amount?.toFixed(2) || 'N/A'}`,
-          icon: DividendIcon,
-          color: 'bg-green-500',
-        });
-      }
-      if (div.pay_date && div.pay_date !== div.ex_dividend_date) {
-         combined.push({
-          id: `pay-${div.ticker}-${div.pay_date}`,
-          date: div.pay_date,
-          type: 'Dividend',
-          title: `${div.ticker} Pay Date: $${div.cash_amount?.toFixed(2) || 'N/A'}`,
-          icon: DividendIcon,
-          color: 'bg-emerald-500', 
-        });
-      }
-    });
-    marketHolidays.forEach(hol => {
-      if (hol.date && hol.status === 'closed') {
-        combined.push({
-          id: `hol-${hol.name}-${hol.date}`,
-          date: hol.date,
-          type: 'Holiday',
-          title: hol.name || 'Market Holiday',
-          icon: CalendarOff,
-          color: 'bg-red-500',
-        });
-      }
-    });
-    return combined;
-  }, [ipoEvents, dividendEvents, marketHolidays]);
+    // Use mockStaticEvents directly, or combine with any fetched static events if needed
+    return mockStaticEvents;
+  }, []); // Removed dependencies as we are using direct mock data
 
   const handleEventDayClick = (day: Date) => {
     setSelectedEventDate(day);
@@ -467,7 +381,6 @@ export default function DashboardPage() {
         const eventDate = parseISO(event.date);
         return isValid(eventDate) && isSameDay(eventDate, day);
       } catch (e) {
-        // console.warn("Invalid date encountered in event data:", event.date, e);
         return false;
       }
     });
@@ -489,7 +402,7 @@ export default function DashboardPage() {
 
     return (
       <div className="relative h-full w-full flex flex-col items-center justify-start">
-        <span className={cn(isToday(props.date) && "font-bold text-primary")}>{format(props.date, "d")}</span>
+        <span className={cn(dateFnsIsToday(props.date) && "font-bold text-primary")}>{format(props.date, "d")}</span>
         {dayEvents.length > 0 && (
           <div className="flex space-x-0.5 mt-0.5 justify-center absolute bottom-1">
             {dayEvents.slice(0, 3).map(event => ( 
@@ -503,31 +416,16 @@ export default function DashboardPage() {
 
 
  const fetchNewsData = React.useCallback(async () => {
-    setIsLoadingNews(true);
+    setIsLoadingNews(true); // Keep this for UI consistency
     setNewsError(null);
-    try {
-      const data = await fetchPolygonData('/v2/reference/news', { order: 'desc', limit: '5', sort: 'published_utc' });
-      if (data.error) {
-        // console.error("Error fetching news data:", data.error); // Already logged
-        setNewsData([]);
-        setNewsError(data.error);
-      } else {
-        setNewsData(data.results || []);
-      }
-    } catch (error: any) {
-      const msg = error.message || "Failed to load news.";
-      console.error("Failed to fetch news data (catch block):", msg);
-      setNewsError(msg);
-      setNewsData([]);
-    } finally {
-      setIsLoadingNews(false);
-    }
-  }, [fetchPolygonData]);
+    // Simulate loading
+    await new Promise(resolve => setTimeout(resolve, 200));
+    setNewsData(mockStaticNewsData.slice(0, 5)); // Use the static data
+    setIsLoadingNews(false);
+  }, []);
 
   React.useEffect(() => {
     const loadMarketData = async () => {
-      // ... (API key check already handled by fetchIndexData) ...
-      
       const initialApiDataState: Record<string, FetchedIndexData> = {};
       initialMarketOverviewData.forEach(market => {
         initialApiDataState[market.polygonTicker] = { loading: true };
@@ -543,16 +441,14 @@ export default function DashboardPage() {
       results.forEach(result => {
         if (result.status === 'fulfilled') {
           newApiData[result.value.symbol] = result.value.data;
-        } else {
-          // console.error(`[Polygon API] Promise rejected for ${result.reason?.symbol || 'unknown symbol'} in Market Overview:`, result.reason);
         }
       });
       setMarketApiData(prevData => ({ ...prevData, ...newApiData }));
     };
 
     loadMarketData();
-    fetchNewsData();
-  }, [fetchNewsData]);
+    fetchNewsData(); // Fetch static news
+  }, [fetchNewsData]); // fetchNewsData is now stable
 
   const calculateChangePercent = (currentPrice?: number, openPrice?: number) => {
     if (typeof currentPrice !== 'number' || typeof openPrice !== 'number' || openPrice === 0 || isNaN(currentPrice) || isNaN(openPrice)) {
@@ -563,56 +459,11 @@ export default function DashboardPage() {
 
   const getChartDataForRange = React.useCallback((fullHistory: PriceHistoryPoint[], range: string): PriceHistoryPoint[] => {
     if (!fullHistory || fullHistory.length === 0) return [];
-    const today = new Date();
-    let startDate: Date;
-
-    switch (range) {
-      case '1D':
-         const lastTradingDayPoint = fullHistory[fullHistory.length -1];
-         if (!lastTradingDayPoint || !lastTradingDayPoint.date) return [];
-         const lastTradingDay = parseISO(lastTradingDayPoint.date);
-         if (!isValid(lastTradingDay)) return [];
-         return fullHistory.filter(point => {
-            if (!point.date) return false;
-            const pointDate = parseISO(point.date);
-            return isValid(pointDate) && isSameDay(pointDate, lastTradingDay);
-         });
-      case '1W':
-        startDate = subYears(today, 1); 
-        const oneWeekAgo = subYears(new Date(),1); oneWeekAgo.setDate(oneWeekAgo.getDate() -7);
-        return fullHistory.filter(point => {
-            if(!point.date) return false;
-            const pointDate = parseISO(point.date);
-            return isValid(pointDate) && pointDate >= oneWeekAgo;
-        });
-      case '1M':
-        startDate = subYears(today, 1); 
-        const oneMonthAgo = subYears(new Date(),1); oneMonthAgo.setMonth(oneMonthAgo.getMonth() -1);
-        return fullHistory.filter(point => {
-           if(!point.date) return false;
-           const pointDate = parseISO(point.date);
-           return isValid(pointDate) && pointDate >= oneMonthAgo;
-        });
-      case '3M':
-        startDate = subYears(today, 1); 
-        const threeMonthsAgo = subYears(new Date(),1); threeMonthsAgo.setMonth(threeMonthsAgo.getMonth() -3);
-        return fullHistory.filter(point => {
-            if(!point.date) return false;
-            const pointDate = parseISO(point.date);
-            return isValid(pointDate) && pointDate >= threeMonthsAgo;
-        });
-      case 'YTD':
-        startDate = startOfYear(today);
-        break;
-      case '1Y':
-      default:
-        return fullHistory; 
-    }
-    return fullHistory.filter(point => {
-        if (!point.date) return false;
-        const pointDate = parseISO(point.date);
-        return isValid(pointDate) && pointDate >= startDate && pointDate <= today;
-    });
+    // For static data, we might just return the full set or a predefined subset
+    if (range === '1D' && fullHistory.length > 0) return [fullHistory[fullHistory.length -1]]; // Just last point for 1D
+    if (range === '1W' && fullHistory.length > 5) return fullHistory.slice(-5);
+    if (range === '1M' && fullHistory.length > 20) return fullHistory.slice(-20);
+    return fullHistory; // Default to full history for other ranges
   }, []);
 
 
@@ -634,96 +485,27 @@ export default function DashboardPage() {
     setDividendEvents([]); 
     setDividendError(null);
 
-    const apiKey = process.env.NEXT_PUBLIC_POLYGON_API_KEY;
-    if (!apiKey || apiKey.startsWith("YOUR_") || apiKey.includes("PLACEHOLDER") || apiKey.length < 20) {
-        const errorMsg = "[Polygon Ticker API] Invalid or placeholder API Key. Configure NEXT_PUBLIC_POLYGON_API_KEY in .env.local & restart server.";
-        console.error(errorMsg);
-        setTickerError(errorMsg);
-        setIsLoadingTicker(false);
-        return;
-    }
-
     const symbol = tickerQuery.toUpperCase();
-    const toDate = format(new Date(), 'yyyy-MM-dd');
-    const fromDateOneYear = format(subYears(new Date(), 1), 'yyyy-MM-dd');
+    // Simulate API call delay
+    await new Promise(resolve => setTimeout(resolve, 500));
 
-    try {
-      // console.log(`[Polygon API Ticker Lookup] Fetching data for ${symbol} using API key ending with: ...${apiKey.slice(-4)}`);
-      
-      const [detailsResponse, prevDayResponse, historyResponse] = await Promise.all([
-        fetchPolygonData(`/v3/reference/tickers/${symbol}`),
-        fetchPolygonData(`/v2/aggs/ticker/${symbol}/prev`, { adjusted: 'true' }),
-        fetchPolygonData(`/v2/aggs/ticker/${symbol}/range/1/day/${fromDateOneYear}/${toDate}`, { adjusted: 'true', sort: 'asc', limit: '5000' })
-      ]);
+    const staticTickerDetails: Record<string, Partial<TickerFullData>> = {
+        'AAPL': {
+            companyName: 'Apple Inc. (Static)', symbol: 'AAPL', exchange: 'NASDAQ', sector: 'Technology', industry: 'Consumer Electronics', logo: `https://placehold.co/48x48.png?text=AAPL`, marketCap: "2.8T", currentPrice: "195.16", priceChangeAmount: "+0.88", priceChangePercent: "+0.45", previousClose: "194.28", openPrice: "194.50", daysRange: "193.90 - 195.50", volume: "45M", avgVolume: "55M", peRatio: "30.5", eps: "6.40", dividendYield: "0.5%", beta: "1.2", nextEarningsDate: "Jul 25, 2024", dividendDate: "May 10, 2024",
+            fullPriceHistory: Array.from({length: 252}, (_, i) => ({ date: format(subYears(new Date(), 1).setDate(new Date().getDate() - (251-i)), 'yyyy-MM-dd'), close: 170 + Math.sin(i/20)*20 + Math.random()*10})),
+        },
+        'MSFT': {
+            companyName: 'Microsoft Corp. (Static)', symbol: 'MSFT', exchange: 'NASDAQ', sector: 'Technology', industry: 'Software - Infrastructure', logo: `https://placehold.co/48x48.png?text=MSFT`, marketCap: "3.1T", currentPrice: "420.72", priceChangeAmount: "-1.20", priceChangePercent: "-0.28", previousClose: "421.92", openPrice: "421.00", daysRange: "419.50 - 422.00", volume: "18M", avgVolume: "22M", peRatio: "38.2", eps: "11.01", dividendYield: "0.7%", beta: "0.9", nextEarningsDate: "Jul 22, 2024", dividendDate: "Jun 05, 2024",
+            fullPriceHistory: Array.from({length: 252}, (_, i) => ({ date: format(subYears(new Date(), 1).setDate(new Date().getDate() - (251-i)), 'yyyy-MM-dd'), close: 380 + Math.sin(i/25)*30 + Math.random()*15})),
+        }
+    };
 
-      let companyDetails: TickerCompanyDetails = {};
-      let prevDayData: TickerPrevDayData = {};
-      let priceHistoryPoints: PriceHistoryPoint[] = [];
-      let fetchErrors: string[] = [];
-
-      if (detailsResponse.error) fetchErrors.push(`Details: ${detailsResponse.error}`);
-      else companyDetails = detailsResponse.results || {};
-
-      if (prevDayResponse.error) fetchErrors.push(`Prev. Day: ${prevDayResponse.error}`);
-      else prevDayData = (prevDayResponse.results && prevDayResponse.results.length > 0) ? prevDayResponse.results[0] : {};
-      
-      if (historyResponse.error) fetchErrors.push(`History: ${historyResponse.error}`);
-      else if (historyResponse.results) {
-        priceHistoryPoints = historyResponse.results.map((r: any) => ({
-          date: format(new Date(r.t), 'yyyy-MM-dd'), 
-          close: r.c,
-        }));
-      }
-
-      if (fetchErrors.length > 0 && Object.keys(companyDetails).length === 0 && Object.keys(prevDayData).length === 0 && priceHistoryPoints.length === 0){
-             const combinedError = fetchErrors.join('; ');
-            //  console.error(`[Polygon API Ticker Lookup] Errors for ${symbol}:`, combinedError);
-             setTickerError(`No data found for ticker "${symbol}". It might be invalid or API calls failed: ${combinedError.substring(0,100)}...`);
-             setIsLoadingTicker(false);
-             return;
-      }
-      if (Object.keys(companyDetails).length === 0 && Object.keys(prevDayData).length === 0) {
-        setTickerError(`No primary data found for ticker "${symbol}". It might be invalid or not supported.`);
-        setIsLoadingTicker(false);
-        return;
-      }
-      
-      const currentPrice = prevDayData.c;
-      const openPriceForDailyChange = prevDayData.o; 
-      const priceChangeNum = typeof currentPrice === 'number' && typeof openPriceForDailyChange === 'number' ? (currentPrice - openPriceForDailyChange) : null;
-      const priceChangePercentNum = calculateChangePercent(currentPrice, openPriceForDailyChange);
-
-      setTickerData({
-        companyName: companyDetails.name || `${symbol} (Name N/A)`,
-        symbol: companyDetails.ticker || symbol,
-        exchange: companyDetails.primary_exchange || "N/A",
-        sector: companyDetails.sic_description || "N/A",
-        industry: companyDetails.sic_description || "N/A", 
-        logo: companyDetails.branding?.logo_url ? `${companyDetails.branding.logo_url}?apiKey=${apiKey}` : `https://placehold.co/48x48.png?text=${symbol.substring(0,3)}`,
-        marketCap: companyDetails.market_cap ? (companyDetails.market_cap / 1_000_000_000).toFixed(2) + "B" : "N/A",
-        currentPrice: typeof currentPrice === 'number' ? currentPrice.toFixed(2) : "N/A",
-        priceChangeAmount: typeof priceChangeNum === 'number' ? priceChangeNum.toFixed(2) : null,
-        priceChangePercent: typeof priceChangePercentNum === 'number' ? priceChangePercentNum.toFixed(2) : null,
-        previousClose: typeof prevDayData.c === 'number' ? prevDayData.c.toFixed(2) : "N/A",
-        openPrice: typeof prevDayData.o === 'number' ? prevDayData.o.toFixed(2) : "N/A",
-        daysRange: (typeof prevDayData.l === 'number' && typeof prevDayData.h === 'number') ? `${prevDayData.l.toFixed(2)} - ${prevDayData.h.toFixed(2)}` : "N/A",
-        fullPriceHistory: priceHistoryPoints,
-        volume: typeof prevDayData.v === 'number' ? prevDayData.v.toLocaleString() : "N/A",
-        avgVolume: "N/A", 
-        peRatio: "N/A",   
-        eps: "N/A",       
-        dividendYield: "N/A", 
-        beta: "N/A",          
-        nextEarningsDate: "N/A", 
-        dividendDate: "N/A",   
-      });
-
-    } catch (error: any) {
-      // console.error("[Polygon API Ticker Lookup] Error in handleTickerLookup:", error);
-      setTickerError(`Failed to fetch data for ${symbol}. ${error.message || 'Unknown error'}`);
-    } finally {
-      setIsLoadingTicker(false);
+    if (staticTickerDetails[symbol]) {
+        setTickerData(staticTickerDetails[symbol] as TickerFullData);
+    } else {
+        setTickerError(`No static data found for ticker "${symbol}". Try AAPL or MSFT.`);
     }
+    setIsLoadingTicker(false);
   };
 
   React.useEffect(() => {
@@ -744,7 +526,6 @@ export default function DashboardPage() {
           if (part.type === 'minute') currentMinuteEST = parseInt(part.value);
         });
       } catch (e) {
-        // console.warn("Error formatting EST time for market status, defaulting to local time for logic:", e);
         const localNow = new Date(); 
         currentHourEST = localNow.getHours();
         currentMinuteEST = localNow.getMinutes();
@@ -1009,4 +790,3 @@ export default function DashboardPage() {
 }
 
     
-
