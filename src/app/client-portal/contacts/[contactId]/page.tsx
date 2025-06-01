@@ -18,10 +18,12 @@ import {
   StickyNote,
   MoreHorizontal,
   Tag,
-  Send
+  Send,
+  Loader2, // Added for loading state
+  AlertTriangle // Added for error/not found state
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Badge } from "@/components/ui/badge';
+import { Badge } from "@/components/ui/badge";
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from '@/components/ui/textarea';
@@ -29,8 +31,19 @@ import { ActivityFeed, type ActivityCardProps } from "@/components/dashboard/Act
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 
+// It's good practice to define a type for your contact data
+interface ContactDetails {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  relationship: string;
+  avatarUrl: string;
+  tags: string[];
+}
+
 // Mock data - replace with actual data fetching
-const mockContactData: Record<string, any> = {
+const mockContactData: Record<string, ContactDetails> = {
   '1': { id: '1', name: 'John Smith', email: 'john.smith@email.com', phone: '555-123-4567', relationship: 'Client', avatarUrl: 'https://placehold.co/100x100.png', tags: ['VIP', 'Referred by Jane'] },
   '2': { id: '2', name: 'Jane Doe', email: 'jane.doe@email.com', phone: '555-987-6543', relationship: 'Prospect', avatarUrl: 'https://placehold.co/100x100.png', tags: ['New Lead'] },
   // Add more mock contacts as needed
@@ -47,25 +60,77 @@ const mockActivityFeed: ActivityCardProps[] = [
 
 export default function ContactDetailPage() {
   const params = useParams();
-  const contactId = params.contactId as string;
-  const [contact, setContact] = React.useState<any | null>(null);
+  // Ensure contactId is treated as a string, even if params might be string | string[]
+  const contactIdParam = params.contactId;
+  const contactId = Array.isArray(contactIdParam) ? contactIdParam[0] : contactIdParam;
+
+  const [contact, setContact] = React.useState<ContactDetails | null>(null);
+  const [isLoading, setIsLoading] = React.useState(true);
   const [noteText, setNoteText] = React.useState('');
 
   React.useEffect(() => {
-    // Simulate fetching contact data
-    if (contactId) {
-      const data = mockContactData[contactId] || { id: contactId, name: `Contact ${contactId}`, email: 'N/A', phone: 'N/A', relationship: 'Unknown', avatarUrl: 'https://placehold.co/100x100.png', tags: [] };
-      setContact(data);
+    setIsLoading(true);
+    if (contactId && typeof contactId === 'string') {
+      // Simulate fetching contact data with a short delay
+      setTimeout(() => {
+        const data = mockContactData[contactId];
+        if (data) {
+          setContact({
+            ...data,
+            tags: Array.isArray(data.tags) ? data.tags : [], // Ensure tags is an array
+          });
+        } else {
+          // If contactId is valid but not in mockData, create a "not found" representation
+           setContact({ 
+            id: contactId, 
+            name: `Contact ID: ${contactId}`, // Display ID if name isn't available
+            email: 'N/A', 
+            phone: 'N/A', 
+            relationship: 'Unknown', 
+            avatarUrl: 'https://placehold.co/100x100.png', // Default avatar
+            tags: [] 
+          });
+          // Or setContact(null) if you want to explicitly show "Contact Not Found" for non-mocked IDs
+        }
+        setIsLoading(false);
+      }, 250); // Simulate network delay
+    } else {
+      // Handle invalid or missing contactId
+      setContact(null);
+      setIsLoading(false);
     }
   }, [contactId]);
 
-  if (!contact) {
+  if (isLoading) {
     return (
-      <div className="flex-1 p-6 md:p-8 flex items-center justify-center">
-        <p className="text-muted-foreground">Loading contact details...</p>
+      <div className="flex-1 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#5b21b6]/10 to-[#000104] p-6 md:p-8 flex items-center justify-center h-screen">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <p className="ml-4 text-muted-foreground text-lg">Loading contact details...</p>
       </div>
     );
   }
+
+  if (!contact) {
+    return (
+      <div className="flex-1 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#5b21b6]/10 to-[#000104] p-6 md:p-8 flex flex-col items-center justify-center h-screen text-center">
+        <AlertTriangle className="h-16 w-16 text-destructive mb-4" />
+        <h2 className="text-2xl font-semibold text-destructive-foreground mb-2">Contact Not Found</h2>
+        <p className="text-muted-foreground">The contact you are looking for does not exist or the ID is invalid.</p>
+        <Button variant="outline" className="mt-6" onClick={() => window.history.back()}>
+          Go Back
+        </Button>
+      </div>
+    );
+  }
+
+  // Safe fallbacks for rendering
+  const displayName = contact.name || 'Unknown Contact';
+  const displayAvatarUrl = contact.avatarUrl || 'https://placehold.co/100x100.png';
+  const displayRelationship = contact.relationship || 'N/A';
+  const displayTags = Array.isArray(contact.tags) ? contact.tags : [];
+  const displayPhone = contact.phone || 'N/A';
+  const displayEmail = contact.email || 'N/A';
+
 
   return (
     <div className="flex-1 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#5b21b6]/10 to-[#000104] p-6 md:p-8 space-y-6">
@@ -74,14 +139,16 @@ export default function ContactDetailPage() {
         <div className="flex flex-col sm:flex-row items-center sm:items-start justify-between gap-4">
           <div className="flex items-center gap-4">
             <Avatar className="h-16 w-16 border-2 border-primary">
-              <AvatarImage src={contact.avatarUrl} alt={contact.name} data-ai-hint="person" />
-              <AvatarFallback className="bg-muted text-xl">{contact.name.substring(0, 2).toUpperCase()}</AvatarFallback>
+              <AvatarImage src={displayAvatarUrl} alt={displayName} data-ai-hint="person" />
+              <AvatarFallback className="bg-muted text-xl">
+                {(displayName || '??').substring(0, 2).toUpperCase()}
+              </AvatarFallback>
             </Avatar>
             <div>
-              <h1 className="text-3xl font-bold text-foreground">{contact.name}</h1>
+              <h1 className="text-3xl font-bold text-foreground">{displayName}</h1>
               <div className="flex items-center gap-2 mt-1">
-                <Badge variant="secondary" className="text-xs">{contact.relationship}</Badge>
-                {contact.tags.map((tag: string) => (
+                <Badge variant="secondary" className="text-xs">{displayRelationship}</Badge>
+                {displayTags.map((tag: string) => (
                   <Badge key={tag} variant="outline" className="text-xs">{tag}</Badge>
                 ))}
                 <Button variant="ghost" size="sm" className="h-auto p-1 text-muted-foreground hover:text-primary">
@@ -93,11 +160,11 @@ export default function ContactDetailPage() {
           <div className="text-sm text-muted-foreground space-y-1 text-center sm:text-right">
             <div className="flex items-center justify-center sm:justify-end gap-2">
               <Phone className="h-4 w-4 text-primary" />
-              <span>{contact.phone}</span>
+              <span>{displayPhone}</span>
             </div>
             <div className="flex items-center justify-center sm:justify-end gap-2">
               <Mail className="h-4 w-4 text-primary" />
-              <span>{contact.email}</span>
+              <span>{displayEmail}</span>
             </div>
           </div>
         </div>
@@ -123,7 +190,7 @@ export default function ContactDetailPage() {
           <TabsContent value="note" className="mt-4">
             <div className="space-y-3">
               <Textarea
-                placeholder={`Add a note for ${contact.name}...`}
+                placeholder={`Add a note for ${displayName}...`}
                 value={noteText}
                 onChange={(e) => setNoteText(e.target.value)}
                 className="min-h-[100px] bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary rounded-md"
@@ -136,7 +203,6 @@ export default function ContactDetailPage() {
               </div>
             </div>
           </TabsContent>
-          {/* Other tab contents would go here */}
            <TabsContent value="task"><p className="text-muted-foreground text-center p-4">Task creation form will appear here.</p></TabsContent>
            <TabsContent value="event"><p className="text-muted-foreground text-center p-4">Event creation form will appear here.</p></TabsContent>
            <TabsContent value="opportunity"><p className="text-muted-foreground text-center p-4">Opportunity creation form will appear here.</p></TabsContent>
@@ -166,5 +232,3 @@ export default function ContactDetailPage() {
   );
 }
 
-
-    
