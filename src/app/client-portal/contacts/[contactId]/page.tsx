@@ -13,7 +13,7 @@ import {
   ListChecks,
   CalendarPlus,
   Briefcase,
-  Users,
+  Users, // Added Users icon
   FileText,
   StickyNote,
   MoreHorizontal,
@@ -23,6 +23,7 @@ import {
   AlertTriangle,
   Edit,
   Save,
+  Search, // Added Search from previous change, keeping it
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -187,7 +188,7 @@ const additionalInfoSections: SectionConfig[] = [
     ],
   },
   {
-    title: "Estimated Net Worth", // Renamed from Assets
+    title: "Estimated Net Worth", 
     fields: [
       { key: "assetsValue", label: "Assets", type: "text", placeholder: "$0.00" },
       { key: "nonLiquidAssets", label: "Non-Liquid Assets", type: "text", placeholder: "$0.00" },
@@ -259,10 +260,9 @@ export default function ContactDetailPage() {
         if (data) {
           setContact({
             ...data,
-            tags: Array.isArray(data.tags) ? data.tags : [], // Ensure tags is an array
+            tags: Array.isArray(data.tags) ? data.tags : [], 
           });
         } else {
-          // Fallback if contactId doesn't match mockData keys
            setContact({ 
             id: contactId, 
             name: `Contact ID: ${contactId}`, 
@@ -274,9 +274,9 @@ export default function ContactDetailPage() {
           });
         }
         setIsLoading(false);
-      }, 250); // Short delay for mock fetch
+      }, 250); 
     } else {
-      setContact(null); // Handle cases where contactId is not valid
+      setContact(null); 
       setIsLoading(false);
     }
   }, [contactId]);
@@ -408,7 +408,27 @@ export default function ContactDetailPage() {
             <ActivityFeed activities={mockActivityFeed} />
           </TabsContent>
           <TabsContent value="email"><p className="text-muted-foreground text-center p-8">Email history will appear here.</p></TabsContent>
-          <TabsContent value="accounts"><p className="text-muted-foreground text-center p-8">Related accounts will appear here.</p></TabsContent>
+          
+          <TabsContent value="accounts" className="p-4 md:p-6 space-y-6">
+            <div className="flex justify-between items-center">
+              <h3 className="text-xl font-semibold text-foreground">Accounts</h3>
+              <p className="text-xl font-semibold text-primary">$0.00</p> {/* Total Value */}
+            </div>
+
+            {/* Placeholder for when there are no accounts */}
+            <div className="flex flex-col items-center justify-center min-h-[250px] text-center bg-black/20 border border-border/20 rounded-lg p-8 shadow-inner">
+              <Users className="h-20 w-20 text-muted-foreground/40 mb-5" strokeWidth={1.5} />
+              <p className="text-lg text-muted-foreground">No accounts were found.</p>
+              <p className="text-sm text-muted-foreground/80 mt-1">Add an account to see details here.</p>
+            </div>
+
+            <div className="flex justify-center pt-4">
+              <Button className="bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition-all duration-150 ease-out">
+                <PlusCircle className="mr-2 h-5 w-5" /> Add New Account
+              </Button>
+            </div>
+          </TabsContent>
+
           <TabsContent value="files"><p className="text-muted-foreground text-center p-8">Files related to this contact will appear here.</p></TabsContent>
           <TabsContent value="additional_info" className="p-4 md:p-6">
             <div className="space-y-8">
