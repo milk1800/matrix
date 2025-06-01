@@ -150,12 +150,12 @@ export default function AssetAnalyticsPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Symbol</TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead className="text-right">Value</TableHead>
-              <TableHead className="text-right">Weight</TableHead>
-              <TableHead className="text-right">YTD Return</TableHead>
+              <TableHead className="font-bold">Symbol</TableHead>
+              <TableHead className="font-bold">Name</TableHead>
+              <TableHead className="font-bold">Category</TableHead>
+              <TableHead className="text-right font-bold">Value</TableHead>
+              <TableHead className="text-right font-bold">Weight</TableHead>
+              <TableHead className="text-right font-bold">YTD Return</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
