@@ -137,7 +137,7 @@ export default function ClientPortalContactsPage() {
                 <Table>
                   <TableHeader>
                     <TableRow className="border-b-border/20">
-                      <TableHead className="w-10 px-6 py-4 whitespace-nowrap"></TableHead> {/* For Checkbox */}
+                      <TableHead className="w-10 px-6 py-4 whitespace-nowrap"></TableHead>
                       <TableHead className="px-6 py-4 whitespace-nowrap">Name</TableHead>
                       <TableHead className="px-6 py-4 whitespace-nowrap">Phone</TableHead>
                       <TableHead className="px-6 py-4 whitespace-nowrap">Email</TableHead>
