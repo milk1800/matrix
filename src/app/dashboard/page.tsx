@@ -25,13 +25,15 @@ import {
   Briefcase,
   DollarSign as DividendIcon,
   CalendarOff,
+  PieChart,
+  FileText as FileTextIcon,
 } from 'lucide-react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from '@/lib/utils';
-import { format, subYears, formatDistanceToNowStrict, parseISO, startOfYear, isSameDay, isValid, addMonths, isToday, startOfMonth } from 'date-fns';
+import { format, subYears, formatDistanceToNowStrict, parseISO, startOfYear, isSameDay, isValid, addMonths, startOfMonth, isToday } from 'date-fns';
 import { TickerPriceChart, type PriceHistoryPoint } from '@/components/charts/TickerPriceChart';
 import { Calendar } from "@/components/ui/calendar";
-import type { DayContentProps, DayPicker } from "react-day-picker";
+import type { DayContentProps } from "react-day-picker"; 
 
 interface MarketData {
   label: string;
@@ -46,7 +48,7 @@ const initialMarketOverviewData: MarketData[] = [
   {
     label: 'Apple (AAPL)',
     polygonTicker: 'AAPL',
-    icon: Landmark,
+    icon: PieChart,
     openTime: '09:30',
     closeTime: '16:00',
     timezone: 'America/New_York',
@@ -54,7 +56,7 @@ const initialMarketOverviewData: MarketData[] = [
   {
     label: 'Microsoft (MSFT)',
     polygonTicker: 'MSFT',
-    icon: Landmark,
+    icon: PieChart,
     openTime: '09:30',
     closeTime: '16:00',
     timezone: 'America/New_York',
@@ -62,7 +64,7 @@ const initialMarketOverviewData: MarketData[] = [
   {
     label: 'Google (GOOGL)',
     polygonTicker: 'GOOGL',
-    icon: Landmark,
+    icon: PieChart,
     openTime: '09:30',
     closeTime: '16:00',
     timezone: 'America/New_York',
@@ -70,7 +72,7 @@ const initialMarketOverviewData: MarketData[] = [
   {
     label: 'Tesla (TSLA)',
     polygonTicker: 'TSLA',
-    icon: Landmark,
+    icon: PieChart,
     openTime: '09:30',
     closeTime: '16:00',
     timezone: 'America/New_York',
@@ -180,11 +182,11 @@ const timeRangeLabels: { [key: string]: string } = {
 // Function to fetch index data for Market Overview
 const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
   const apiKey = process.env.NEXT_PUBLIC_POLYGON_API_KEY;
-  console.log(`[Polygon API] Attempting to use API key for Market Overview ${symbol}: ${apiKey ? '******' + apiKey.slice(-4) : 'UNDEFINED'}`);
+  // console.log(`[Polygon API] Attempting to use API key for Market Overview ${symbol}: ${apiKey ? '******' + apiKey.slice(-4) : 'UNDEFINED'}`);
 
-  if (!apiKey) {
-    const errorMsg = "API Key Missing. Configure NEXT_PUBLIC_POLYGON_API_KEY in .env.local & restart server.";
-    console.error(`[Polygon API Error] ${errorMsg} for symbol: ${symbol}`);
+  if (!apiKey || apiKey.startsWith("YOUR_") || apiKey.includes("PLACEHOLDER") || apiKey.length < 20) {
+    const errorMsg = `[Polygon API Error] Invalid or placeholder API Key for ${symbol}. Configure NEXT_PUBLIC_POLYGON_API_KEY in .env.local & restart server.`;
+    console.error(errorMsg);
     return { error: errorMsg };
   }
 
@@ -195,9 +197,9 @@ const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
     if (!response.ok) {
       try {
         const errorData = await response.json();
-        console.log(`[Polygon API Error] Full error response for ${symbol}:`, errorData); 
+        // console.log(`[Polygon API Error] Full error response for ${symbol}:`, errorData); 
         if (errorData && Object.keys(errorData).length === 0 && errorData.constructor === Object) {
-           console.warn(`[Polygon API Warn] Polygon returned an empty error object for ${symbol} with status ${response.status}.`);
+          //  console.warn(`[Polygon API Warn] Polygon returned an empty error object for ${symbol} with status ${response.status}.`);
            errorMessage += ` - Polygon returned an empty error response. Check API key, permissions, or endpoint validity.`;
         } else if (errorData && errorData.message) {
           errorMessage = `API Error: ${response.status} - ${errorData.message}`;
@@ -210,7 +212,7 @@ const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
         } else {
             const responseText = await response.text().catch(() => "Failed to read error response text.");
             const snippet = responseText.substring(0, 200) + (responseText.length > 200 ? '...' : '');
-            console.warn(`[Polygon API Warn] Could not parse JSON error for ${symbol}, but got text. Status: ${response.status}. Snippet:`, snippet);
+            // console.warn(`[Polygon API Warn] Could not parse JSON error for ${symbol}, but got text. Status: ${response.status}. Snippet:`, snippet);
             errorMessage += ` - ${response.statusText || 'Failed to parse error response.'} Raw text snippet: ${snippet.substring(0,50)}...`;
         }
         
@@ -218,7 +220,7 @@ const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
             errorMessage = `API Error: 401 - Unknown API Key. Please verify your Polygon.io API key and plan for ${symbol}.`;
         }
       } catch (e) { 
-          console.warn(`[Polygon API Warn] Failed to parse JSON error response for ${symbol}. Status: ${response.status}. Error:`, e);
+          // console.warn(`[Polygon API Warn] Failed to parse JSON error response for ${symbol}. Status: ${response.status}. Error:`, e);
           errorMessage += ` - ${response.statusText || 'Failed to parse error JSON body.'}`;
       }
       console.error(`Error fetching ${symbol}: ${errorMessage}`);
@@ -229,7 +231,7 @@ const fetchIndexData = async (symbol: string): Promise<FetchedIndexData> => {
       const { c, o } = data.results[0];
       return { c, o, loading: false };
     }
-    console.warn(`[Polygon API Warn] No data results found for ${symbol} in Polygon response.`);
+    // console.warn(`[Polygon API Warn] No data results found for ${symbol} in Polygon response.`);
     return { error: `No data results from Polygon for ${symbol}`, loading: false };
   } catch (error: any) {
     const networkErrorMsg = `Network/Fetch error for ${symbol}: ${error.message || 'Unknown network error'}`;
@@ -269,10 +271,10 @@ export default function DashboardPage() {
 
   const fetchPolygonData = React.useCallback(async (endpoint: string, params: Record<string, string> = {}): Promise<any> => {
     const apiKey = process.env.NEXT_PUBLIC_POLYGON_API_KEY;
-    console.log(`[Polygon Events API] Attempting to use API key for ${endpoint}: ${apiKey ? '******' + apiKey.slice(-4) : 'UNDEFINED'}`);
+    // console.log(`[Polygon Events API] Attempting to use API key for ${endpoint}: ${apiKey ? '******' + apiKey.slice(-4) : 'UNDEFINED'}`);
 
-    if (!apiKey) {
-      const errorMsg = `[Polygon Events API] API Key (NEXT_PUBLIC_POLYGON_API_KEY) is not set for endpoint ${endpoint}.`;
+    if (!apiKey || apiKey.startsWith("YOUR_") || apiKey.includes("PLACEHOLDER") || apiKey.length < 20) {
+      const errorMsg = `[Polygon Events API] Invalid or placeholder API Key (NEXT_PUBLIC_POLYGON_API_KEY). Please configure it. Endpoint: ${endpoint}.`;
       console.error(errorMsg);
       return { error: errorMsg, results: [] }; 
     }
@@ -286,9 +288,9 @@ export default function DashboardPage() {
         let errorMsg = `Failed to fetch ${endpoint}. Status: ${response.status}`;
         try {
           const errorData = await response.json();
-          console.log(`[Polygon API Error - Events] Full error response for ${endpoint}:`, errorData); 
+          // console.log(`[Polygon API Error - Events] Full error response for ${endpoint}:`, errorData); 
           if (errorData && Object.keys(errorData).length === 0 && errorData.constructor === Object) {
-             console.warn(`[Polygon API Warn - Events] Polygon returned an empty error object for ${endpoint} with status ${response.status}.`);
+            //  console.warn(`[Polygon API Warn - Events] Polygon returned an empty error object for ${endpoint} with status ${response.status}.`);
              errorMsg += ` - Polygon returned an empty error response.`;
           } else if (errorData && errorData.message) {
             errorMsg += ` - ${errorData.message}`;
@@ -301,12 +303,12 @@ export default function DashboardPage() {
           } else {
             const responseText = await response.text().catch(() => "Failed to read error response text.");
             const snippet = responseText.substring(0, 200) + (responseText.length > 200 ? '...' : '');
-            console.warn(`[Polygon API Warn - Events] Could not parse JSON error for ${endpoint}, but got text. Status: ${response.status}. Snippet:`, snippet);
+            // console.warn(`[Polygon API Warn - Events] Could not parse JSON error for ${endpoint}, but got text. Status: ${response.status}. Snippet:`, snippet);
             errorMsg += ` - ${response.statusText || 'Failed to parse error response.'} Raw text snippet: ${snippet.substring(0,50)}...`;
           }
         } catch (e) { 
-            console.warn(`[Polygon API Warn - Events] Failed to parse JSON error response for ${endpoint}. Status: ${response.status}. Error:`, e);
-            errorMsg += ` - ${response.statusText || 'Failed to parse error JSON body.'}`;
+            // console.warn(`[Polygon API Warn - Events] Failed to parse JSON error response for ${endpoint}. Status: ${response.status}. Error:`, e);
+            errorMsg += ` - ${response.statusText || 'Failed to parse error JSON body.'}`; 
         }
         console.error(errorMsg); 
         return { error: errorMsg, results: [] };
@@ -328,7 +330,7 @@ export default function DashboardPage() {
       const fromDate = format(new Date(), 'yyyy-MM-dd');
       const data = await fetchPolygonData('/v3/reference/ipos', { 'expected_pricing_date.gte': fromDate, 'expected_pricing_date.lte': toDate, limit: '50' });
       if (data.error) {
-        console.error("Error in fetchIPOs:", data.error);
+        // console.error("Error in fetchIPOs:", data.error); // Already logged by fetchPolygonData
         setIpoEvents([]);
         setIpoError(data.error);
       } else {
@@ -350,7 +352,7 @@ export default function DashboardPage() {
     try {
       const data = await fetchPolygonData('/v1/marketstatus/upcoming');
       if (data.error) {
-        console.error("Error in fetchMarketHolidays:", data.error);
+        // console.error("Error in fetchMarketHolidays:", data.error); // Already logged
         setMarketHolidays([]);
         setHolidayError(data.error);
       } else {
@@ -377,7 +379,7 @@ export default function DashboardPage() {
     try {
       const data = await fetchPolygonData(`/v3/reference/dividends`, { ticker: ticker, limit: '50', order: 'desc' });
       if (data.error) {
-        console.error(`Error in fetchDividends for ${ticker}:`, data.error);
+        // console.error(`Error in fetchDividends for ${ticker}:`, data.error); // Already logged
         setDividendEvents([]);
         setDividendError(data.error);
       } else {
@@ -465,7 +467,7 @@ export default function DashboardPage() {
         const eventDate = parseISO(event.date);
         return isValid(eventDate) && isSameDay(eventDate, day);
       } catch (e) {
-        console.warn("Invalid date encountered in event data:", event.date, e);
+        // console.warn("Invalid date encountered in event data:", event.date, e);
         return false;
       }
     });
@@ -506,7 +508,7 @@ export default function DashboardPage() {
     try {
       const data = await fetchPolygonData('/v2/reference/news', { order: 'desc', limit: '5', sort: 'published_utc' });
       if (data.error) {
-        console.error("Error fetching news data:", data.error);
+        // console.error("Error fetching news data:", data.error); // Already logged
         setNewsData([]);
         setNewsError(data.error);
       } else {
@@ -524,17 +526,8 @@ export default function DashboardPage() {
 
   React.useEffect(() => {
     const loadMarketData = async () => {
-      const apiKey = process.env.NEXT_PUBLIC_POLYGON_API_KEY;
-      if (!apiKey) {
-        console.warn("[Polygon API] CRITICAL: NEXT_PUBLIC_POLYGON_API_KEY is not defined. Market data will not be fetched. Ensure .env.local is set and server restarted.");
-        const errorState: Record<string, FetchedIndexData> = {};
-        initialMarketOverviewData.forEach(market => {
-          errorState[market.polygonTicker] = { error: 'API Key Missing. Check .env.local & restart server.' };
-        });
-        setMarketApiData(errorState);
-        return;
-      }
-
+      // ... (API key check already handled by fetchIndexData) ...
+      
       const initialApiDataState: Record<string, FetchedIndexData> = {};
       initialMarketOverviewData.forEach(market => {
         initialApiDataState[market.polygonTicker] = { loading: true };
@@ -551,7 +544,7 @@ export default function DashboardPage() {
         if (result.status === 'fulfilled') {
           newApiData[result.value.symbol] = result.value.data;
         } else {
-          console.error(`[Polygon API] Promise rejected for ${result.reason?.symbol || 'unknown symbol'} in Market Overview:`, result.reason);
+          // console.error(`[Polygon API] Promise rejected for ${result.reason?.symbol || 'unknown symbol'} in Market Overview:`, result.reason);
         }
       });
       setMarketApiData(prevData => ({ ...prevData, ...newApiData }));
@@ -642,10 +635,12 @@ export default function DashboardPage() {
     setDividendError(null);
 
     const apiKey = process.env.NEXT_PUBLIC_POLYGON_API_KEY;
-    if (!apiKey) {
-      setTickerError("API Key Missing. Configure in .env.local & restart server.");
-      setIsLoadingTicker(false);
-      return;
+    if (!apiKey || apiKey.startsWith("YOUR_") || apiKey.includes("PLACEHOLDER") || apiKey.length < 20) {
+        const errorMsg = "[Polygon Ticker API] Invalid or placeholder API Key. Configure NEXT_PUBLIC_POLYGON_API_KEY in .env.local & restart server.";
+        console.error(errorMsg);
+        setTickerError(errorMsg);
+        setIsLoadingTicker(false);
+        return;
     }
 
     const symbol = tickerQuery.toUpperCase();
@@ -653,7 +648,7 @@ export default function DashboardPage() {
     const fromDateOneYear = format(subYears(new Date(), 1), 'yyyy-MM-dd');
 
     try {
-      console.log(`[Polygon API Ticker Lookup] Fetching data for ${symbol} using API key ending with: ...${apiKey.slice(-4)}`);
+      // console.log(`[Polygon API Ticker Lookup] Fetching data for ${symbol} using API key ending with: ...${apiKey.slice(-4)}`);
       
       const [detailsResponse, prevDayResponse, historyResponse] = await Promise.all([
         fetchPolygonData(`/v3/reference/tickers/${symbol}`),
@@ -682,7 +677,7 @@ export default function DashboardPage() {
 
       if (fetchErrors.length > 0 && Object.keys(companyDetails).length === 0 && Object.keys(prevDayData).length === 0 && priceHistoryPoints.length === 0){
              const combinedError = fetchErrors.join('; ');
-             console.error(`[Polygon API Ticker Lookup] Errors for ${symbol}:`, combinedError);
+            //  console.error(`[Polygon API Ticker Lookup] Errors for ${symbol}:`, combinedError);
              setTickerError(`No data found for ticker "${symbol}". It might be invalid or API calls failed: ${combinedError.substring(0,100)}...`);
              setIsLoadingTicker(false);
              return;
@@ -724,7 +719,7 @@ export default function DashboardPage() {
       });
 
     } catch (error: any) {
-      console.error("[Polygon API Ticker Lookup] Error in handleTickerLookup:", error);
+      // console.error("[Polygon API Ticker Lookup] Error in handleTickerLookup:", error);
       setTickerError(`Failed to fetch data for ${symbol}. ${error.message || 'Unknown error'}`);
     } finally {
       setIsLoadingTicker(false);
@@ -749,7 +744,7 @@ export default function DashboardPage() {
           if (part.type === 'minute') currentMinuteEST = parseInt(part.value);
         });
       } catch (e) {
-        console.warn("Error formatting EST time for market status, defaulting to local time for logic:", e);
+        // console.warn("Error formatting EST time for market status, defaulting to local time for logic:", e);
         const localNow = new Date(); 
         currentHourEST = localNow.getHours();
         currentMinuteEST = localNow.getMinutes();
@@ -830,7 +825,7 @@ export default function DashboardPage() {
                 let displayError = apiResult.error.substring(0, 50) + (apiResult.error.length > 50 ? '...' : '');
                  if (apiResult.error.includes("429")) displayError = "Rate Limit";
                  else if (apiResult.error.toLowerCase().includes("unknown api key") || apiResult.error.includes("401")) displayError = "Auth Error";
-                 else if (apiResult.error.includes("API Key Missing")) displayError = "Key Missing";
+                 else if (apiResult.error.includes("API Key Missing") || apiResult.error.includes("not set") || apiResult.error.includes("placeholder API Key")) displayError = "Key Issue";
                  else if (apiResult.error.includes("No data")) displayError = "No Data";
               valueDisplay = <TooltipProvider><Tooltip><TooltipTrigger asChild><span className="text-sm text-red-400/80 flex items-center truncate"><AlertCircle className="w-4 h-4 mr-1 shrink-0" /> {displayError}</span></TooltipTrigger><TooltipContent><p>{apiResult.error}</p></TooltipContent></Tooltip></TooltipProvider>;
               changeDisplay = "";
@@ -879,7 +874,7 @@ export default function DashboardPage() {
         </PlaceholderCard>
         <PlaceholderCard title="Top News Stories" icon={Newspaper} className="lg:col-span-2 h-full">
           {isLoadingNews && (<div className="flex items-center justify-center h-32"><Loader2 className="w-6 h-6 animate-spin text-primary" /></div>)}
-          {newsError && (<div className="flex flex-col items-center justify-center h-32 text-red-400"><AlertCircle className="w-8 h-8 mb-2" /><p className="text-sm">{newsError}</p></div>)}
+          {newsError && (<div className="flex flex-col items-center justify-center h-32 text-red-400"><AlertCircle className="w-8 h-8 mb-2" /><p className="text-sm max-w-md truncate" title={newsError}>{newsError}</p></div>)}
           {!isLoadingNews && !newsError && newsData.length === 0 && (<p className="text-muted-foreground text-center py-4">No news available.</p>)}
           {!isLoadingNews && !newsError && newsData.length > 0 && (
             <ul className="space-y-4 max-h-[400px] overflow-y-auto no-visual-scrollbar">
@@ -892,7 +887,7 @@ export default function DashboardPage() {
                   <p className="text-xs text-muted-foreground mb-1 line-clamp-2" title={item.description}>{item.description}</p>
                   <div className="flex justify-between items-center text-xs text-muted-foreground/70">
                     <span>{item.publisher?.name || 'Unknown Source'}</span>
-                    <span>{formatDistanceToNowStrict(parseISO(item.published_utc), { addSuffix: true })}</span>
+                    <span>{item.published_utc ? formatDistanceToNowStrict(parseISO(item.published_utc), { addSuffix: true }) : 'N/A'}</span>
                   </div>
                 </li>
               ))}
@@ -982,9 +977,9 @@ export default function DashboardPage() {
             {(isLoadingEvents.ipos || isLoadingEvents.holidays || (isLoadingEvents.dividends && !!tickerData?.symbol)) && (
               <div className="flex items-center text-muted-foreground"><Loader2 className="mr-2 h-4 w-4 animate-spin" />Loading events...</div>
             )}
-            {ipoError && <p className="text-xs text-red-400">IPOs: {ipoError.substring(0, 60)}...</p>}
-            {holidayError && <p className="text-xs text-red-400">Holidays: {holidayError.substring(0, 60)}...</p>}
-            {dividendError && !!tickerData?.symbol && <p className="text-xs text-red-400">Dividends for {tickerData.symbol}: {dividendError.substring(0, 60)}...</p>}
+            {ipoError && <p className="text-xs text-red-400 max-w-xs truncate" title={ipoError}>IPOs: {ipoError}</p>}
+            {holidayError && <p className="text-xs text-red-400 max-w-xs truncate" title={holidayError}>Holidays: {holidayError}</p>}
+            {dividendError && !!tickerData?.symbol && <p className="text-xs text-red-400 max-w-xs truncate" title={dividendError}>Dividends for {tickerData.symbol}: {dividendError}</p>}
             
             {!isLoadingEvents.ipos && !isLoadingEvents.holidays && (!isLoadingEvents.dividends || !tickerData?.symbol) && eventsForSelectedDay.length > 0 ? (
               <ul className="space-y-3 max-h-[300px] overflow-y-auto pr-2 no-visual-scrollbar">
@@ -1013,6 +1008,5 @@ export default function DashboardPage() {
   );
 }
 
-
-
     
+
