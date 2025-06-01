@@ -35,6 +35,7 @@ import { cn } from '@/lib/utils';
 import { PlaceholderCard } from '@/components/dashboard/placeholder-card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Separator } from '@/components/ui/separator';
 
 interface ContactDetails {
@@ -58,11 +59,17 @@ const mockActivityFeed: ActivityCardProps[] = [
   { id: 'act3', type: 'task', summary: 'Task "Prepare Q4 Performance Report" completed by Maven AI.', user: 'Maven AI', userAvatar: '/icons/brain-logo.png', timestamp: '1 day ago' },
 ];
 
+interface AdditionalInfoFieldOption {
+  value: string;
+  label: string;
+}
 interface AdditionalInfoField {
   key: string;
   label: string;
-  type?: 'text' | 'date' | 'textarea' | 'number';
+  type?: 'text' | 'date' | 'textarea' | 'number' | 'select';
   placeholder?: string;
+  options?: AdditionalInfoFieldOption[];
+  selectPlaceholder?: string;
 }
 
 interface SectionConfig {
@@ -70,6 +77,11 @@ interface SectionConfig {
   icon?: React.ElementType;
   fields: AdditionalInfoField[];
 }
+
+const yearOptions = Array.from({ length: 49 }, (_, i) => {
+  const year = i + 1;
+  return { value: `${year} Year${year > 1 ? 's' : ''}`, label: `${year} Year${year > 1 ? 's' : ''}` };
+});
 
 const additionalInfoSections: SectionConfig[] = [
   {
@@ -110,13 +122,68 @@ const additionalInfoSections: SectionConfig[] = [
   {
     title: "Investment Profile",
     fields: [
-      { key: "investmentObjective", label: "Investment Objective" },
-      { key: "timeHorizon", label: "Time Horizon" },
-      { key: "riskTolerance", label: "Risk Tolerance" },
-      { key: "experienceMutualFunds", label: "Experience with Mutual Funds" },
-      { key: "experienceStocksBonds", label: "Experience with Stocks & Bonds" },
-      { key: "experiencePartnerships", label: "Experience with Partnerships" },
-      { key: "otherInvestingExperience", label: "Other Investing Experience" },
+      { 
+        key: "investmentObjective", 
+        label: "Investment Objective",
+        type: 'select',
+        selectPlaceholder: 'Select objective...',
+        options: [
+          { value: 'aggressive_growth', label: 'Aggressive Growth' },
+          { value: 'growth', label: 'Growth' },
+          { value: 'income', label: 'Income' },
+          { value: 'safety_of_principal', label: 'Safety of Principal' },
+        ]
+      },
+      { 
+        key: "timeHorizon", 
+        label: "Time Horizon",
+        type: 'select',
+        selectPlaceholder: 'Select horizon...',
+        options: [
+          { value: 'short_term', label: 'Short Term' },
+          { value: 'intermediate', label: 'Intermediate' },
+          { value: 'long_term', label: 'Long Term' },
+        ]
+      },
+      { 
+        key: "riskTolerance", 
+        label: "Risk Tolerance",
+        type: 'select',
+        selectPlaceholder: 'Select tolerance...',
+        options: [
+          { value: 'low', label: 'Low' },
+          { value: 'moderate', label: 'Moderate' },
+          { value: 'high_risk', label: 'High Risk' },
+        ]
+      },
+      { 
+        key: "experienceMutualFunds", 
+        label: "Experience with Mutual Funds",
+        type: 'select',
+        selectPlaceholder: 'Select years...',
+        options: yearOptions
+      },
+      { 
+        key: "experienceStocksBonds", 
+        label: "Experience with Stocks & Bonds",
+        type: 'select',
+        selectPlaceholder: 'Select years...',
+        options: yearOptions
+      },
+      { 
+        key: "experiencePartnerships", 
+        label: "Experience with Partnerships",
+        type: 'select',
+        selectPlaceholder: 'Select years...',
+        options: yearOptions
+      },
+      { 
+        key: "otherInvestingExperience", 
+        label: "Other Investing Experience",
+        type: 'select',
+        selectPlaceholder: 'Select years...',
+        options: yearOptions
+      },
     ],
   },
   {
@@ -176,7 +243,7 @@ export default function ContactDetailPage() {
   const initialAdditionalInfoState: Record<string, string> = {};
   additionalInfoSections.forEach(section => {
     section.fields.forEach(field => {
-      initialAdditionalInfoState[field.key] = field.type === 'textarea' ? "" : "Not Set";
+      initialAdditionalInfoState[field.key] = "Not Set"; 
     });
   });
 
@@ -186,14 +253,16 @@ export default function ContactDetailPage() {
   React.useEffect(() => {
     setIsLoading(true);
     if (contactId && typeof contactId === 'string') {
+      // Simulate fetching contact data
       setTimeout(() => {
         const data = mockContactData[contactId];
         if (data) {
           setContact({
             ...data,
-            tags: Array.isArray(data.tags) ? data.tags : [],
+            tags: Array.isArray(data.tags) ? data.tags : [], // Ensure tags is an array
           });
         } else {
+          // Fallback if contactId doesn't match mockData keys
            setContact({ 
             id: contactId, 
             name: `Contact ID: ${contactId}`, 
@@ -205,9 +274,9 @@ export default function ContactDetailPage() {
           });
         }
         setIsLoading(false);
-      }, 250); 
+      }, 250); // Short delay for mock fetch
     } else {
-      setContact(null);
+      setContact(null); // Handle cases where contactId is not valid
       setIsLoading(false);
     }
   }, [contactId]);
@@ -362,12 +431,31 @@ export default function ContactDetailPage() {
                           </Label>
                           <div className="md:col-span-2">
                             {isEditing ? (
-                              field.type === 'textarea' ? (
+                              field.type === 'select' && field.options ? (
+                                <Select
+                                  value={additionalInfoData[field.key] === "Not Set" ? undefined : additionalInfoData[field.key]}
+                                  onValueChange={(value) => handleAdditionalInfoChange(field.key, value)}
+                                >
+                                  <SelectTrigger 
+                                    id={`${section.title}-${field.key}`}
+                                    className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary"
+                                  >
+                                    <SelectValue placeholder={field.selectPlaceholder || "Select an option"} />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {field.options.map(opt => (
+                                      <SelectItem key={opt.value} value={opt.value}>
+                                        {opt.label}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              ) : field.type === 'textarea' ? (
                                 <Textarea
                                   id={`${section.title}-${field.key}`}
                                   value={additionalInfoData[field.key] === "Not Set" ? "" : additionalInfoData[field.key]}
                                   onChange={(e) => handleAdditionalInfoChange(field.key, e.target.value)}
-                                  placeholder={field.placeholder || field.label}
+                                  placeholder={field.placeholder || `Enter ${field.label.toLowerCase()}...`}
                                   className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary"
                                   rows={3}
                                 />
@@ -377,7 +465,7 @@ export default function ContactDetailPage() {
                                   type={field.type || 'text'}
                                   value={additionalInfoData[field.key] === "Not Set" ? "" : additionalInfoData[field.key]}
                                   onChange={(e) => handleAdditionalInfoChange(field.key, e.target.value)}
-                                  placeholder={field.placeholder || field.label}
+                                  placeholder={field.placeholder || `Enter ${field.label.toLowerCase()}...`}
                                   className="bg-input border-border/50 text-foreground placeholder-muted-foreground focus:ring-primary"
                                 />
                               )
@@ -401,3 +489,4 @@ export default function ContactDetailPage() {
   );
 }
 
+    
