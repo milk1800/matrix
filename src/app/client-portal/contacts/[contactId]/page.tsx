@@ -115,9 +115,9 @@ const additionalInfoSections: SectionConfig[] = [
     title: "Investment Profile",
     fields: [
       { key: "investmentObjective", label: "Investment Objective", type: 'select', selectPlaceholder: 'Select objective...', options: [ { value: 'aggressive_growth', label: 'Aggressive Growth' }, { value: 'growth', label: 'Growth' }, { value: 'income', label: 'Income' }, { value: 'safety_of_principal', label: 'Safety of Principal' }, ] },
-      { key: "timeHorizon", label: "Time Horizon", type: 'select', selectPlaceholder: 'Select horizon...', options: [ { value: 'short_term', label: 'Short Term' }, { value: 'intermediate', label: 'Intermediate' }, { value: 'long_term', label: 'Long Term' }, ] },
+      { key: "timeHorizon", label: "Time Horizon", type: 'select', selectPlaceholder: 'Select horizon...', options: [ { value: 'short_term', label: 'Short Term (1-3 years)' }, { value: 'intermediate', label: 'Intermediate (3-7 years)' }, { value: 'long_term', label: 'Long Term (7+ years)' }, ] },
       { key: "riskTolerance", label: "Risk Tolerance", type: 'select', selectPlaceholder: 'Select tolerance...', options: [ { value: 'low', label: 'Low' }, { value: 'moderate', label: 'Moderate' }, { value: 'high_risk', label: 'High Risk' }, ] },
-      { key: "experienceMutualFunds", label: "Experience with Mutual Funds", type: 'select', selectPlaceholder: 'Select years...', options: yearOptions }, { key: "experienceStocksBonds", label: "Experience with Stocks & Bonds", type: 'select', selectPlaceholder: 'Select years...', options: yearOptions }, { key: "experiencePartnerships", label: "Experience with Partnerships", type: 'select', selectPlaceholder: 'Select years...', options: yearOptions }, { key: "otherInvestingExperience", label: "Other Investing Experience", type: 'select', selectPlaceholder: 'Select years...', options: yearOptions },
+      { key: "experienceMutualFunds", label: "Experience with Mutual Funds", type: 'select', selectPlaceholder: 'Select years...', options: yearOptions }, { key: "experienceStocksBonds", label: "Experience with Stocks & Bonds", type: 'select', selectPlaceholder: 'Select years...', options: yearOptions }, { key: "experiencePartnerships", label: "Experience with Partnerships", type: 'select', selectPlaceholder: 'Select years...', options: yearOptions }, { key: "otherInvestingExperience", label: "Other Investing Experience", type: 'text', placeholder: 'e.g. Real Estate, Private Equity' },
     ],
   },
   {
@@ -129,7 +129,11 @@ const additionalInfoSections: SectionConfig[] = [
   {
     title: "Estimated Tax Information",
     fields: [
-      { key: "taxBracket", label: "Tax Bracket", placeholder: "e.g., 24%" }, { key: "taxFilingStatus", label: "Tax Filing Status" }, { key: "estimatedTaxableIncome", label: "Estimated Taxable Income", type: "text", placeholder: "$0.00" },
+      { key: "taxBracket", label: "Federal Tax Rate", placeholder: "e.g., 24%" },
+      { key: "stateTaxRate", label: "State Tax Rate", type: "text", placeholder: "e.g., 6.5%" },
+      { key: "taxFilingStatus", label: "Tax Filing Status", type: "text", placeholder: "e.g., Married Filing Jointly" },
+      { key: "hasTaxLossCarryforward", label: "Has Tax Loss Carryforward", type: "text", placeholder: "Yes/No" },
+      { key: "estimatedTaxableIncome", label: "Estimated Taxable Income", type: "text", placeholder: "$0.00" },
     ],
   },
   {
@@ -147,7 +151,7 @@ const additionalInfoSections: SectionConfig[] = [
 ];
 
 interface AccountFormData {
-  id: string; // For unique key in lists
+  id: string; 
   accountNumber: string;
   company: string;
   product: string;
@@ -212,7 +216,6 @@ export default function ContactDetailPage() {
   const [additionalInfoData, setAdditionalInfoData] = React.useState<Record<string, string>>(initialAdditionalInfoState);
   const [editingSections, setEditingSections] = React.useState<Record<string, boolean>>({});
 
-  // State for "Add Account" modal
   const [isAddAccountModalOpen, setIsAddAccountModalOpen] = React.useState(false);
   const [accountFormData, setAccountFormData] = React.useState<AccountFormData>(initialAccountFormState);
   const [linkedAccounts, setLinkedAccounts] = React.useState<AccountFormData[]>([]);
@@ -227,13 +230,40 @@ export default function ContactDetailPage() {
             ...data,
             tags: Array.isArray(data.tags) ? data.tags : [],
           });
+
+          if (data.id === '1') { // John Smith's ID
+            const johnSmithSpecificData: Record<string, string> = {
+              occupation: "Software Engineer",
+              occupationStartDate: "2012-03-01",
+              retirementDate: "2045-06-15",
+              grossAnnualIncome: "$185,000",
+              investmentObjective: "growth",
+              timeHorizon: "long_term",
+              riskTolerance: "moderate",
+              experienceMutualFunds: "8 Years",
+              experienceStocksBonds: "12 Years",
+              experiencePartnerships: "2 Years",
+              otherInvestingExperience: "Real estate and private equity",
+              assetsValue: "$1,200,000",
+              nonLiquidAssets: "$400,000",
+              liabilities: "$250,000",
+              estimatedNetWorth: "$950,000",
+              estimatedLiquidNetWorth: "$550,000",
+              taxBracket: "24%",
+              stateTaxRate: "6.5%",
+              taxFilingStatus: "Married Filing Jointly",
+              hasTaxLossCarryforward: "Yes",
+            };
+            setAdditionalInfoData(prev => ({ ...prev, ...johnSmithSpecificData }));
+          }
+
         } else {
           setContact({
             id: contactId, name: `Contact ID: ${contactId}`, email: 'N/A', phone: 'N/A', relationship: 'Unknown', avatarUrl: 'https://placehold.co/100x100.png', tags: []
           });
         }
         setIsLoading(false);
-      }, 250);
+      }, 250); // Simulate fetch delay
     } else {
       setContact(null);
       setIsLoading(false);
@@ -259,7 +289,7 @@ export default function ContactDetailPage() {
     setAccountFormData(prev => {
       const newState = { ...prev, [field]: value };
       if (field === 'taxQualified' && value === false) {
-        newState.taxQualType = ''; // Reset taxQualType if taxQualified is unchecked
+        newState.taxQualType = ''; 
       }
       return newState;
     });
@@ -273,7 +303,7 @@ export default function ContactDetailPage() {
     setLinkedAccounts(prev => [...prev, { ...accountFormData, id: Date.now().toString() }]);
     toast({ title: "Account Added", description: `${accountFormData.product} account for ${accountFormData.company} added successfully.` });
     setIsAddAccountModalOpen(false);
-    setAccountFormData(initialAccountFormState); // Reset form
+    setAccountFormData(initialAccountFormState); 
   };
   
   const calculateTotalAssetBalance = (accounts: AccountFormData[]): string => {
@@ -396,7 +426,7 @@ export default function ContactDetailPage() {
               <Button 
                 className="bg-green-500 hover:bg-green-600 text-white font-semibold py-3 px-6 rounded-lg shadow-md hover:shadow-lg transition-all duration-150 ease-out"
                 onClick={() => {
-                  setAccountFormData(prev => ({ ...initialAccountFormState, contacts: displayName, id: '' })); // Pre-fill and reset ID
+                  setAccountFormData(prev => ({ ...initialAccountFormState, contacts: displayName, id: '' })); 
                   setIsAddAccountModalOpen(true);
                 }}
               >
@@ -495,3 +525,4 @@ export default function ContactDetailPage() {
     </>
   );
 }
+
