@@ -2,6 +2,7 @@
 "use client";
 
 import * as React from 'react';
+import Link from 'next/link'; // Import Link
 import { PlaceholderCard } from '@/components/dashboard/placeholder-card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -157,9 +158,9 @@ export default function ClientPortalContactsPage() {
                             <Checkbox id={`contact-${contact.id}`} aria-label={`Select contact ${contact.name}`} />
                           </TableCell>
                           <TableCell className="font-medium text-foreground px-6 py-4 whitespace-nowrap truncate">
-                             <a href={`/client-portal/contacts/${contact.id}`} className="hover:underline hover:text-primary">
+                             <Link href={`/client-portal/contacts/${contact.id}`} className="hover:underline hover:text-primary">
                               {contact.name}
-                            </a>
+                            </Link>
                           </TableCell>
                           <TableCell className="text-muted-foreground px-6 py-4 whitespace-nowrap truncate">{contact.phone}</TableCell>
                           <TableCell className="text-muted-foreground px-6 py-4 whitespace-nowrap truncate">{contact.email}</TableCell>
