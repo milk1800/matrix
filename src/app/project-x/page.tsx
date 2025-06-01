@@ -34,7 +34,9 @@ import {
   ChevronRight,
   RotateCcw,
   Lightbulb,
-  BarChartBig
+  BarChartBig,
+  Search,
+  Contact2 // New icon for client selection
 } from 'lucide-react';
 
 interface QuestionnaireData {
@@ -89,6 +91,35 @@ const investmentGoalOptions = [
   { id: "education", label: "Education Funding" },
 ];
 
+// Mock client data for pre-filling questionnaire
+const mockClientDatabase: Record<string, Partial<QuestionnaireData>> = {
+  "John Smith": {
+    age: 42,
+    investmentHorizon: "7+",
+    riskTolerance: "Medium",
+    incomeNeeds: "Low",
+    investmentGoals: ["retirement", "wealthGrowth"],
+    esgConsiderations: true,
+  },
+  "Jane Doe": {
+    age: 28,
+    investmentHorizon: "7+",
+    riskTolerance: "High",
+    incomeNeeds: "None",
+    investmentGoals: ["wealthGrowth"],
+    esgConsiderations: false,
+  },
+  "Alex Johnson": {
+    age: 55,
+    investmentHorizon: "3-7",
+    riskTolerance: "Low",
+    incomeNeeds: "Moderate",
+    investmentGoals: ["capitalPreservation", "incomeGeneration"],
+    esgConsiderations: true,
+  }
+};
+
+
 export default function ProjectXPage() {
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = React.useState(1);
@@ -96,6 +127,9 @@ export default function ProjectXPage() {
   const [isSubmitted, setIsSubmitted] = React.useState(false);
   const [alerts, setAlerts] = React.useState<AiAlertItem[]>(initialAlerts);
   const [showPortfolio, setShowPortfolio] = React.useState(false);
+  const [clientSearchTerm, setClientSearchTerm] = React.useState("");
+  const [loadedClientName, setLoadedClientName] = React.useState<string | null>(null);
+
 
   const handleInputChange = (field: keyof QuestionnaireData, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -112,6 +146,37 @@ export default function ProjectXPage() {
     });
   };
 
+  const handleLoadClient = () => {
+    const searchTermNormalized = clientSearchTerm.trim();
+    const foundClientKey = Object.keys(mockClientDatabase).find(
+      key => key.toLowerCase() === searchTermNormalized.toLowerCase()
+    );
+
+    if (foundClientKey) {
+      const clientData = mockClientDatabase[foundClientKey];
+      setFormData(prev => ({
+        ...prev, // Keep any existing data, but overwrite with client data
+        ...clientData,
+        investmentGoals: clientData.investmentGoals ? [...clientData.investmentGoals] : [], // Ensure array is new
+      }));
+      setLoadedClientName(foundClientKey);
+      toast({
+        title: "Client Data Loaded",
+        description: `Profile for ${foundClientKey} has been pre-filled.`,
+      });
+    } else {
+      setLoadedClientName(null);
+      // Optionally reset parts of form data if client not found, or leave as is
+      // setFormData({ investmentGoals: [] }); // Example: reset form
+      toast({
+        title: "Client Not Found",
+        description: `No profile found for "${searchTermNormalized}". Please proceed manually.`,
+        variant: "destructive",
+      });
+    }
+  };
+
+
   const handleNextStep = () => {
     if (currentStep < TOTAL_STEPS) {
       setCurrentStep(prev => prev + 1);
@@ -120,7 +185,7 @@ export default function ProjectXPage() {
       setShowPortfolio(true);
       toast({
         title: "Profile Submitted!",
-        description: "Maven AI is now constructing your suggested portfolio.",
+        description: `Maven AI is now constructing suggested portfolio for ${loadedClientName || 'the provided profile'}.`,
       });
       console.log("Form Submitted:", formData);
     }
@@ -149,6 +214,15 @@ export default function ProjectXPage() {
       case "Low": return "bg-blue-500/20 border-blue-500/50 text-blue-400";
       default: return "bg-muted text-muted-foreground";
     }
+  };
+
+  const resetFullForm = () => {
+    setShowPortfolio(false);
+    setIsSubmitted(false);
+    setCurrentStep(1);
+    setFormData({ investmentGoals: [] });
+    setClientSearchTerm("");
+    setLoadedClientName(null);
   };
 
   const renderQuestionnaireStep = () => {
@@ -200,14 +274,14 @@ export default function ProjectXPage() {
               <div className="mt-2 space-y-2">
                 {investmentGoalOptions.map(goal => (
                   <div key={goal.id} className="flex items-center space-x-2">
-                    <Checkbox id={`goal-${goal.id}`} checked={formData.investmentGoals?.includes(goal.id)} onCheckedChange={(checked) => handleCheckboxChange(goal.id, !!checked)} />
+                    <Checkbox id={`goal-${goal.id}`} checked={(formData.investmentGoals || []).includes(goal.id)} onCheckedChange={(checked) => handleCheckboxChange(goal.id, !!checked)} />
                     <Label htmlFor={`goal-${goal.id}`} className="font-normal text-foreground">{goal.label}</Label>
                   </div>
                 ))}
               </div>
             </div>
             <div className="flex items-center space-x-2 pt-2">
-              <Checkbox id="esgConsiderations" checked={formData.esgConsiderations} onCheckedChange={(checked) => handleInputChange('esgConsiderations', !!checked)} />
+              <Checkbox id="esgConsiderations" checked={!!formData.esgConsiderations} onCheckedChange={(checked) => handleInputChange('esgConsiderations', !!checked)} />
               <Label htmlFor="esgConsiderations" className="font-normal text-foreground flex items-center"><Leaf className="mr-1.5 h-4 w-4 text-green-400" />Include ESG Considerations?</Label>
             </div>
           </div>
@@ -228,25 +302,48 @@ export default function ProjectXPage() {
         {/* Left Column: Questionnaire & Portfolio */}
         <div className="lg:col-span-2 space-y-8">
           {!showPortfolio ? (
-            <PlaceholderCard title="Investor Profile Questionnaire" icon={User} className="min-h-[400px]">
-              <Progress value={(currentStep / TOTAL_STEPS) * 100} className="w-full h-2.5 mb-6 mt-2 [&>div]:bg-primary" />
-              <div className="mb-8 min-h-[250px]">
-                {renderQuestionnaireStep()}
-              </div>
-              <div className="flex justify-between items-center pt-4 border-t border-border/30">
-                <Button variant="outline" onClick={handlePrevStep} disabled={currentStep === 1}>
-                  <ChevronLeft className="mr-2 h-4 w-4" /> Previous
-                </Button>
-                <p className="text-sm text-muted-foreground">Step {currentStep} of {TOTAL_STEPS}</p>
-                <Button onClick={handleNextStep} className="bg-primary hover:bg-primary/90">
-                  {currentStep === TOTAL_STEPS ? "Generate Portfolio" : "Next"}
-                  {currentStep < TOTAL_STEPS && <ChevronRight className="ml-2 h-4 w-4" />}
-                </Button>
-              </div>
-            </PlaceholderCard>
+            <>
+              <PlaceholderCard title="Client Selection" icon={Contact2} className="min-h-0">
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="clientNameSearch" className="text-muted-foreground">Select Client</Label>
+                    <div className="flex space-x-2 mt-1">
+                      <Input
+                        id="clientNameSearch"
+                        placeholder="Type client name to search (e.g., John Smith)"
+                        value={clientSearchTerm}
+                        onChange={(e) => setClientSearchTerm(e.target.value)}
+                        className="bg-input border-border/50"
+                      />
+                      <Button onClick={handleLoadClient} variant="outline">
+                        <Search className="mr-2 h-4 w-4" /> Load
+                      </Button>
+                    </div>
+                    {loadedClientName && <p className="text-xs text-green-400 mt-2">Loaded profile for: {loadedClientName}</p>}
+                  </div>
+                </div>
+              </PlaceholderCard>
+              <Separator className="my-6 border-border/30" />
+              <PlaceholderCard title="Investor Profile Questionnaire" icon={User} className="min-h-[400px]">
+                <Progress value={(currentStep / TOTAL_STEPS) * 100} className="w-full h-2.5 mb-6 mt-2 [&>div]:bg-primary" />
+                <div className="mb-8 min-h-[250px]">
+                  {renderQuestionnaireStep()}
+                </div>
+                <div className="flex justify-between items-center pt-4 border-t border-border/30">
+                  <Button variant="outline" onClick={handlePrevStep} disabled={currentStep === 1}>
+                    <ChevronLeft className="mr-2 h-4 w-4" /> Previous
+                  </Button>
+                  <p className="text-sm text-muted-foreground">Step {currentStep} of {TOTAL_STEPS}</p>
+                  <Button onClick={handleNextStep} className="bg-primary hover:bg-primary/90">
+                    {currentStep === TOTAL_STEPS ? "Generate Portfolio" : "Next"}
+                    {currentStep < TOTAL_STEPS && <ChevronRight className="ml-2 h-4 w-4" />}
+                  </Button>
+                </div>
+              </PlaceholderCard>
+            </>
           ) : (
-            <PlaceholderCard title="Maven AI Suggested Portfolio" icon={PieChartIcon} className="min-h-[400px]">
-              <p className="text-sm text-muted-foreground mb-4">Based on your profile, Maven AI suggests the following allocation. This is a starting point and can be further customized.</p>
+            <PlaceholderCard title={`Maven AI Suggested Portfolio${loadedClientName ? ` for ${loadedClientName}` : ''}`} icon={PieChartIcon} className="min-h-[400px]">
+              <p className="text-sm text-muted-foreground mb-4">Based on the profile, Maven AI suggests the following allocation. This is a starting point and can be further customized.</p>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
                 <div className="space-y-3">
                   {mockPortfolio.map(asset => (
@@ -265,7 +362,7 @@ export default function ProjectXPage() {
                 </div>
               </div>
                 <div className="flex justify-end mt-6">
-                    <Button variant="outline" onClick={() => {setShowPortfolio(false); setIsSubmitted(false); setCurrentStep(1); setFormData({investmentGoals:[]})}}>
+                    <Button variant="outline" onClick={resetFullForm}>
                         <RotateCcw className="mr-2 h-4 w-4" /> Start Over
                     </Button>
                      <Button className="ml-2 bg-primary hover:bg-primary/90">
@@ -282,9 +379,9 @@ export default function ProjectXPage() {
             {alerts.length === 0 && !isSubmitted ? (
                  <p className="text-muted-foreground text-center py-10">Complete the questionnaire to view potential AI-driven portfolio alerts.</p>
             ): alerts.length === 0 && isSubmitted ? (
-                <p className="text-muted-foreground text-center py-10">No active alerts for your suggested portfolio.</p>
+                <p className="text-muted-foreground text-center py-10">No active alerts for the suggested portfolio.</p>
             ) : (
-              <ScrollArea className="h-[350px] pr-3 -mr-3"> {/* Negative margin to offset scrollbar */}
+              <ScrollArea className="h-[350px] pr-3 -mr-3"> 
                 <div className="space-y-4">
                   {alerts.map(alert => (
                     <Alert key={alert.id} className={cn("border-border/40 bg-black/20", alert.actionTaken && "opacity-60")}>
