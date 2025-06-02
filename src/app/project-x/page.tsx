@@ -13,6 +13,7 @@ import { Progress } from "@/components/ui/progress";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import {
@@ -36,8 +37,11 @@ import {
   Lightbulb,
   BarChartBig,
   Search,
-  Contact2
+  Contact2,
+  Loader2,
 } from 'lucide-react';
+import { generateEtfPortfolio, type GenerateEtfPortfolioOutput, type GenerateEtfPortfolioInput } from "@/ai/flows/generate-etf-portfolio-flow";
+
 
 interface QuestionnaireData {
   age?: number;
@@ -110,6 +114,8 @@ const mockClientDatabase: Record<string, Partial<QuestionnaireData>> = {
     incomeNeeds: "Low",
     investmentGoals: ["retirement", "wealthGrowth"],
     esgConsiderations: true,
+    annualIncome: "$150,000 - $200,000",
+    investableAssets: "$750,000",
   },
   "Jane Doe": {
     age: 28,
@@ -118,6 +124,8 @@ const mockClientDatabase: Record<string, Partial<QuestionnaireData>> = {
     incomeNeeds: "None",
     investmentGoals: ["wealthGrowth"],
     esgConsiderations: false,
+    annualIncome: "$75,000 - $100,000",
+    investableAssets: "$150,000",
   },
   "Alex Johnson": {
     age: 55,
@@ -126,6 +134,8 @@ const mockClientDatabase: Record<string, Partial<QuestionnaireData>> = {
     incomeNeeds: "Moderate",
     investmentGoals: ["capitalPreservation", "incomeGeneration"],
     esgConsiderations: true,
+    annualIncome: "$200,000+",
+    investableAssets: "$1,200,000",
   }
 };
 
@@ -135,10 +145,13 @@ export default function ProjectXPage() {
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = React.useState(1);
   const [formData, setFormData] = React.useState<QuestionnaireData>(initialFormDataState);
-  const [isSubmitted, setIsSubmitted] = React.useState(false);
   const [alerts, setAlerts] = React.useState<AiAlertItem[]>(initialAlerts);
-  const [showPortfolio, setShowPortfolio] = React.useState(false);
+  const [showPortfolio, setShowPortfolio] = React.useState(false); // Retained for UI flow
   const [loadedClientName, setLoadedClientName] = React.useState<string | null>(null);
+
+  const [aiPortfolioRecommendation, setAiPortfolioRecommendation] = React.useState<GenerateEtfPortfolioOutput | null>(null);
+  const [isGeneratingPortfolio, setIsGeneratingPortfolio] = React.useState(false);
+  const [portfolioGenerationError, setPortfolioGenerationError] = React.useState<string | null>(null);
 
 
   const handleInputChange = (field: keyof QuestionnaireData, value: any) => {
@@ -160,6 +173,9 @@ export default function ProjectXPage() {
     if (clientNameKey === CLEAR_SELECTION_VALUE || !clientNameKey) {
       setFormData(initialFormDataState);
       setLoadedClientName(null);
+      setAiPortfolioRecommendation(null); // Clear AI portfolio if form is reset
+      setShowPortfolio(false);
+      setCurrentStep(1);
       toast({ title: "Form Cleared", description: "Questionnaire has been reset." });
       return;
     }
@@ -172,6 +188,9 @@ export default function ProjectXPage() {
         investmentGoals: clientData.investmentGoals ? [...clientData.investmentGoals] : [],
       });
       setLoadedClientName(clientNameKey);
+      setAiPortfolioRecommendation(null); // Clear previous AI portfolio
+      setShowPortfolio(false); // Reset portfolio view
+      setCurrentStep(1); // Reset to first step
       toast({
         title: "Client Data Loaded",
         description: `Profile for ${clientNameKey} has been pre-filled.`,
@@ -187,18 +206,54 @@ export default function ProjectXPage() {
     }
   };
 
+  const handleGeneratePortfolio = async () => {
+    setIsGeneratingPortfolio(true);
+    setPortfolioGenerationError(null);
+    setAiPortfolioRecommendation(null);
+
+    const flowInput: GenerateEtfPortfolioInput = {
+      name: loadedClientName || undefined,
+      age: formData.age,
+      investmentHorizon: formData.investmentHorizon,
+      riskTolerance: formData.riskTolerance,
+      objective: formData.investmentGoals?.join(', ') || undefined,
+      annualIncome: formData.annualIncome, // This field isn't in current QuestionnaireData, will be undefined
+      netWorth: formData.investableAssets, // Using investableAssets for netWorth for now
+      liquidityNeeds: formData.incomeNeeds,
+      taxBracket: undefined, // This field isn't in current QuestionnaireData
+      accountTypes: undefined, // This field isn't in current QuestionnaireData
+      currentHoldings: undefined, // This field isn't in current QuestionnaireData
+      esgConsiderations: formData.esgConsiderations,
+    };
+
+    try {
+      const result = await generateEtfPortfolio(flowInput);
+      setAiPortfolioRecommendation(result);
+      setShowPortfolio(true); // Show the portfolio section
+      toast({
+        title: "Portfolio Generated!",
+        description: `Maven AI has constructed a suggested ETF portfolio.`,
+      });
+    } catch (error: any) {
+      console.error("Error generating portfolio:", error);
+      setPortfolioGenerationError(error.message || "Failed to generate portfolio. Please try again.");
+      toast({
+        title: "Portfolio Generation Failed",
+        description: error.message || "An unexpected error occurred.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsGeneratingPortfolio(false);
+    }
+  };
+
 
   const handleNextStep = () => {
     if (currentStep < TOTAL_STEPS) {
       setCurrentStep(prev => prev + 1);
     } else {
-      setIsSubmitted(true);
-      setShowPortfolio(true);
-      toast({
-        title: "Profile Submitted!",
-        description: `Maven AI is now constructing suggested portfolio for ${loadedClientName || 'the provided profile'}.`,
-      });
-      console.log("Form Submitted:", formData);
+      // Final step: trigger AI portfolio generation
+      handleGeneratePortfolio();
     }
   };
 
@@ -229,10 +284,12 @@ export default function ProjectXPage() {
 
   const resetFullForm = () => {
     setShowPortfolio(false);
-    setIsSubmitted(false);
+    setAiPortfolioRecommendation(null);
+    setPortfolioGenerationError(null);
     setCurrentStep(1);
     setFormData(initialFormDataState);
     setLoadedClientName(null);
+    toast({title: "Form Reset", description: "Questionnaire and portfolio have been cleared."});
   };
 
   const renderQuestionnaireStep = () => {
@@ -267,11 +324,15 @@ export default function ProjectXPage() {
               </RadioGroup>
             </div>
             <div>
-              <Label htmlFor="incomeNeeds" className="text-muted-foreground">Income Needs from Portfolio</Label>
+              <Label htmlFor="incomeNeeds" className="text-muted-foreground">Income Needs from Portfolio (Liquidity Needs)</Label>
               <Select value={formData.incomeNeeds || ""} onValueChange={(value) => handleInputChange('incomeNeeds', value)}>
                 <SelectTrigger id="incomeNeeds" className="bg-input border-border/50"><SelectValue placeholder="Select income needs" /></SelectTrigger>
                 <SelectContent><SelectItem value="None">None / Growth Focused</SelectItem><SelectItem value="Low">Low (e.g., occasional withdrawals)</SelectItem><SelectItem value="Moderate">Moderate (e.g., supplemental income)</SelectItem><SelectItem value="Significant">Significant (e.g., primary income source)</SelectItem></SelectContent>
               </Select>
+            </div>
+             <div>
+              <Label htmlFor="investableAssets" className="text-muted-foreground">Investable Assets (Estimate for Net Worth)</Label>
+              <Input id="investableAssets" type="text" placeholder="e.g., $500,000" value={formData.investableAssets || ''} onChange={(e) => handleInputChange('investableAssets', e.target.value)} className="bg-input border-border/50" />
             </div>
           </div>
         );
@@ -280,7 +341,7 @@ export default function ProjectXPage() {
           <div className="space-y-6">
             <h3 className="text-xl font-semibold text-foreground flex items-center"><Goal className="mr-2 h-5 w-5 text-primary" />Goals & Preferences</h3>
             <div>
-              <Label className="text-muted-foreground">Primary Investment Goals</Label>
+              <Label className="text-muted-foreground">Primary Investment Goals (Objectives)</Label>
               <div className="mt-2 space-y-2">
                 {investmentGoalOptions.map(goal => (
                   <div key={goal.id} className="flex items-center space-x-2">
@@ -309,7 +370,6 @@ export default function ProjectXPage() {
       </h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
-        {/* Left Column: Questionnaire & Portfolio */}
         <div className="lg:col-span-2 space-y-8">
           {!showPortfolio ? (
             <>
@@ -343,51 +403,74 @@ export default function ProjectXPage() {
                     <ChevronLeft className="mr-2 h-4 w-4" /> Previous
                   </Button>
                   <p className="text-sm text-muted-foreground">Step {currentStep} of {TOTAL_STEPS}</p>
-                  <Button onClick={handleNextStep} className="bg-primary hover:bg-primary/90">
-                    {currentStep === TOTAL_STEPS ? "Generate Portfolio" : "Next"}
-                    {currentStep < TOTAL_STEPS && <ChevronRight className="ml-2 h-4 w-4" />}
+                  <Button onClick={handleNextStep} className="bg-primary hover:bg-primary/90" disabled={isGeneratingPortfolio}>
+                    {isGeneratingPortfolio ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    {currentStep === TOTAL_STEPS ? (isGeneratingPortfolio ? "Generating..." : "Generate Portfolio") : "Next"}
+                    {currentStep < TOTAL_STEPS && !isGeneratingPortfolio && <ChevronRight className="ml-2 h-4 w-4" />}
                   </Button>
                 </div>
               </PlaceholderCard>
             </>
-          ) : (
-            <PlaceholderCard title={`Maven AI Suggested Portfolio${loadedClientName ? ` for ${loadedClientName}` : ''}`} icon={PieChartIcon} className="min-h-[400px]">
-              <p className="text-sm text-muted-foreground mb-4">Based on the profile, Maven AI suggests the following allocation. This is a starting point and can be further customized.</p>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-center">
-                <div className="space-y-3">
-                  {mockPortfolio.map(asset => (
-                    <div key={asset.assetClass} className="flex items-center justify-between text-sm p-2 rounded-md hover:bg-muted/10">
-                      <div className="flex items-center gap-2">
-                        <span className={cn("h-3 w-3 rounded-sm", asset.color)}></span>
-                        <span className="text-muted-foreground">{asset.assetClass}</span>
-                      </div>
-                      <span className="font-medium text-foreground">{asset.percentage}%</span>
-                    </div>
-                  ))}
+          ) : aiPortfolioRecommendation ? (
+            <PlaceholderCard title={aiPortfolioRecommendation.portfolioName} icon={PieChartIcon} className="min-h-[400px]">
+                <div className="mb-4">
+                    <h3 className="text-lg font-semibold text-foreground mb-2">Allocation Table</h3>
+                    <Table>
+                        <TableHeader>
+                        <TableRow>
+                            <TableHead>ETF</TableHead>
+                            <TableHead>Allocation</TableHead>
+                            <TableHead>Asset Class</TableHead>
+                        </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                        {aiPortfolioRecommendation.allocations.map((alloc, index) => (
+                            <TableRow key={index}>
+                            <TableCell className="font-medium">{alloc.etf}</TableCell>
+                            <TableCell>{alloc.percentage}</TableCell>
+                            <TableCell>{alloc.assetClass}</TableCell>
+                            </TableRow>
+                        ))}
+                        </TableBody>
+                    </Table>
                 </div>
-                <div className="h-[300px] w-full bg-black/30 rounded-md flex items-center justify-center p-4" data-ai-hint="asset allocation donut chart">
-                   <BarChartBig className="w-24 h-24 text-primary/30" />
-                   <p className="text-muted-foreground ml-4">Asset Allocation Chart</p>
+                 <div className="mb-4">
+                    <h3 className="text-lg font-semibold text-foreground mb-2">Rationale</h3>
+                    <p className="text-sm text-muted-foreground whitespace-pre-line">{aiPortfolioRecommendation.rationaleSummary}</p>
                 </div>
-              </div>
-                <div className="flex justify-end mt-6">
+                <div className="flex justify-end mt-6 space-x-2">
                     <Button variant="outline" onClick={resetFullForm}>
                         <RotateCcw className="mr-2 h-4 w-4" /> Start Over
                     </Button>
-                     <Button className="ml-2 bg-primary hover:bg-primary/90">
+                     <Button className="bg-primary hover:bg-primary/90">
                         Implement This Portfolio
                     </Button>
+                </div>
+            </PlaceholderCard>
+          ) : portfolioGenerationError ? (
+            <PlaceholderCard title="Portfolio Generation Error" icon={AlertTriangle} className="min-h-[400px]">
+                <p className="text-red-400">{portfolioGenerationError}</p>
+                <div className="flex justify-end mt-6">
+                    <Button variant="outline" onClick={resetFullForm}>
+                        <RotateCcw className="mr-2 h-4 w-4" /> Try Again
+                    </Button>
+                </div>
+            </PlaceholderCard>
+          ) : (
+            <PlaceholderCard title="Generating Portfolio..." icon={Loader2} className="min-h-[400px] animate-pulse">
+                <div className="flex flex-col items-center justify-center h-full">
+                    <Loader2 className="w-16 h-16 text-primary animate-spin" />
+                    <p className="mt-4 text-muted-foreground">Maven AI is constructing your portfolio...</p>
                 </div>
             </PlaceholderCard>
           )}
         </div>
 
-        {/* Right Column: Alerts & Info */}
         <div className="lg:col-span-1 space-y-8">
           <PlaceholderCard title="AI Portfolio Alerts" icon={AlertTriangle} className="min-h-[300px]">
-            {alerts.length === 0 && !isSubmitted ? (
+            {alerts.length === 0 && !showPortfolio ? (
                  <p className="text-muted-foreground text-center py-10">Complete the questionnaire to view potential AI-driven portfolio alerts.</p>
-            ): alerts.length === 0 && isSubmitted ? (
+            ): alerts.length === 0 && showPortfolio ? (
                 <p className="text-muted-foreground text-center py-10">No active alerts for the suggested portfolio.</p>
             ) : (
               <ScrollArea className="h-[350px] pr-3 -mr-3"> 
