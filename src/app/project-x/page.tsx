@@ -499,20 +499,6 @@ export default function ProjectXPage() {
               </ScrollArea>
             )}
           </PlaceholderCard>
-
-          <PlaceholderCard title="Maven AI Engine" icon={Lightbulb}>
-            <div className="space-y-2 text-sm text-muted-foreground">
-              <p>Maven AI constructs and monitors portfolios by analyzing:</p>
-              <ul className="list-disc list-inside pl-2 space-y-1 text-xs">
-                <li>Your investor profile and risk tolerance.</li>
-                <li>Real-time market data and economic indicators.</li>
-                <li>Historical asset class performance and correlations.</li>
-                <li>Global news sentiment and geopolitical events.</li>
-                <li>Regulatory changes and government policies.</li>
-              </ul>
-              <p className="mt-3">Recommendations are data-driven, designed to align with your long-term goals while adapting to changing market conditions.</p>
-            </div>
-          </PlaceholderCard>
         </div>
       </div>
     </main>
