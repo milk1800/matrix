@@ -117,7 +117,8 @@ const additionalInfoSections: SectionConfig[] = [
       { key: "investmentObjective", label: "Investment Objective", type: 'select', selectPlaceholder: 'Select objective...', options: [ { value: 'aggressive_growth', label: 'Aggressive Growth' }, { value: 'growth', label: 'Growth' }, { value: 'income', label: 'Income' }, { value: 'safety_of_principal', label: 'Safety of Principal' }, ] },
       { key: "timeHorizon", label: "Time Horizon", type: 'select', selectPlaceholder: 'Select horizon...', options: [ { value: 'short_term', label: 'Short Term (1-3 years)' }, { value: 'intermediate', label: 'Intermediate (3-7 years)' }, { value: 'long_term', label: 'Long Term (7+ years)' }, ] },
       { key: "riskTolerance", label: "Risk Tolerance", type: 'select', selectPlaceholder: 'Select tolerance...', options: [ { value: 'low', label: 'Low' }, { value: 'moderate', label: 'Moderate' }, { value: 'high_risk', label: 'High Risk' }, ] },
-      { key: "experienceMutualFunds", label: "Experience with Mutual Funds", type: 'select', selectPlaceholder: 'Select years...', options: yearOptions }, { key: "experienceStocksBonds", label: "Experience with Stocks & Bonds", type: 'select', selectPlaceholder: 'Select years...', options: yearOptions }, { key: "experiencePartnerships", label: "Experience with Partnerships", type: 'select', selectPlaceholder: 'Select years...', options: yearOptions }, { key: "otherInvestingExperience", label: "Other Investing Experience", type: 'text', placeholder: 'e.g. Real Estate, Private Equity' },
+      { key: "experienceMutualFunds", label: "Experience with Mutual Funds", type: 'select', selectPlaceholder: 'Select years...', options: yearOptions }, { key: "experienceStocksBonds", label: "Experience with Stocks & Bonds", type: 'select', selectPlaceholder: 'Select years...', options: yearOptions }, { key: "experiencePartnerships", label: "Experience with Partnerships", type: 'select', selectPlaceholder: 'Select years...', options: yearOptions }, 
+      { key: "otherInvestingExperience", label: "Other Investing Experience", type: 'text', placeholder: 'e.g. Real Estate, Private Equity' },
     ],
   },
   {
@@ -192,7 +193,7 @@ const statusOptions = [
   { value: "active", label: "Active" }, { value: "pending", label: "Pending" }, { value: "closed", label: "Closed" }, { value: "restricted", label: "Restricted" },
 ];
 const rebalanceFrequencyOptions = [
-  { value: "daily", label: "Daily" }, { value: "monthly", label: "Monthly" }, { value: "quarterly", label: "Quarterly" }, { value: "annually", label: "Annually" }, { value: "on_demand", label: "On Demand" }, { value: "never", label: "Never" },
+  { value: "daily", label: "Daily" }, { value: "monthly", label: "Monthly" }, { value: "quarterly", label: "Quarterly" }, { value: "annually", label: "Annually" }, { value: "semi_annually", label: "Semi-Annually" }, { value: "on_demand", label: "On Demand" }, { value: "never", label: "Never" },
 ];
 
 
@@ -255,6 +256,54 @@ export default function ContactDetailPage() {
               hasTaxLossCarryforward: "Yes",
             };
             setAdditionalInfoData(prev => ({ ...prev, ...johnSmithSpecificData }));
+
+            const staticJohnSmithAccounts: AccountFormData[] = [
+              {
+                id: 'static-1',
+                accountNumber: 'ROTH-123456',
+                company: 'Pershing LLC',
+                product: 'Retirement Account',
+                accountType: 'roth_ira',
+                taxQualified: true,
+                taxQualType: 'qualified',
+                discretionary: true,
+                managed: true,
+                manager: '', // Not specified
+                contacts: 'John Smith',
+                modelStrategy: 'Growth Portfolio Model A',
+                status: 'active',
+                issueDate: '2020-01-15',
+                cashValue: '45000',
+                faceValue: '0',
+                surrenderValue: '0',
+                loanBalance: '0',
+                assetBalance: '45000', // Using cash value for asset balance
+                rebalanceFrequency: 'quarterly',
+              },
+              {
+                id: 'static-2',
+                accountNumber: 'BROKER-7891011',
+                company: 'Fidelity Investments',
+                product: 'Individual Investment Account',
+                accountType: 'taxable_brokerage',
+                taxQualified: false,
+                taxQualType: '',
+                discretionary: false,
+                managed: false,
+                manager: '', // Not specified
+                contacts: 'John Smith',
+                modelStrategy: 'Core Equities Model',
+                status: 'active',
+                issueDate: '2022-07-22',
+                cashValue: '82300',
+                faceValue: '0',
+                surrenderValue: '0',
+                loanBalance: '0',
+                assetBalance: '82300', // Using cash value for asset balance
+                rebalanceFrequency: 'semi_annually',
+              },
+            ];
+            setLinkedAccounts(staticJohnSmithAccounts);
           }
 
         } else {
@@ -300,7 +349,7 @@ export default function ContactDetailPage() {
       toast({ title: "Missing Required Fields", description: "Account Number, Company, and Product are required.", variant: "destructive" });
       return;
     }
-    setLinkedAccounts(prev => [...prev, { ...accountFormData, id: Date.now().toString() }]);
+    setLinkedAccounts(prev => [...prev, { ...accountFormData, contacts: displayName, id: Date.now().toString() }]);
     toast({ title: "Account Added", description: `${accountFormData.product} account for ${accountFormData.company} added successfully.` });
     setIsAddAccountModalOpen(false);
     setAccountFormData(initialAccountFormState); 
