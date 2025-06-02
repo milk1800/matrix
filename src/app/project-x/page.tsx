@@ -36,7 +36,7 @@ import {
   Lightbulb,
   BarChartBig,
   Search,
-  Contact2 // New icon for client selection
+  Contact2
 } from 'lucide-react';
 
 interface QuestionnaireData {
@@ -91,7 +91,17 @@ const investmentGoalOptions = [
   { id: "education", label: "Education Funding" },
 ];
 
-// Mock client data for pre-filling questionnaire
+const initialFormDataState: QuestionnaireData = {
+  investmentGoals: [],
+  age: undefined,
+  investmentHorizon: undefined,
+  riskTolerance: undefined,
+  incomeNeeds: undefined,
+  annualIncome: undefined,
+  investableAssets: undefined,
+  esgConsiderations: undefined,
+};
+
 const mockClientDatabase: Record<string, Partial<QuestionnaireData>> = {
   "John Smith": {
     age: 42,
@@ -123,11 +133,10 @@ const mockClientDatabase: Record<string, Partial<QuestionnaireData>> = {
 export default function ProjectXPage() {
   const { toast } = useToast();
   const [currentStep, setCurrentStep] = React.useState(1);
-  const [formData, setFormData] = React.useState<QuestionnaireData>({ investmentGoals: [] });
+  const [formData, setFormData] = React.useState<QuestionnaireData>(initialFormDataState);
   const [isSubmitted, setIsSubmitted] = React.useState(false);
   const [alerts, setAlerts] = React.useState<AiAlertItem[]>(initialAlerts);
   const [showPortfolio, setShowPortfolio] = React.useState(false);
-  const [clientSearchTerm, setClientSearchTerm] = React.useState("");
   const [loadedClientName, setLoadedClientName] = React.useState<string | null>(null);
 
 
@@ -146,31 +155,33 @@ export default function ProjectXPage() {
     });
   };
 
-  const handleLoadClient = () => {
-    const searchTermNormalized = clientSearchTerm.trim();
-    const foundClientKey = Object.keys(mockClientDatabase).find(
-      key => key.toLowerCase() === searchTermNormalized.toLowerCase()
-    );
+  const handleClientSelectionChange = (clientNameKey: string) => {
+    if (!clientNameKey) { // If "Select Client to Pre-fill" or empty value is chosen
+      setFormData(initialFormDataState); // Reset form data
+      setLoadedClientName(null);
+      toast({ title: "Form Cleared", description: "Questionnaire has been reset." });
+      return;
+    }
 
-    if (foundClientKey) {
-      const clientData = mockClientDatabase[foundClientKey];
-      setFormData(prev => ({
-        ...prev, // Keep any existing data, but overwrite with client data
+    const clientData = mockClientDatabase[clientNameKey];
+    if (clientData) {
+      setFormData({ // Fully replace form data with client's, ensuring all fields are reset if not in clientData
+        ...initialFormDataState, // Start with a base empty form
         ...clientData,
-        investmentGoals: clientData.investmentGoals ? [...clientData.investmentGoals] : [], // Ensure array is new
-      }));
-      setLoadedClientName(foundClientKey);
+        investmentGoals: clientData.investmentGoals ? [...clientData.investmentGoals] : [],
+      });
+      setLoadedClientName(clientNameKey);
       toast({
         title: "Client Data Loaded",
-        description: `Profile for ${foundClientKey} has been pre-filled.`,
+        description: `Profile for ${clientNameKey} has been pre-filled.`,
       });
     } else {
+      // This case should ideally not happen if clientNameKey comes from Object.keys(mockClientDatabase)
       setLoadedClientName(null);
-      // Optionally reset parts of form data if client not found, or leave as is
-      // setFormData({ investmentGoals: [] }); // Example: reset form
+      setFormData(initialFormDataState);
       toast({
         title: "Client Not Found",
-        description: `No profile found for "${searchTermNormalized}". Please proceed manually.`,
+        description: `No profile found for "${clientNameKey}". Form reset.`,
         variant: "destructive",
       });
     }
@@ -220,8 +231,7 @@ export default function ProjectXPage() {
     setShowPortfolio(false);
     setIsSubmitted(false);
     setCurrentStep(1);
-    setFormData({ investmentGoals: [] });
-    setClientSearchTerm("");
+    setFormData(initialFormDataState);
     setLoadedClientName(null);
   };
 
@@ -237,7 +247,7 @@ export default function ProjectXPage() {
             </div>
             <div>
               <Label htmlFor="investmentHorizon" className="text-muted-foreground">Investment Horizon</Label>
-              <Select value={formData.investmentHorizon} onValueChange={(value) => handleInputChange('investmentHorizon', value)}>
+              <Select value={formData.investmentHorizon || ""} onValueChange={(value) => handleInputChange('investmentHorizon', value)}>
                 <SelectTrigger id="investmentHorizon" className="bg-input border-border/50"><SelectValue placeholder="Select horizon" /></SelectTrigger>
                 <SelectContent><SelectItem value="1-3">Short-term (1-3 years)</SelectItem><SelectItem value="3-7">Medium-term (3-7 years)</SelectItem><SelectItem value="7+">Long-term (7+ years)</SelectItem></SelectContent>
               </Select>
@@ -258,7 +268,7 @@ export default function ProjectXPage() {
             </div>
             <div>
               <Label htmlFor="incomeNeeds" className="text-muted-foreground">Income Needs from Portfolio</Label>
-              <Select value={formData.incomeNeeds} onValueChange={(value) => handleInputChange('incomeNeeds', value)}>
+              <Select value={formData.incomeNeeds || ""} onValueChange={(value) => handleInputChange('incomeNeeds', value)}>
                 <SelectTrigger id="incomeNeeds" className="bg-input border-border/50"><SelectValue placeholder="Select income needs" /></SelectTrigger>
                 <SelectContent><SelectItem value="None">None / Growth Focused</SelectItem><SelectItem value="Low">Low (e.g., occasional withdrawals)</SelectItem><SelectItem value="Moderate">Moderate (e.g., supplemental income)</SelectItem><SelectItem value="Significant">Significant (e.g., primary income source)</SelectItem></SelectContent>
               </Select>
@@ -306,20 +316,19 @@ export default function ProjectXPage() {
               <PlaceholderCard title="Client Selection" icon={Contact2} className="min-h-0">
                 <div className="space-y-4">
                   <div>
-                    <Label htmlFor="clientNameSearch" className="text-muted-foreground">Select Client</Label>
-                    <div className="flex space-x-2 mt-1">
-                      <Input
-                        id="clientNameSearch"
-                        placeholder="Type client name to search (e.g., John Smith)"
-                        value={clientSearchTerm}
-                        onChange={(e) => setClientSearchTerm(e.target.value)}
-                        className="bg-input border-border/50"
-                      />
-                      <Button onClick={handleLoadClient} variant="outline">
-                        <Search className="mr-2 h-4 w-4" /> Load
-                      </Button>
-                    </div>
-                    {loadedClientName && <p className="text-xs text-green-400 mt-2">Loaded profile for: {loadedClientName}</p>}
+                    <Label htmlFor="clientNameSelect" className="text-muted-foreground">Select Client to Pre-fill Questionnaire</Label>
+                    <Select value={loadedClientName || ""} onValueChange={handleClientSelectionChange}>
+                      <SelectTrigger id="clientNameSelect" className="bg-input border-border/50 mt-1">
+                        <SelectValue placeholder="Select Client to Pre-fill..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="">Clear Selection / Reset Form</SelectItem>
+                        {Object.keys(mockClientDatabase).map(clientName => (
+                          <SelectItem key={clientName} value={clientName}>{clientName}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {loadedClientName && <p className="text-xs text-green-400 mt-2">Profile for: {loadedClientName} is loaded.</p>}
                   </div>
                 </div>
               </PlaceholderCard>
