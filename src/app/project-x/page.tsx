@@ -129,6 +129,7 @@ const mockClientDatabase: Record<string, Partial<QuestionnaireData>> = {
   }
 };
 
+const CLEAR_SELECTION_VALUE = "_clear_selection_";
 
 export default function ProjectXPage() {
   const { toast } = useToast();
@@ -156,8 +157,8 @@ export default function ProjectXPage() {
   };
 
   const handleClientSelectionChange = (clientNameKey: string) => {
-    if (!clientNameKey) { // If "Select Client to Pre-fill" or empty value is chosen
-      setFormData(initialFormDataState); // Reset form data
+    if (clientNameKey === CLEAR_SELECTION_VALUE || !clientNameKey) {
+      setFormData(initialFormDataState);
       setLoadedClientName(null);
       toast({ title: "Form Cleared", description: "Questionnaire has been reset." });
       return;
@@ -165,8 +166,8 @@ export default function ProjectXPage() {
 
     const clientData = mockClientDatabase[clientNameKey];
     if (clientData) {
-      setFormData({ // Fully replace form data with client's, ensuring all fields are reset if not in clientData
-        ...initialFormDataState, // Start with a base empty form
+      setFormData({ 
+        ...initialFormDataState, 
         ...clientData,
         investmentGoals: clientData.investmentGoals ? [...clientData.investmentGoals] : [],
       });
@@ -176,7 +177,6 @@ export default function ProjectXPage() {
         description: `Profile for ${clientNameKey} has been pre-filled.`,
       });
     } else {
-      // This case should ideally not happen if clientNameKey comes from Object.keys(mockClientDatabase)
       setLoadedClientName(null);
       setFormData(initialFormDataState);
       toast({
@@ -317,12 +317,12 @@ export default function ProjectXPage() {
                 <div className="space-y-4">
                   <div>
                     <Label htmlFor="clientNameSelect" className="text-muted-foreground">Select Client to Pre-fill Questionnaire</Label>
-                    <Select value={loadedClientName || ""} onValueChange={handleClientSelectionChange}>
+                    <Select value={loadedClientName || CLEAR_SELECTION_VALUE} onValueChange={handleClientSelectionChange}>
                       <SelectTrigger id="clientNameSelect" className="bg-input border-border/50 mt-1">
                         <SelectValue placeholder="Select Client to Pre-fill..." />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="">Clear Selection / Reset Form</SelectItem>
+                        <SelectItem value={CLEAR_SELECTION_VALUE}>Clear Selection / Reset Form</SelectItem>
                         {Object.keys(mockClientDatabase).map(clientName => (
                           <SelectItem key={clientName} value={clientName}>{clientName}</SelectItem>
                         ))}
