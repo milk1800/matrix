@@ -95,6 +95,12 @@ const accountsWithoutBeneficiaryData: AccountWithoutBeneficiary[] = [
 ];
 
 export default function ClientAnalyticsPage() {
+  const [isMounted, setIsMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   return (
     <main className="min-h-screen bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#5b21b6]/10 to-[#000104] flex-1 p-6 space-y-8 md:p-8">
       <h1 className="text-3xl font-bold tracking-tight text-foreground mb-8">Client Analytics</h1>
@@ -167,9 +173,11 @@ export default function ClientAnalyticsPage() {
                         <TableCell className="text-right font-semibold">{account.aumDisplay}</TableCell>
                       </TableRow>
                     </TooltipTrigger>
-                    <TooltipContent side="top" className="bg-popover text-popover-foreground">
-                      <p>Tap to initiate beneficiary outreach task</p>
-                    </TooltipContent>
+                    {isMounted && (
+                      <TooltipContent side="top" className="bg-popover text-popover-foreground">
+                        <p>Tap to initiate beneficiary outreach task</p>
+                      </TooltipContent>
+                    )}
                   </Tooltip>
                 ))}
               </TableBody>
@@ -212,8 +220,5 @@ export default function ClientAnalyticsPage() {
     </main>
   );
 }
-
-
-    
 
     
