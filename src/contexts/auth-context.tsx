@@ -5,12 +5,13 @@
 import type { User } from "firebase/auth";
 import { signInWithPopup, signOut as firebaseSignOut, onAuthStateChanged, type OAuthCredential } from "firebase/auth";
 import * as React from "react";
-import { auth, googleAuthProvider } from "@/lib/firebase/config";
+import { auth as firebaseAuth, googleAuthProvider, isFirebaseConfigured } from "@/lib/firebase/config"; // Renamed auth to firebaseAuth to avoid conflict
 
 interface AuthContextType {
   user: User | null;
   accessToken: string | null;
   isLoading: boolean;
+  isConfigured: boolean; // To indicate if Firebase is set up
   signInWithGoogleAndGetGmailToken: () => Promise<void>;
   signOutGoogle: () => Promise<void>;
 }
@@ -23,23 +24,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = React.useState(true);
 
   React.useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+    if (!isFirebaseConfigured || !firebaseAuth) {
+      setIsLoading(false);
+      console.warn("AuthProvider: Firebase is not configured. Auth features will be disabled.");
+      return;
+    }
+
+    const unsubscribe = onAuthStateChanged(firebaseAuth, (currentUser) => {
       setUser(currentUser);
       setIsLoading(false);
       if (!currentUser) {
         setAccessToken(null); // Clear access token on sign out
       }
-      // Note: We get the access token during signInWithPopup, not directly from onAuthStateChanged for external services like Gmail API.
     });
     return () => unsubscribe();
   }, []);
 
   const signInWithGoogleAndGetGmailToken = async () => {
+    if (!isFirebaseConfigured || !firebaseAuth) {
+      console.error("Firebase not configured. Cannot sign in.");
+      // Optionally, show a toast or alert to the user
+      return;
+    }
     setIsLoading(true);
     try {
-      const result = await signInWithPopup(auth, googleAuthProvider);
-      // This gives you a Google Access Token. You can use it to access the Google API.
-      const credential = result.credential as OAuthCredential; // Cast to specific type
+      const result = await signInWithPopup(firebaseAuth, googleAuthProvider);
+      const credential = result.credential as OAuthCredential;
       if (credential && credential.accessToken) {
         setAccessToken(credential.accessToken);
         setUser(result.user);
@@ -51,26 +61,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (error: any) {
       console.error("Error during Google Sign-In:", error);
       setAccessToken(null);
-      // Handle specific errors (e.g., popup_closed_by_user, network_error)
-      if (error.code === 'auth/popup-closed-by-user') {
-        // User closed the popup
-      }
     } finally {
       setIsLoading(false);
     }
   };
 
   const signOutGoogle = async () => {
+    if (!isFirebaseConfigured || !firebaseAuth) {
+      console.error("Firebase not configured. Cannot sign out.");
+      return;
+    }
     setIsLoading(true);
     try {
-      await firebaseSignOut(auth);
+      await firebaseSignOut(firebaseAuth);
       setUser(null);
       setAccessToken(null);
       if (typeof window !== 'undefined' && window.gapi && window.gapi.auth2) {
         const authInstance = window.gapi.auth2.getAuthInstance();
         if (authInstance && authInstance.isSignedIn.get()) {
           authInstance.signOut();
-          authInstance.disconnect(); // Revokes all granted scopes
+          authInstance.disconnect();
           console.log("GAPI client signed out and disconnected.");
         }
       }
@@ -82,7 +92,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{ user, accessToken, isLoading, signInWithGoogleAndGetGmailToken, signOutGoogle }}>
+    <AuthContext.Provider 
+      value={{ 
+        user, 
+        accessToken, 
+        isLoading, 
+        isConfigured: isFirebaseConfigured && !!firebaseAuth, 
+        signInWithGoogleAndGetGmailToken, 
+        signOutGoogle 
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
