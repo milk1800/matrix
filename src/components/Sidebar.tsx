@@ -1,4 +1,3 @@
-
 "use client";
 
 import Link from "next/link";
@@ -57,7 +56,6 @@ const navSectionsData: NavSection[] = [
     icon: AppWindow,
     items: [
       { name: 'Home', icon: HomeIcon, href: '/client-portal/home' },
-      { name: 'Email', icon: Mail, href: '/client-portal/email' },
       { name: 'Contacts', icon: ContactIcon, href: '/client-portal/contacts' },
       { name: 'Tasks', icon: ListChecks, href: '/client-portal/tasks' },
       { name: 'Workflows', icon: Workflow, href: '/client-portal/workflows'},
