@@ -78,8 +78,10 @@ export default function AssetAnalyticsPage() {
               <SelectValue placeholder="Select Advisor" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="mike_mcdermott_mam">Mike McDermott MAM</SelectItem>
-              <SelectItem value="sam_rothstein_sar">Sam Rothstein SAR</SelectItem>
+              <SelectItem value="dom_cobb">Dom Cobb</SelectItem>
+              <SelectItem value="alice_ayers">Alice Ayers</SelectItem>
+              <SelectItem value="peter_banning">Peter Banning</SelectItem>
+              <SelectItem value="jules_winnfield">Jules Winnfield</SelectItem>
             </SelectContent>
           </Select>
         </PlaceholderCard>
