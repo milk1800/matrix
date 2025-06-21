@@ -46,7 +46,7 @@ interface MarketData {
 
 const initialMarketOverviewData: MarketData[] = [
   {
-    label: 'Apple (AAPL)',
+    label: 'Apple Inc. (AAPL)',
     polygonTicker: 'AAPL',
     icon: PieChart,
     openTime: '09:30',
@@ -54,7 +54,7 @@ const initialMarketOverviewData: MarketData[] = [
     timezone: 'America/New_York',
   },
   {
-    label: 'Microsoft (MSFT)',
+    label: 'Microsoft Corporation (MSFT)',
     polygonTicker: 'MSFT',
     icon: PieChart,
     openTime: '09:30',
@@ -62,7 +62,7 @@ const initialMarketOverviewData: MarketData[] = [
     timezone: 'America/New_York',
   },
   {
-    label: 'Google (GOOGL)',
+    label: 'Alphabet Inc. (GOOGL)',
     polygonTicker: 'GOOGL',
     icon: PieChart,
     openTime: '09:30',
@@ -70,7 +70,7 @@ const initialMarketOverviewData: MarketData[] = [
     timezone: 'America/New_York',
   },
   {
-    label: 'Tesla (TSLA)',
+    label: 'Tesla, Inc. (TSLA)',
     polygonTicker: 'TSLA',
     icon: PieChart,
     openTime: '09:30',
@@ -489,11 +489,13 @@ export default function DashboardPage() {
 
     const staticTickerDetails: Record<string, Partial<TickerFullData>> = {
         'AAPL': {
-            companyName: 'Apple Inc. (Static)', symbol: 'AAPL', exchange: 'NASDAQ', sector: 'Technology', industry: 'Consumer Electronics', logo: `https://placehold.co/48x48.png?text=AAPL`, marketCap: "2.8T", currentPrice: "195.16", priceChangeAmount: "+0.88", priceChangePercent: "+0.45", previousClose: "194.28", openPrice: "194.50", daysRange: "193.90 - 195.50", volume: "45M", avgVolume: "55M", peRatio: "30.5", eps: "6.40", dividendYield: "0.5%", beta: "1.2", nextEarningsDate: "Jul 25, 2024", dividendDate: "May 10, 2024",
+            companyName: 'Apple Inc.',
+            symbol: 'AAPL', exchange: 'NASDAQ', sector: 'Technology', industry: 'Consumer Electronics', logo: `https://placehold.co/48x48.png?text=AAPL`, marketCap: "2.8T", currentPrice: "195.16", priceChangeAmount: "+0.88", priceChangePercent: "+0.45", previousClose: "194.28", openPrice: "194.50", daysRange: "193.90 - 195.50", volume: "45M", avgVolume: "55M", peRatio: "30.5", eps: "6.40", dividendYield: "0.5%", beta: "1.2", nextEarningsDate: "Jul 25, 2024", dividendDate: "May 10, 2024",
             fullPriceHistory: Array.from({length: 252}, (_, i) => ({ date: format(subYears(new Date(), 1).setDate(new Date().getDate() - (251-i)), 'yyyy-MM-dd'), close: 170 + Math.sin(i/20)*20 + Math.random()*10})),
         },
         'MSFT': {
-            companyName: 'Microsoft Corp. (Static)', symbol: 'MSFT', exchange: 'NASDAQ', sector: 'Technology', industry: 'Software - Infrastructure', logo: `https://placehold.co/48x48.png?text=MSFT`, marketCap: "3.1T", currentPrice: "420.72", priceChangeAmount: "-1.20", priceChangePercent: "-0.28", previousClose: "421.92", openPrice: "421.00", daysRange: "419.50 - 422.00", volume: "18M", avgVolume: "22M", peRatio: "38.2", eps: "11.01", dividendYield: "0.7%", beta: "0.9", nextEarningsDate: "Jul 22, 2024", dividendDate: "Jun 05, 2024",
+            companyName: 'Microsoft Corporation',
+            symbol: 'MSFT', exchange: 'NASDAQ', sector: 'Technology', industry: 'Software - Infrastructure', logo: `https://placehold.co/48x48.png?text=MSFT`, marketCap: "3.1T", currentPrice: "420.72", priceChangeAmount: "-1.20", priceChangePercent: "-0.28", previousClose: "421.92", openPrice: "421.00", daysRange: "419.50 - 422.00", volume: "18M", avgVolume: "22M", peRatio: "38.2", eps: "11.01", dividendYield: "0.7%", beta: "0.9", nextEarningsDate: "Jul 22, 2024", dividendDate: "Jun 05, 2024",
             fullPriceHistory: Array.from({length: 252}, (_, i) => ({ date: format(subYears(new Date(), 1).setDate(new Date().getDate() - (251-i)), 'yyyy-MM-dd'), close: 380 + Math.sin(i/25)*30 + Math.random()*15})),
         }
     };
@@ -669,7 +671,7 @@ export default function DashboardPage() {
                     <span>
                       {isMounted && item.published_utc 
                         ? formatDistanceToNowStrict(parseISO(item.published_utc), { addSuffix: true }) 
-                        : (item.published_utc ? "Calculating..." : "N/A")
+                        : "Calculating..."
                       }
                     </span>
                   </div>
@@ -693,7 +695,7 @@ export default function DashboardPage() {
            <div className="w-full space-y-6 p-4 md:p-6">
             {/* Minimal Header Section */}
             <div className="w-full text-left mb-4">
-              <h3 className="text-2xl font-bold text-foreground mb-1">{tickerData.companyName}</h3>
+              <h3 className="text-2xl font-bold text-foreground mb-1">{`${tickerData.companyName} (${tickerData.symbol})`}</h3>
               <div className="flex items-end gap-3 mb-1">
                 <span className="text-4xl font-bold text-foreground">${tickerData.currentPrice}</span>
                 {(tickerData.priceChangeAmount && tickerData.priceChangePercent) && (
@@ -791,4 +793,3 @@ export default function DashboardPage() {
     </main>
   );
 }
-

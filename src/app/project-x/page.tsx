@@ -16,6 +16,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { getCompanyNameFromTicker } from "@/lib/ticker-utils";
 import {
   Brain,
   User,
@@ -418,7 +419,7 @@ export default function ProjectXPage() {
                     <Table>
                         <TableHeader>
                         <TableRow>
-                            <TableHead>ETF</TableHead>
+                            <TableHead>Asset</TableHead>
                             <TableHead>Allocation</TableHead>
                             <TableHead>Asset Class</TableHead>
                         </TableRow>
@@ -426,8 +427,8 @@ export default function ProjectXPage() {
                         <TableBody>
                         {aiPortfolioRecommendation.allocations.map((alloc, index) => (
                             <TableRow key={index}>
-                            <TableCell className="font-medium">{alloc.etf}</TableCell>
-                            <TableCell>{alloc.percentage}</TableCell>
+                            <TableCell className="font-medium">{getCompanyNameFromTicker(alloc.etf)} ({alloc.etf})</TableCell>
+                            <TableCell>{alloc.allocation}</TableCell>
                             <TableCell>{alloc.assetClass}</TableCell>
                             </TableRow>
                         ))}
@@ -504,4 +505,3 @@ export default function ProjectXPage() {
     </main>
   );
 }
-

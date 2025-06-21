@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { formatTickerAndName } from "@/lib/ticker-utils";
 
 const metricCardsData = [
   {
@@ -150,8 +151,7 @@ export default function AssetAnalyticsPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="font-bold">Symbol</TableHead>
-              <TableHead className="font-bold">Name</TableHead>
+              <TableHead className="font-bold">Asset</TableHead>
               <TableHead className="font-bold">Category</TableHead>
               <TableHead className="text-right font-bold">Value</TableHead>
               <TableHead className="text-right font-bold">Weight</TableHead>
@@ -161,8 +161,7 @@ export default function AssetAnalyticsPage() {
           <TableBody>
             {topPerformingAssetsData.map((asset) => (
               <TableRow key={asset.symbol}>
-                <TableCell className="font-medium">{asset.symbol}</TableCell>
-                <TableCell>{asset.name}</TableCell>
+                <TableCell className="font-medium">{formatTickerAndName(asset.symbol)}</TableCell>
                 <TableCell className="text-muted-foreground">{asset.category}</TableCell>
                 <TableCell className="text-right">{asset.value}</TableCell>
                 <TableCell className="text-right">{asset.weight}</TableCell>

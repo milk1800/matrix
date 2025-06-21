@@ -16,6 +16,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogC
 import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
+import { getCompanyNameFromTicker } from '@/lib/ticker-utils';
 
 const inter = Inter({
   variable: '--font-inter',
@@ -78,7 +79,7 @@ function TickerContent() {
     <div className="animate-ticker whitespace-nowrap flex items-center text-sm font-mono">
       {duplicatedTickerItems.map((item, index) => (
         <span key={`${item.symbol}-${index}`} className="text-white px-4"> 
-          {item.symbol}: <span className={item.color || 'text-white'}>{item.price} {item.change}{item.changePercent}</span>
+          {getCompanyNameFromTicker(item.symbol)}: <span className={item.color || 'text-white'}>{item.price} {item.change}{item.changePercent}</span>
         </span>
       ))}
     </div>
