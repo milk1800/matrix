@@ -1,4 +1,3 @@
-
 "use client";
 import * as React from "react";
 import Image from "next/image";
@@ -91,11 +90,9 @@ export default function AssetAnalyticsPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all_custodians">All Custodians</SelectItem>
-              <SelectItem value="pershing">Pershing</SelectItem>
               <SelectItem value="schwab">Charles Schwab</SelectItem>
               <SelectItem value="fidelity">Fidelity</SelectItem>
               <SelectItem value="goldman">Goldman Sachs</SelectItem>
-              <SelectItem value="pas">PAS</SelectItem>
             </SelectContent>
           </Select>
         </PlaceholderCard>
