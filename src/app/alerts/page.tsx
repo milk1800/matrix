@@ -50,7 +50,6 @@ const generateLastCheckedTime = (minutesAgoMax: number): string => {
 const mockSystemStatuses: SystemStatusItem[] = [
   { id: 'netx360plus', name: 'NetX360+', icon: Server, status: 'Operational', lastChecked: generateLastCheckedTime(7), details: 'All systems normal.' },
   { id: 'netx', name: 'NetXInvestor', icon: Server, status: 'Operational', lastChecked: generateLastCheckedTime(5), details: 'All systems normal.' },
-  { id: 'sanctuary', name: 'Sanctuary One', icon: Server, status: 'Performance Issues', lastChecked: generateLastCheckedTime(2), details: 'API latency detected in reporting module.' },
   { id: 'schwab', name: 'Schwab Advisor Center', icon: Landmark, status: 'Operational', lastChecked: generateLastCheckedTime(10) },
   { id: 'wealthscape', name: 'Wealthscape', icon: Briefcase, status: 'Down', lastChecked: generateLastCheckedTime(1), details: 'Login unavailable. Investigating.' },
   { id: 'zoom', name: 'Zoom', icon: Video, status: 'Operational', lastChecked: generateLastCheckedTime(15) },
