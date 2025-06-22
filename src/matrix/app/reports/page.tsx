@@ -1,4 +1,2 @@
-
-// This file is intentionally left blank as it's being deleted.
-// The build system will handle the actual deletion if possible,
-// or this will effectively make the route inactive.
+// This file has been emptied to resolve a build conflict.
+// The primary page is located at /src/app/reports/page.tsx.
