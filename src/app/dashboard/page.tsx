@@ -46,7 +46,7 @@ interface MarketData {
 
 const initialMarketOverviewData: MarketData[] = [
   {
-    label: 'Apple (AAPL)',
+    label: 'Apple Inc. (AAPL)',
     polygonTicker: 'AAPL',
     icon: PieChart,
     openTime: '09:30',
@@ -54,7 +54,7 @@ const initialMarketOverviewData: MarketData[] = [
     timezone: 'America/New_York',
   },
   {
-    label: 'Microsoft (MSFT)',
+    label: 'Microsoft Corporation (MSFT)',
     polygonTicker: 'MSFT',
     icon: PieChart,
     openTime: '09:30',
@@ -62,7 +62,7 @@ const initialMarketOverviewData: MarketData[] = [
     timezone: 'America/New_York',
   },
   {
-    label: 'Google (GOOGL)',
+    label: 'Alphabet Inc. (GOOGL)',
     polygonTicker: 'GOOGL',
     icon: PieChart,
     openTime: '09:30',
@@ -70,7 +70,7 @@ const initialMarketOverviewData: MarketData[] = [
     timezone: 'America/New_York',
   },
   {
-    label: 'Tesla (TSLA)',
+    label: 'Tesla, Inc. (TSLA)',
     polygonTicker: 'TSLA',
     icon: PieChart,
     openTime: '09:30',
@@ -262,14 +262,13 @@ export default function DashboardPage() {
   const [marketStatuses, setMarketStatuses] = React.useState<Record<string, MarketStatusInfo>>({});
   const [currentTimeEST, setCurrentTimeEST] = React.useState<string>('Loading...');
   
-  const [newsData, setNewsData] = React.useState<any[]>(mockStaticNewsData); // Use static news
-  const [isLoadingNews, setIsLoadingNews] = React.useState(false); // No longer loading from API
+  const [newsData, setNewsData] = React.useState<any[]>(mockStaticNewsData); 
+  const [isLoadingNews, setIsLoadingNews] = React.useState(false); 
   const [newsError, setNewsError] = React.useState<string | null>(null);
 
   const [selectedRange, setSelectedRange] = React.useState<string>('1Y');
   const [chartData, setChartData] = React.useState<PriceHistoryPoint[]>([]);
 
-  // State for Events Calendar
   const [ipoEvents, setIpoEvents] = React.useState<PolygonIPO[]>([]);
   const [ipoError, setIpoError] = React.useState<string | null>(null);
   const [dividendEvents, setDividendEvents] = React.useState<PolygonDividend[]>([]);
@@ -280,12 +279,15 @@ export default function DashboardPage() {
   const [selectedEventDate, setSelectedEventDate] = React.useState<Date | undefined>();
   const [eventsForSelectedDay, setEventsForSelectedDay] = React.useState<CombinedEvent[]>([]);
   const [isLoadingEvents, setIsLoadingEvents] = React.useState({ ipos: false, holidays: false, dividends: false });
+  const [isMounted, setIsMounted] = React.useState(false);
+
+  React.useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
 
-  // This function is no longer making actual API calls for this page's purpose
   const fetchPolygonData = React.useCallback(async (endpoint: string, params: Record<string, string> = {}): Promise<any> => {
     console.log(`[STATIC MODE] Mock fetchPolygonData called for ${endpoint} with params:`, params);
-    // Simulate a small delay
     await new Promise(resolve => setTimeout(resolve, 50));
 
     if (endpoint.includes('/v3/reference/ipos')) {
@@ -300,7 +302,7 @@ export default function DashboardPage() {
     if (endpoint.includes('/v2/reference/news')) {
         return { results: mockStaticNewsData.slice(0,5) };
     }
-    if (endpoint.includes('/v3/reference/tickers/')) { // For ticker details
+    if (endpoint.includes('/v3/reference/tickers/')) { 
         const ticker = endpoint.split('/').pop() || "MOCK";
         return { 
             results: { 
@@ -313,13 +315,13 @@ export default function DashboardPage() {
             }
         };
     }
-    if (endpoint.includes('/v2/aggs/ticker/') && endpoint.includes('/prev')) { // For prev day
+    if (endpoint.includes('/v2/aggs/ticker/') && endpoint.includes('/prev')) { 
         return { results: [{ c: 100 + Math.random()*10, o: 98 + Math.random()*10, l: 95 + Math.random()*5, h: 102 + Math.random()*5, v: 1000000 + Math.random()*500000 }] };
     }
-    if (endpoint.includes('/v2/aggs/ticker/') && endpoint.includes('/range/')) { // For history
+    if (endpoint.includes('/v2/aggs/ticker/') && endpoint.includes('/range/')) { 
         const history: PriceHistoryPoint[] = [];
         let currentDate = subYears(new Date(), 1);
-        for(let i=0; i<252; i++){ // ~1 year of trading days
+        for(let i=0; i<252; i++){ 
             history.push({ date: format(currentDate, 'yyyy-MM-dd'), close: 100 + Math.sin(i/20) * 10 + Math.random()*5 });
             currentDate.setDate(currentDate.getDate() + 1);
         }
@@ -333,7 +335,7 @@ export default function DashboardPage() {
   const fetchIPOs = React.useCallback(async () => {
     setIsLoadingEvents(prev => ({ ...prev, ipos: true }));
     setIpoError(null);
-    const data = await fetchPolygonData('/v3/reference/ipos'); // Will use static mock
+    const data = await fetchPolygonData('/v3/reference/ipos'); 
     if (data.error) setIpoError(data.error); else setIpoEvents(data.results || []);
     setIsLoadingEvents(prev => ({ ...prev, ipos: false }));
   }, [fetchPolygonData]);
@@ -341,7 +343,7 @@ export default function DashboardPage() {
   const fetchMarketHolidays = React.useCallback(async () => {
     setIsLoadingEvents(prev => ({ ...prev, holidays: true }));
     setHolidayError(null);
-    const data = await fetchPolygonData('/v1/marketstatus/upcoming'); // Will use static mock
+    const data = await fetchPolygonData('/v1/marketstatus/upcoming'); 
     if (data.error) setHolidayError(data.error); else setMarketHolidays(data || []);
     setIsLoadingEvents(prev => ({ ...prev, holidays: false }));
   }, [fetchPolygonData]);
@@ -350,7 +352,7 @@ export default function DashboardPage() {
     if (!ticker) { setDividendEvents([]); setDividendError(null); return; }
     setIsLoadingEvents(prev => ({ ...prev, dividends: true }));
     setDividendError(null);
-    const data = await fetchPolygonData('/v3/reference/dividends', { ticker }); // Will use static mock
+    const data = await fetchPolygonData('/v3/reference/dividends', { ticker }); 
     if (data.error) setDividendError(data.error); else setDividendEvents(data.results || []);
     setIsLoadingEvents(prev => ({ ...prev, dividends: false }));
   }, [fetchPolygonData]);
@@ -370,9 +372,8 @@ export default function DashboardPage() {
   }, [tickerData?.symbol, fetchDividends]);
 
   const allEventsForCalendar = React.useMemo((): CombinedEvent[] => {
-    // Use mockStaticEvents directly, or combine with any fetched static events if needed
     return mockStaticEvents;
-  }, []); // Removed dependencies as we are using direct mock data
+  }, []); 
 
   const handleEventDayClick = (day: Date) => {
     setSelectedEventDate(day);
@@ -416,11 +417,10 @@ export default function DashboardPage() {
 
 
  const fetchNewsData = React.useCallback(async () => {
-    setIsLoadingNews(true); // Keep this for UI consistency
+    setIsLoadingNews(true); 
     setNewsError(null);
-    // Simulate loading
     await new Promise(resolve => setTimeout(resolve, 200));
-    setNewsData(mockStaticNewsData.slice(0, 5)); // Use the static data
+    setNewsData(mockStaticNewsData.slice(0, 5)); 
     setIsLoadingNews(false);
   }, []);
 
@@ -447,8 +447,8 @@ export default function DashboardPage() {
     };
 
     loadMarketData();
-    fetchNewsData(); // Fetch static news
-  }, [fetchNewsData]); // fetchNewsData is now stable
+    fetchNewsData(); 
+  }, [fetchNewsData]); 
 
   const calculateChangePercent = (currentPrice?: number, openPrice?: number) => {
     if (typeof currentPrice !== 'number' || typeof openPrice !== 'number' || openPrice === 0 || isNaN(currentPrice) || isNaN(openPrice)) {
@@ -459,11 +459,10 @@ export default function DashboardPage() {
 
   const getChartDataForRange = React.useCallback((fullHistory: PriceHistoryPoint[], range: string): PriceHistoryPoint[] => {
     if (!fullHistory || fullHistory.length === 0) return [];
-    // For static data, we might just return the full set or a predefined subset
-    if (range === '1D' && fullHistory.length > 0) return [fullHistory[fullHistory.length -1]]; // Just last point for 1D
+    if (range === '1D' && fullHistory.length > 0) return [fullHistory[fullHistory.length -1]]; 
     if (range === '1W' && fullHistory.length > 5) return fullHistory.slice(-5);
     if (range === '1M' && fullHistory.length > 20) return fullHistory.slice(-20);
-    return fullHistory; // Default to full history for other ranges
+    return fullHistory; 
   }, []);
 
 
@@ -486,16 +485,17 @@ export default function DashboardPage() {
     setDividendError(null);
 
     const symbol = tickerQuery.toUpperCase();
-    // Simulate API call delay
     await new Promise(resolve => setTimeout(resolve, 500));
 
     const staticTickerDetails: Record<string, Partial<TickerFullData>> = {
         'AAPL': {
-            companyName: 'Apple Inc. (Static)', symbol: 'AAPL', exchange: 'NASDAQ', sector: 'Technology', industry: 'Consumer Electronics', logo: `https://placehold.co/48x48.png?text=AAPL`, marketCap: "2.8T", currentPrice: "195.16", priceChangeAmount: "+0.88", priceChangePercent: "+0.45", previousClose: "194.28", openPrice: "194.50", daysRange: "193.90 - 195.50", volume: "45M", avgVolume: "55M", peRatio: "30.5", eps: "6.40", dividendYield: "0.5%", beta: "1.2", nextEarningsDate: "Jul 25, 2024", dividendDate: "May 10, 2024",
+            companyName: 'Apple Inc.',
+            symbol: 'AAPL', exchange: 'NASDAQ', sector: 'Technology', industry: 'Consumer Electronics', logo: `https://placehold.co/48x48.png?text=AAPL`, marketCap: "2.8T", currentPrice: "195.16", priceChangeAmount: "+0.88", priceChangePercent: "+0.45", previousClose: "194.28", openPrice: "194.50", daysRange: "193.90 - 195.50", volume: "45M", avgVolume: "55M", peRatio: "30.5", eps: "6.40", dividendYield: "0.5%", beta: "1.2", nextEarningsDate: "Jul 25, 2024", dividendDate: "May 10, 2024",
             fullPriceHistory: Array.from({length: 252}, (_, i) => ({ date: format(subYears(new Date(), 1).setDate(new Date().getDate() - (251-i)), 'yyyy-MM-dd'), close: 170 + Math.sin(i/20)*20 + Math.random()*10})),
         },
         'MSFT': {
-            companyName: 'Microsoft Corp. (Static)', symbol: 'MSFT', exchange: 'NASDAQ', sector: 'Technology', industry: 'Software - Infrastructure', logo: `https://placehold.co/48x48.png?text=MSFT`, marketCap: "3.1T", currentPrice: "420.72", priceChangeAmount: "-1.20", priceChangePercent: "-0.28", previousClose: "421.92", openPrice: "421.00", daysRange: "419.50 - 422.00", volume: "18M", avgVolume: "22M", peRatio: "38.2", eps: "11.01", dividendYield: "0.7%", beta: "0.9", nextEarningsDate: "Jul 22, 2024", dividendDate: "Jun 05, 2024",
+            companyName: 'Microsoft Corporation',
+            symbol: 'MSFT', exchange: 'NASDAQ', sector: 'Technology', industry: 'Software - Infrastructure', logo: `https://placehold.co/48x48.png?text=MSFT`, marketCap: "3.1T", currentPrice: "420.72", priceChangeAmount: "-1.20", priceChangePercent: "-0.28", previousClose: "421.92", openPrice: "421.00", daysRange: "419.50 - 422.00", volume: "18M", avgVolume: "22M", peRatio: "38.2", eps: "11.01", dividendYield: "0.7%", beta: "0.9", nextEarningsDate: "Jul 22, 2024", dividendDate: "Jun 05, 2024",
             fullPriceHistory: Array.from({length: 252}, (_, i) => ({ date: format(subYears(new Date(), 1).setDate(new Date().getDate() - (251-i)), 'yyyy-MM-dd'), close: 380 + Math.sin(i/25)*30 + Math.random()*15})),
         }
     };
@@ -668,7 +668,12 @@ export default function DashboardPage() {
                   <p className="text-xs text-muted-foreground mb-1 line-clamp-2" title={item.description}>{item.description}</p>
                   <div className="flex justify-between items-center text-xs text-muted-foreground/70">
                     <span>{item.publisher?.name || 'Unknown Source'}</span>
-                    <span>{item.published_utc ? formatDistanceToNowStrict(parseISO(item.published_utc), { addSuffix: true }) : 'N/A'}</span>
+                    <span>
+                      {isMounted && item.published_utc 
+                        ? formatDistanceToNowStrict(parseISO(item.published_utc), { addSuffix: true }) 
+                        : "Calculating..."
+                      }
+                    </span>
                   </div>
                 </li>
               ))}
@@ -690,7 +695,7 @@ export default function DashboardPage() {
            <div className="w-full space-y-6 p-4 md:p-6">
             {/* Minimal Header Section */}
             <div className="w-full text-left mb-4">
-              <h3 className="text-2xl font-bold text-foreground mb-1">{tickerData.companyName}</h3>
+              <h3 className="text-2xl font-bold text-foreground mb-1">{`${tickerData.companyName} (${tickerData.symbol})`}</h3>
               <div className="flex items-end gap-3 mb-1">
                 <span className="text-4xl font-bold text-foreground">${tickerData.currentPrice}</span>
                 {(tickerData.priceChangeAmount && tickerData.priceChangePercent) && (
@@ -788,5 +793,3 @@ export default function DashboardPage() {
     </main>
   );
 }
-
-    

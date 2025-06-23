@@ -1,4 +1,3 @@
-
 "use client";
 import * as React from "react";
 import Image from "next/image";
@@ -9,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { formatTickerAndName } from "@/lib/ticker-utils";
 
 const metricCardsData = [
   {
@@ -78,8 +78,10 @@ export default function AssetAnalyticsPage() {
               <SelectValue placeholder="Select Advisor" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="mike_mcdermott_mam">Mike McDermott MAM</SelectItem>
-              <SelectItem value="sam_rothstein_sar">Sam Rothstein SAR</SelectItem>
+              <SelectItem value="dom_cobb">Dom Cobb</SelectItem>
+              <SelectItem value="alice_ayers">Alice Ayers</SelectItem>
+              <SelectItem value="peter_banning">Peter Banning</SelectItem>
+              <SelectItem value="jules_winnfield">Jules Winnfield</SelectItem>
             </SelectContent>
           </Select>
         </PlaceholderCard>
@@ -90,11 +92,9 @@ export default function AssetAnalyticsPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all_custodians">All Custodians</SelectItem>
-              <SelectItem value="pershing">Pershing</SelectItem>
               <SelectItem value="schwab">Charles Schwab</SelectItem>
               <SelectItem value="fidelity">Fidelity</SelectItem>
               <SelectItem value="goldman">Goldman Sachs</SelectItem>
-              <SelectItem value="pas">PAS</SelectItem>
             </SelectContent>
           </Select>
         </PlaceholderCard>
@@ -150,8 +150,7 @@ export default function AssetAnalyticsPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="font-bold">Symbol</TableHead>
-              <TableHead className="font-bold">Name</TableHead>
+              <TableHead className="font-bold">Asset</TableHead>
               <TableHead className="font-bold">Category</TableHead>
               <TableHead className="text-right font-bold">Value</TableHead>
               <TableHead className="text-right font-bold">Weight</TableHead>
@@ -161,8 +160,7 @@ export default function AssetAnalyticsPage() {
           <TableBody>
             {topPerformingAssetsData.map((asset) => (
               <TableRow key={asset.symbol}>
-                <TableCell className="font-medium">{asset.symbol}</TableCell>
-                <TableCell>{asset.name}</TableCell>
+                <TableCell className="font-medium">{formatTickerAndName(asset.symbol)}</TableCell>
                 <TableCell className="text-muted-foreground">{asset.category}</TableCell>
                 <TableCell className="text-right">{asset.value}</TableCell>
                 <TableCell className="text-right">{asset.weight}</TableCell>

@@ -7,8 +7,8 @@ import Script from 'next/script';
 import { useAuth } from '@/contexts/auth-context';
 import { Button } from '@/components/ui/button';
 import { PlaceholderCard } from '@/components/dashboard/placeholder-card';
-import { Loader2, Mail, LogIn, LogOut, RefreshCcw, Send } from 'lucide-react'; // Added LogIn, LogOut, RefreshCcw
-import { ScrollArea } from '@/components/ui/scroll-area'; // Added ScrollArea
+import { Loader2, Mail, LogIn, LogOut, RefreshCcw, Send, AlertTriangle } from 'lucide-react'; // Added AlertTriangle
+import { ScrollArea } from '@/components/ui/scroll-area';
 
 interface GmailMessageHeader {
   name: string;
@@ -48,14 +48,12 @@ declare global {
   }
 }
 
-// TODO: Replace with your actual Google Cloud API Key and OAuth Client ID from environment variables
-// Ensure these are prefixed with NEXT_PUBLIC_ if used client-side
 const GOOGLE_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_CLOUD_API_KEY || "YOUR_GOOGLE_CLOUD_API_KEY_PLACEHOLDER";
 const GOOGLE_CLIENT_ID = process.env.NEXT_PUBLIC_GOOGLE_OAUTH_CLIENT_ID || "YOUR_GOOGLE_OAUTH_CLIENT_ID_PLACEHOLDER";
 
 
 export default function ClientPortalEmailPage() {
-  const { user, accessToken, isLoading: isAuthLoading, signInWithGoogleAndGetGmailToken, signOutGoogle } = useAuth();
+  const { user, accessToken, isLoading: isAuthLoading, isConfigured: isAuthConfigured, signInWithGoogleAndGetGmailToken, signOutGoogle } = useAuth();
   const [gapiReady, setGapiReady] = React.useState(false);
   const [messages, setMessages] = React.useState<GmailMessage[]>([]);
   const [isLoadingMessages, setIsLoadingMessages] = React.useState(false);
@@ -63,12 +61,11 @@ export default function ClientPortalEmailPage() {
   const [isGapiScriptLoaded, setIsGapiScriptLoaded] = React.useState(false);
 
   const GMAIL_DISCOVERY_DOC = "https://www.googleapis.com/discovery/v1/apis/gmail/v1/rest";
-  const GMAIL_SCOPES = "https://www.googleapis.com/auth/gmail.readonly https://www.googleapis.com/auth/gmail.send";
+  // GMAIL_SCOPES is handled by googleAuthProvider in firebase config now
 
   const handleGapiScriptLoad = () => {
     console.log("Google API Script loaded.");
     setIsGapiScriptLoaded(true);
-    // gapi.load will be called once accessToken is available
   };
 
   const initializeGapiClient = React.useCallback(async () => {
@@ -79,8 +76,8 @@ export default function ClientPortalEmailPage() {
     }
     if (GOOGLE_API_KEY.includes("PLACEHOLDER") || GOOGLE_CLIENT_ID.includes("PLACEHOLDER")) {
       console.warn("Placeholder Google API Key or Client ID detected. GAPI client not initialized.");
-      setErrorMessage("Gmail API client is not configured by the developer. Please provide API Key and Client ID.");
-      setGapiReady(false); // Ensure gapiReady is false if config is missing
+      setErrorMessage("Gmail API client is not configured by the developer. Please provide API Key and Client ID in environment variables.");
+      setGapiReady(false);
       return;
     }
 
@@ -88,14 +85,12 @@ export default function ClientPortalEmailPage() {
     try {
       await window.gapi.client.init({
         apiKey: GOOGLE_API_KEY,
-        clientId: GOOGLE_CLIENT_ID, // Not strictly needed for client.init but good practice
         discoveryDocs: [GMAIL_DISCOVERY_DOC],
-        // scope: GMAIL_SCOPES, // Scope is handled by Firebase Auth and token
       });
       window.gapi.client.setToken({ access_token: accessToken });
       setGapiReady(true);
       console.log("GAPI client initialized successfully.");
-      setErrorMessage(null); // Clear previous errors
+      setErrorMessage(null);
     } catch (error: any) {
       console.error("Error initializing GAPI client:", error);
       setErrorMessage(`Failed to initialize Gmail API client: ${error.details || error.message || 'Unknown error'}`);
@@ -104,10 +99,10 @@ export default function ClientPortalEmailPage() {
   }, [accessToken]);
 
   React.useEffect(() => {
-    if (isGapiScriptLoaded && accessToken && !gapiReady) {
+    if (isGapiScriptLoaded && accessToken && !gapiReady && isAuthConfigured) {
       window.gapi.load('client', initializeGapiClient);
     }
-  }, [isGapiScriptLoaded, accessToken, gapiReady, initializeGapiClient]);
+  }, [isGapiScriptLoaded, accessToken, gapiReady, initializeGapiClient, isAuthConfigured]);
 
   const fetchMessages = React.useCallback(async () => {
     if (!gapiReady || !user || !accessToken) {
@@ -142,7 +137,6 @@ export default function ClientPortalEmailPage() {
         for (const key in batchResponse.result) {
           messageItems.push(batchResponse.result[key].result as GmailMessage);
         }
-        // Sort by date descending
         setMessages(messageItems.sort((a,b) => parseInt(b.internalDate) - parseInt(a.internalDate)));
       } else {
         setMessages([]);
@@ -153,18 +147,17 @@ export default function ClientPortalEmailPage() {
       setErrorMessage(`Failed to fetch messages: ${errorDetail?.message || error.message || 'Unknown error'}. Status: ${errorDetail?.status || 'N/A'}`);
       if (errorDetail?.status === 'UNAUTHENTICATED' || error.status === 401) {
         setErrorMessage("Authentication error. Your session might have expired. Please try signing out and signing in again.");
-        // Consider calling signOutGoogle() here or providing a specific re-auth button
       }
     } finally {
       setIsLoadingMessages(false);
     }
-  }, [gapiReady, user, accessToken, signOutGoogle]); 
+  }, [gapiReady, user, accessToken]); 
 
   React.useEffect(() => {
-    if (gapiReady) {
+    if (gapiReady && isAuthConfigured) {
       fetchMessages();
     }
-  }, [gapiReady, fetchMessages]);
+  }, [gapiReady, fetchMessages, isAuthConfigured]);
   
   const getHeaderValue = (headers: GmailMessageHeader[] | undefined, name: string): string => {
     if (!headers) return 'N/A';
@@ -172,7 +165,20 @@ export default function ClientPortalEmailPage() {
     return header ? header.value : 'N/A';
   };
 
-  if (isAuthLoading && !user) { // Show loader only if auth is truly loading and no user yet
+  if (!isAuthConfigured && !isAuthLoading) {
+    return (
+      <main className="min-h-screen bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#5b21b6]/10 to-[#000104] flex-1 p-6 md:p-8">
+        <h1 className="text-3xl font-bold tracking-tight text-foreground mb-6">Email</h1>
+        <PlaceholderCard title="Firebase Not Configured" icon={AlertTriangle} iconClassName="text-destructive">
+          <p className="text-muted-foreground">
+            Firebase authentication is not properly configured. Please check your Firebase setup and environment variables (e.g., API key, Project ID in <code>.env.local</code> or <code>src/lib/firebase/config.ts</code>). Email functionality requires user authentication.
+          </p>
+        </PlaceholderCard>
+      </main>
+    );
+  }
+  
+  if (isAuthLoading && !user) {
     return (
       <main className="min-h-screen bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#5b21b6]/10 to-[#000104] flex-1 p-6 md:p-8 flex items-center justify-center">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -184,7 +190,7 @@ export default function ClientPortalEmailPage() {
     <>
       <Script
         src="https://apis.google.com/js/api.js"
-        strategy="lazyOnload" // Changed strategy
+        strategy="lazyOnload"
         onLoad={handleGapiScriptLoad}
         onError={(e) => {
           console.error('Google API Script failed to load:', e);
@@ -265,7 +271,7 @@ export default function ClientPortalEmailPage() {
             </PlaceholderCard>
           </>
         )}
-         {!user && !isAuthLoading && !isGapiScriptLoaded &&
+         {!user && !isAuthLoading && !isGapiScriptLoaded && isAuthConfigured &&
             <PlaceholderCard title="Gmail Integration Unavailable">
                  <p className="text-muted-foreground text-center p-4">
                     The Google API script could not be loaded. Please check your internet connection, disable any ad-blockers that might interfere with Google scripts, and refresh the page.

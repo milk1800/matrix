@@ -10,6 +10,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { cn } from "@/lib/utils";
 import { analyzePortfolioItems, type AnalyzePortfolioOutput, type PortfolioItem } from "@/ai/flows/analyze-portfolio-flow";
 import { Loader2 } from "lucide-react";
+import { getCompanyNameFromTicker } from "@/lib/ticker-utils";
 
 const portfolioOverviewData: PortfolioItem[] = [
   { ticker: 'AAPL', name: 'Alpha Fund', category: 'Equity', value: '$1,250,000', weight: '25.0%', ytdReturn: '+5.2%' },
@@ -85,7 +86,7 @@ export default function PortfolioMatrixPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="font-bold">Ticker</TableHead>
+              <TableHead className="font-bold">Company</TableHead>
               <TableHead className="font-bold">Name</TableHead>
               <TableHead className="font-bold">Category</TableHead>
               <TableHead className="font-bold text-right">Value</TableHead>
@@ -96,7 +97,7 @@ export default function PortfolioMatrixPage() {
           <TableBody>
             {portfolioOverviewData.map((item) => (
               <TableRow key={item.ticker}>
-                <TableCell className="font-medium">{item.ticker}</TableCell>
+                <TableCell className="font-medium">{getCompanyNameFromTicker(item.ticker)}</TableCell>
                 <TableCell>{item.name}</TableCell>
                 <TableCell className="text-muted-foreground">{item.category}</TableCell>
                 <TableCell className="text-right text-foreground">{item.value}</TableCell>
@@ -117,7 +118,7 @@ export default function PortfolioMatrixPage() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="font-bold">Ticker</TableHead>
+              <TableHead className="font-bold">Company</TableHead>
               <TableHead className="font-bold">Name</TableHead>
               <TableHead className="font-bold">Category</TableHead>
               <TableHead className="font-bold text-right">Value</TableHead>
@@ -133,7 +134,7 @@ export default function PortfolioMatrixPage() {
                   item.ytdReturn.startsWith('-') ? 'missed-opportunity-row' : ''
                 )}
               >
-                <TableCell className="font-medium">{item.ticker}</TableCell>
+                <TableCell className="font-medium">{getCompanyNameFromTicker(item.ticker)}</TableCell>
                 <TableCell>{item.name}</TableCell>
                 <TableCell className="text-muted-foreground">{item.category}</TableCell>
                 <TableCell className="text-right text-foreground">{item.value}</TableCell>

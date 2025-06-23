@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+<<<<<<< HEAD
     "baseUrl": ".",
     "paths": {
       "@/*": [
@@ -7,6 +8,9 @@
       ]
     },
     "target": "ES2017",
+=======
+    "target": "es5",
+>>>>>>> origin/main
     "lib": [
       "dom",
       "dom.iterable",
@@ -15,10 +19,17 @@
     "allowJs": true,
     "skipLibCheck": true,
     "strict": false,
+<<<<<<< HEAD
+=======
+    "forceConsistentCasingInFileNames": true,
+>>>>>>> origin/main
     "noEmit": true,
     "incremental": true,
     "module": "esnext",
+<<<<<<< HEAD
     "esModuleInterop": true,
+=======
+>>>>>>> origin/main
     "moduleResolution": "node",
     "resolveJsonModule": true,
     "isolatedModules": true,
@@ -27,6 +38,7 @@
       {
         "name": "next"
       }
+<<<<<<< HEAD
     ]
   },
   "include": [
@@ -34,6 +46,19 @@
     ".next/types/**/*.ts",
     "**/*.ts",
     "**/*.tsx"
+=======
+    ],
+    "baseUrl": "src",
+    "paths": {
+      "@/*": ["./*"]
+    }
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    "next-env.d.ts",
+    ".next/types/**/*.ts"
+>>>>>>> origin/main
   ],
   "exclude": [
     "node_modules"
