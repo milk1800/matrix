@@ -27,40 +27,41 @@ interface ContributionAccount {
   dueDate: string; // YYYY-MM-DD format
 }
 
-const generateRandomAccountNumber = (): string => {
-  const randomNumber = Math.floor(100000 + Math.random() * 900000);
-  return `XYZ${randomNumber}`;
-};
+const generateMockAccounts = (): ContributionAccount[] => {
+    const generateRandomAccountNumber = (): string => {
+      const randomNumber = Math.floor(100000 + Math.random() * 900000);
+      return `XYZ${randomNumber}`;
+    };
 
-const getFutureDate = (days: number): string => {
-  const date = new Date();
-  date.setDate(date.getDate() + days);
-  return format(date, 'yyyy-MM-dd');
-};
+    const getFutureDate = (days: number): string => {
+      const date = new Date();
+      date.setDate(date.getDate() + days);
+      return format(date, 'yyyy-MM-dd');
+    };
 
-// Ensure unique account numbers for mock data
-const usedAccountNumbers = new Set<string>();
-const generateUniqueAccountNumber = (): string => {
-  let accountNumber;
-  do {
-    accountNumber = generateRandomAccountNumber();
-  } while (usedAccountNumbers.has(accountNumber));
-  usedAccountNumbers.add(accountNumber);
-  return accountNumber;
-};
+    const usedAccountNumbers = new Set<string>();
+    const generateUniqueAccountNumber = (): string => {
+      let accountNumber;
+      do {
+        accountNumber = generateRandomAccountNumber();
+      } while (usedAccountNumbers.has(accountNumber));
+      usedAccountNumbers.add(accountNumber);
+      return accountNumber;
+    };
 
-const initialContributionAccounts: ContributionAccount[] = [
-  { id: "1", accountName: generateUniqueAccountNumber(), originalAccountName: "John's Primary Roth", accountType: "Roth IRA", annualLimit: 7000, amountContributed: 3500, dueDate: getFutureDate(3) },
-  { id: "2", accountName: generateUniqueAccountNumber(), originalAccountName: "Jane's Traditional", accountType: "Traditional IRA", annualLimit: 7000, amountContributed: 7000, dueDate: getFutureDate(25) },
-  { id: "3", accountName: generateUniqueAccountNumber(), originalAccountName: "Business SEP", accountType: "SEP IRA", annualLimit: 66000, amountContributed: 25000, dueDate: getFutureDate(60) },
-  { id: "4", accountName: generateUniqueAccountNumber(), originalAccountName: "Side Gig SIMPLE", accountType: "SIMPLE IRA", annualLimit: 16000, amountContributed: 8000, dueDate: getFutureDate(-5) },
-  { id: "5", accountName: generateUniqueAccountNumber(), originalAccountName: "John's Rollover IRA", accountType: "Traditional IRA", annualLimit: 7000, amountContributed: 1000, dueDate: getFutureDate(90) },
-  { id: "6", accountName: generateUniqueAccountNumber(), originalAccountName: "Spouse Roth", accountType: "Roth IRA", annualLimit: 7000, amountContributed: 0, dueDate: getFutureDate(1) },
-  { id: "7", accountName: generateUniqueAccountNumber(), originalAccountName: "Emergency Fund IRA", accountType: "Traditional IRA", annualLimit: 7000, amountContributed: 3000, dueDate: getFutureDate(0) },
-  { id: "8", accountName: generateUniqueAccountNumber(), originalAccountName: "College Fund IRA", accountType: "Roth IRA", annualLimit: 7000, amountContributed: 1500, dueDate: getFutureDate(14) },
-  { id: "9", accountName: generateUniqueAccountNumber(), originalAccountName: "Retirement Plus", accountType: "SEP IRA", annualLimit: 66000, amountContributed: 60000, dueDate: getFutureDate(40) },
-  { id: "10", accountName: generateUniqueAccountNumber(), originalAccountName: "Travel Savings IRA", accountType: "Traditional IRA", annualLimit: 7000, amountContributed: 500, dueDate: getFutureDate(180) },
-];
+    return [
+      { id: "1", accountName: generateUniqueAccountNumber(), originalAccountName: "John's Primary Roth", accountType: "Roth IRA", annualLimit: 7000, amountContributed: 3500, dueDate: getFutureDate(3) },
+      { id: "2", accountName: generateUniqueAccountNumber(), originalAccountName: "Jane's Traditional", accountType: "Traditional IRA", annualLimit: 7000, amountContributed: 7000, dueDate: getFutureDate(25) },
+      { id: "3", accountName: generateUniqueAccountNumber(), originalAccountName: "Business SEP", accountType: "SEP IRA", annualLimit: 66000, amountContributed: 25000, dueDate: getFutureDate(60) },
+      { id: "4", accountName: generateUniqueAccountNumber(), originalAccountName: "Side Gig SIMPLE", accountType: "SIMPLE IRA", annualLimit: 16000, amountContributed: 8000, dueDate: getFutureDate(-5) },
+      { id: "5", accountName: generateUniqueAccountNumber(), originalAccountName: "John's Rollover IRA", accountType: "Traditional IRA", annualLimit: 7000, amountContributed: 1000, dueDate: getFutureDate(90) },
+      { id: "6", accountName: generateUniqueAccountNumber(), originalAccountName: "Spouse Roth", accountType: "Roth IRA", annualLimit: 7000, amountContributed: 0, dueDate: getFutureDate(1) },
+      { id: "7", accountName: generateUniqueAccountNumber(), originalAccountName: "Emergency Fund IRA", accountType: "Traditional IRA", annualLimit: 7000, amountContributed: 3000, dueDate: getFutureDate(0) },
+      { id: "8", accountName: generateUniqueAccountNumber(), originalAccountName: "College Fund IRA", accountType: "Roth IRA", annualLimit: 7000, amountContributed: 1500, dueDate: getFutureDate(14) },
+      { id: "9", accountName: generateUniqueAccountNumber(), originalAccountName: "Retirement Plus", accountType: "SEP IRA", annualLimit: 66000, amountContributed: 60000, dueDate: getFutureDate(40) },
+      { id: "10", accountName: generateUniqueAccountNumber(), originalAccountName: "Travel Savings IRA", accountType: "Traditional IRA", annualLimit: 7000, amountContributed: 500, dueDate: getFutureDate(180) },
+    ];
+};
 
 const calculateMonthsLeft = (): number => {
   const currentMonth = new Date().getMonth(); 
@@ -127,11 +128,17 @@ const IRA_TYPES_ORDER: AccountType[] = ['Roth IRA', 'Traditional IRA', 'SEP IRA'
 
 
 export default function ContributionMatrixPage() {
-  const accounts = initialContributionAccounts;
+  const [accounts, setAccounts] = React.useState<ContributionAccount[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
   const [mavenQuery, setMavenQuery] = React.useState("");
   const [mavenResponse, setMavenResponse] = React.useState<string | null>(null);
   const [isLoadingMaven, setIsLoadingMaven] = React.useState(false);
   const { toast } = useToast();
+
+  React.useEffect(() => {
+    setAccounts(generateMockAccounts());
+    setIsLoading(false);
+  }, []);
 
 
   const handleAskMaven = async () => {
@@ -173,13 +180,15 @@ export default function ContributionMatrixPage() {
       "SIMPLE IRA": { totalRemaining: 0, totalOpportunity: 0, totalLimit: 0, totalContributed: 0 },
     };
 
-    accounts.forEach(acc => {
-      const remaining = Math.max(0, acc.annualLimit - acc.amountContributed);
-      result[acc.accountType].totalRemaining += remaining;
-      result[acc.accountType].totalOpportunity += remaining * MOCK_FEE_RATE;
-      result[acc.accountType].totalLimit += acc.annualLimit;
-      result[acc.accountType].totalContributed += acc.amountContributed;
-    });
+    if (accounts.length > 0) {
+        accounts.forEach(acc => {
+          const remaining = Math.max(0, acc.annualLimit - acc.amountContributed);
+          result[acc.accountType].totalRemaining += remaining;
+          result[acc.accountType].totalOpportunity += remaining * MOCK_FEE_RATE;
+          result[acc.accountType].totalLimit += acc.annualLimit;
+          result[acc.accountType].totalContributed += acc.amountContributed;
+        });
+    }
 
     return IRA_TYPES_ORDER.map(type => {
       const data = result[type];
@@ -191,6 +200,15 @@ export default function ContributionMatrixPage() {
       };
     });
   }, [accounts]);
+  
+  if (isLoading) {
+    return (
+        <main className="min-h-screen bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#5b21b6]/10 to-[#000104] flex-1 p-6 space-y-8 md:p-8 flex items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="ml-2 text-muted-foreground">Loading Contribution Data...</p>
+        </main>
+    );
+  }
 
 
   return (
@@ -332,4 +350,3 @@ export default function ContributionMatrixPage() {
     </main>
   );
 }
-

@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { AlertTriangle, CalendarDays, Filter, MessageSquare, Send, Server, Landmark, Briefcase, Video, Mail, RefreshCcw } from "lucide-react";
+import { AlertTriangle, CalendarDays, Filter, MessageSquare, Send, Server, Landmark, Briefcase, Video, Mail, RefreshCcw, Loader2 } from "lucide-react";
 import { format, subDays, addDays, subMinutes } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useTicker } from "@/contexts/ticker-context";
@@ -37,36 +37,40 @@ interface SystemStatusItem {
   details?: string;
 }
 
-const generateRandomDate = (daysAgoMin: number, daysAgoMax: number): string => {
-  const days = Math.floor(Math.random() * (daysAgoMax - daysAgoMin + 1)) + daysAgoMin;
-  return format(subDays(new Date(), days), "yyyy-MM-dd HH:mm:ss");
+const generateMockData = () => {
+    const generateRandomDate = (daysAgoMin: number, daysAgoMax: number): string => {
+      const days = Math.floor(Math.random() * (daysAgoMax - daysAgoMin + 1)) + daysAgoMin;
+      return format(subDays(new Date(), days), "yyyy-MM-dd HH:mm:ss");
+    };
+
+    const generateLastCheckedTime = (minutesAgoMax: number): string => {
+      const minutes = Math.floor(Math.random() * minutesAgoMax) + 1;
+      return format(subMinutes(new Date(), minutes), "MMM dd, HH:mm");
+    }
+
+    const mockSystemStatuses: SystemStatusItem[] = [
+      { id: 'netx360plus', name: 'NetX360+', icon: Server, status: 'Operational', lastChecked: generateLastCheckedTime(7), details: 'All systems normal.' },
+      { id: 'netx', name: 'NetXInvestor', icon: Server, status: 'Operational', lastChecked: generateLastCheckedTime(5), details: 'All systems normal.' },
+      { id: 'sanctuary', name: 'Sanctuary One', icon: Server, status: 'Performance Issues', lastChecked: generateLastCheckedTime(2), details: 'API latency detected in reporting module.' },
+      { id: 'schwab', name: 'Schwab Advisor Center', icon: Landmark, status: 'Operational', lastChecked: generateLastCheckedTime(10) },
+      { id: 'wealthscape', name: 'Wealthscape', icon: Briefcase, status: 'Down', lastChecked: generateLastCheckedTime(1), details: 'Login unavailable. Investigating.' },
+      { id: 'zoom', name: 'Zoom', icon: Video, status: 'Operational', lastChecked: generateLastCheckedTime(15) },
+      { id: 'outlook', name: 'Outlook / Exchange', icon: Mail, status: 'Operational', lastChecked: generateLastCheckedTime(3) },
+    ];
+
+    const mockAlerts: AlertItem[] = [
+      { id: '1', title: 'Compliance Breach Detected', messagePreview: 'Account XYZ123 has exceeded trading limits for Q3. Immediate review required.', dateTime: generateRandomDate(1, 2), category: 'Compliance', severity: 'Urgent', isRead: false },
+      { id: '2', title: 'System Maintenance Scheduled', messagePreview: 'Scheduled maintenance tonight from 2 AM to 3 AM EST. Platform will be unavailable.', dateTime: generateRandomDate(0, 0), category: 'System', severity: 'Info', isRead: true },
+      { id: '3', title: 'Portfolio Rebalance Suggested', messagePreview: 'AI suggests rebalancing for client ABC portfolio due to recent market volatility and shift in risk tolerance.', dateTime: generateRandomDate(3, 5), category: 'Portfolio', severity: 'Warning', isRead: false },
+      { id: '4', title: 'Unusual Login Activity', messagePreview: 'Multiple failed login attempts detected on account JKL789 from an unrecognized IP address.', dateTime: generateRandomDate(0, 1), category: 'Security', severity: 'Urgent', isRead: false },
+      { id: '5', title: 'Trade Execution Confirmation', messagePreview: 'Buy order for 100 shares of MSFT at $450.20 executed successfully for account MNO456.', dateTime: generateRandomDate(1, 1), category: 'Trade', severity: 'Info', isRead: true },
+      { id: '6', title: 'Market Volatility Alert', messagePreview: 'High volatility detected in the energy sector. Review relevant client portfolios.', dateTime: generateRandomDate(0, 0), category: 'Portfolio', severity: 'Warning', isRead: false },
+      { id: '7', title: 'Policy Update: AML Requirements', messagePreview: 'New AML policy effective Nov 1st. Ensure all client documentation is up to date.', dateTime: generateRandomDate(7, 10), category: 'Compliance', severity: 'Info', isRead: true },
+      { id: '8', title: 'Upcoming RMD Deadline', messagePreview: 'Client GHI321 has an upcoming RMD deadline in 30 days. Initiate contact.', dateTime: generateRandomDate(0, 0), category: 'Portfolio', severity: 'Warning', isRead: false },
+    ];
+
+    return { mockSystemStatuses, mockAlerts };
 };
-
-const generateLastCheckedTime = (minutesAgoMax: number): string => {
-  const minutes = Math.floor(Math.random() * minutesAgoMax) + 1;
-  return format(subMinutes(new Date(), minutes), "MMM dd, HH:mm");
-}
-
-const mockSystemStatuses: SystemStatusItem[] = [
-  { id: 'netx360plus', name: 'NetX360+', icon: Server, status: 'Operational', lastChecked: generateLastCheckedTime(7), details: 'All systems normal.' },
-  { id: 'netx', name: 'NetXInvestor', icon: Server, status: 'Operational', lastChecked: generateLastCheckedTime(5), details: 'All systems normal.' },
-  { id: 'sanctuary', name: 'Sanctuary One', icon: Server, status: 'Performance Issues', lastChecked: generateLastCheckedTime(2), details: 'API latency detected in reporting module.' },
-  { id: 'schwab', name: 'Schwab Advisor Center', icon: Landmark, status: 'Operational', lastChecked: generateLastCheckedTime(10) },
-  { id: 'wealthscape', name: 'Wealthscape', icon: Briefcase, status: 'Down', lastChecked: generateLastCheckedTime(1), details: 'Login unavailable. Investigating.' },
-  { id: 'zoom', name: 'Zoom', icon: Video, status: 'Operational', lastChecked: generateLastCheckedTime(15) },
-  { id: 'outlook', name: 'Outlook / Exchange', icon: Mail, status: 'Operational', lastChecked: generateLastCheckedTime(3) },
-];
-
-const mockAlerts: AlertItem[] = [
-  { id: '1', title: 'Compliance Breach Detected', messagePreview: 'Account XYZ123 has exceeded trading limits for Q3. Immediate review required.', dateTime: generateRandomDate(1, 2), category: 'Compliance', severity: 'Urgent', isRead: false },
-  { id: '2', title: 'System Maintenance Scheduled', messagePreview: 'Scheduled maintenance tonight from 2 AM to 3 AM EST. Platform will be unavailable.', dateTime: generateRandomDate(0, 0), category: 'System', severity: 'Info', isRead: true },
-  { id: '3', title: 'Portfolio Rebalance Suggested', messagePreview: 'AI suggests rebalancing for client ABC portfolio due to recent market volatility and shift in risk tolerance.', dateTime: generateRandomDate(3, 5), category: 'Portfolio', severity: 'Warning', isRead: false },
-  { id: '4', title: 'Unusual Login Activity', messagePreview: 'Multiple failed login attempts detected on account JKL789 from an unrecognized IP address.', dateTime: generateRandomDate(0, 1), category: 'Security', severity: 'Urgent', isRead: false },
-  { id: '5', title: 'Trade Execution Confirmation', messagePreview: 'Buy order for 100 shares of MSFT at $450.20 executed successfully for account MNO456.', dateTime: generateRandomDate(1, 1), category: 'Trade', severity: 'Info', isRead: true },
-  { id: '6', title: 'Market Volatility Alert', messagePreview: 'High volatility detected in the energy sector. Review relevant client portfolios.', dateTime: generateRandomDate(0, 0), category: 'Portfolio', severity: 'Warning', isRead: false },
-  { id: '7', title: 'Policy Update: AML Requirements', messagePreview: 'New AML policy effective Nov 1st. Ensure all client documentation is up to date.', dateTime: generateRandomDate(7, 10), category: 'Compliance', severity: 'Info', isRead: true },
-  { id: '8', title: 'Upcoming RMD Deadline', messagePreview: 'Client GHI321 has an upcoming RMD deadline in 30 days. Initiate contact.', dateTime: generateRandomDate(0, 0), category: 'Portfolio', severity: 'Warning', isRead: false },
-];
 
 const getSeverityBadgeClass = (severity: AlertItem["severity"]): string => {
   switch (severity) {
@@ -112,11 +116,19 @@ const getSystemStatusBadgeClass = (status: SystemStatus): string => {
 
 
 export default function AlertsPage() {
-  const [alerts, setAlerts] = React.useState<AlertItem[]>(mockAlerts);
-  const [systemStatuses, setSystemStatuses] = React.useState<SystemStatusItem[]>(mockSystemStatuses);
+  const [alerts, setAlerts] = React.useState<AlertItem[]>([]);
+  const [systemStatuses, setSystemStatuses] = React.useState<SystemStatusItem[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
   const [broadcastMessageInput, setBroadcastMessageInput] = React.useState("");
   const { tickerMessage, setTickerMessage } = useTicker();
   const { toast } = useToast();
+
+  React.useEffect(() => {
+    const { mockSystemStatuses, mockAlerts } = generateMockData();
+    setSystemStatuses(mockSystemStatuses);
+    setAlerts(mockAlerts);
+    setIsLoading(false);
+  }, []);
 
   const toggleReadStatus = (alertId: string) => {
     setAlerts(prevAlerts =>
@@ -144,6 +156,15 @@ export default function AlertsPage() {
       description: "The default ticker has been resumed.",
     });
   };
+  
+  if (isLoading) {
+    return (
+        <main className="min-h-screen bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#5b21b6]/10 to-[#000104] flex-1 p-6 space-y-8 md:p-8 flex items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <p className="ml-2 text-muted-foreground">Loading Alerts...</p>
+        </main>
+    );
+  }
 
   return (
     <main className="min-h-screen bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#5b21b6]/10 to-[#000104] flex-1 p-6 space-y-8 md:p-8">
